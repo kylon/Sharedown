@@ -245,7 +245,7 @@ const SharedownAPI = (() => {
                     evt = new CustomEvent('DownloadFail', { detail: `Exit code: ${data.exitCode}` });
 
                 window.dispatchEvent(evt);
-               
+
             });
 
             ffmpegCmd.on('error', (err) => {
@@ -294,6 +294,7 @@ const SharedownAPI = (() => {
                 fs.rmSync(tmpFold, {force: true, recursive: true});
 
             fs.mkdirSync(tmpFold);
+			videoProgBar.setAttribute('data-tmp-perc', '0');
 
             const ytdlp = spawn('yt-dlp', ['-N', '4', '-o', tmpOutFile, '-v', videoData.m]);
 
