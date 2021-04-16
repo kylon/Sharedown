@@ -14,7 +14,7 @@ Sharedown is an Electron application to download Sharepoint videos, especially m
 * Login modules to implement custom automatic login (see [Wiki](https://github.com/kylon/Sharedown/wiki))
 
 ### Install
-* Download latest release from [here](#)
+* Download latest release from [here](https://github.com/kylon/Sharedown/releases/latest)
 * Place Sharedown app in your preferred location
 
 Default output folder is your OS _**Downloads**_ folder, or, in Linux, if not found, your _**Home**_ folder.
