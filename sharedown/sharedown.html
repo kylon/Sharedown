@@ -1,0 +1,201 @@
+<!--
+  This file is part of the Sharedown (https://github.com/kylon/Sharedown).
+  Copyright (c) 2021 Kylon.
+ 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, version 3.
+ 
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharedown</title>
+
+    <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="sharedown.css">
+</head>
+<body class="h-100">
+    <div class="container-fluid h-100">
+        <div id="sharedownhead" class="row bg-sharepoint2 p-4 pt-2 position-fixed w-100">
+            <div class="col-12 mb-4 text-center">
+                <img class="img-fluid" src="../sharedownlogo.png">
+            </div>
+
+            <div class="col-12">
+                <div class="input-group">
+                    <input id="addurlinp" type="text" class="form-control" placeholder="Sharepoint video link" aria-label="video link">
+                    <button id="addurlbtn" class="btn btn-warning text-white" type="button" title="Add video to download list"><i class="fa fa-plus"></i></button>
+                </div>
+            </div>
+
+            <div class="col-12 d-flex justify-content-end pt-4">
+                <div class="btn-group">
+                    <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa fa-cog"></i> Settings</a>
+                    <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa fa-stop"></i> Stop download</a>
+                    <a id="start-dwnl" href="#" class="btn btn-light"><i class="fa fa-arrow-down"></i> Start download</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row shinfo position-fixed w-100">
+            <div class="col-12 fst-italic text-lightgrey p-2">
+                <p class="mb-0">(<span id="quelen">0</span>) Download queue - (<span id="completec">0</span>) Complete</p>
+            </div>
+        </div>
+
+        <div id="dque" class="downloadque row pb-3"></div>
+    </div>
+
+    <!-- video settings modal -->
+    <div id="videosett" class="modal fade" tabindex="-1" aria-labelledby="videosett" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Video settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="saveas" class="form-label">Save file as</label>
+                                <input id="saveas" type="text" class="form-control" placeholder="file name">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <label for="voutdirp" class="form-label">Video output directory</label>
+                            <div class="input-group mb-3">
+                                <button class="btn btn-outline-secondary" type="button" id="voutdirinp">Select folder</button>
+                                <input id="voutdirp" type="text" class="form-control outpath" aria-label="Video output directory">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span id="save-succ-str" class="text-success d-none"><i class="fa fa-check"></i> Saved</span>
+                    <button id="save-sett" type="button" class="btn bg-sharepoint1" data-video-id="">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- global settings modal -->
+    <div id="sharedownsett" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sharedown settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="downlrun-setalr" class="row mb-3 d-none">
+                        <div class="col-12 text-center">
+                            <i class="text-darkyellow">A download has started!<br>Settings will be applied on next download.</i>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="soutdirp" class="form-label">Sharedown output directory</label>
+                            <div class="input-group mb-3">
+                                <button class="btn btn-outline-secondary" type="button" id="soutdirinp">Select folder</button>
+                                <input id="soutdirp" type="text" class="form-control outpath" aria-label="Sharedown output directory" placeholder="Downloads/sharedownVideos">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Downloader</label>
+                                <select id="shddownloader" class="form-select" aria-label="Downloader">
+                                    <option value="ffmpeg">FFmpeg (Slow/Stable)</option>
+                                    <option selected value="yt-dlp">Youtube-dlp (Fast)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Microsoft ID</label>
+                                <input id="username" type="text" class="form-control" aria-describedby="unamehelp" placeholder="Email, phone or skype">
+                                <div id="unamehelp" class="form-text">Your ID will be deleted on application exit</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Sharedown login module</label>
+                                <select id="loginmodlist" class="form-select" aria-label="Login module"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row logfieldscont"><!--login module additional fields--></div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="autosavestate">
+                                <label class="form-check-label" for="autosavestate">Automatically save Sharedown state</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <p>Save Sharedown download queue, global settings and per-video settings.</p>
+                        </div>
+                        <div class="col-6">
+                            <button id="mexportstate" type="button" class="btn bg-sharepoint1 float-end">Save Sharedown state</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span id="gsett-succ-str" class="text-success d-none"><i class="fa fa-check"></i> Saved</span>
+                    <button id="gsett-save" type="button" class="btn bg-sharepoint1">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingscr" class="d-none text-center">
+        <div class="spinner-border spinner-5x text-warning" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <template id="videoitem">
+        <div class="videoitm mt-1 col-12">
+            <div class="input-group" data-video-id="">
+                <div class="progress rounded-0 position-relative flex-fill bg-sharepoint3">
+                    <span class="progtext position-absolute text-truncate text-white fw-bold"></span>
+                    <div class="progress-bar rounded-0 bg-sharepoint4" role="progressbar" data-tmp-perc="0"></div>
+                </div>
+                <button type="button" class="vsett-btn btn btn-outline-secondary" title="Sharedown video options"><i class="fa fa-cog"></i></button>
+                <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa fa-times"></i></button>
+            </div>
+        </div>
+    </template>
+
+    <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="messageBoxType.js"></script>
+    <script src="timeoutMessage.js"></script>
+    <script src="video.js"></script>
+    <script src="downloadQue.js"></script>
+    <script src="utils.js"></script>
+    <script src="sharedown.js"></script>
+</body>
+</html>

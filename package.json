@@ -1,0 +1,42 @@
+{
+  "name": "sharedown",
+  "version": "1.0.0",
+  "description": "An application to save your Sharepoint videos for offline usage (especially meant for students)",
+  "main": "app.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"this app has no tests\" && exit 1",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.electron.sharedown",
+    "copyright": "Copyright © 2021 kylon",
+    "mac": {
+      "category": "kylon.sharedown"
+    },
+    "win": {
+      "target": ["nsis","portable"]
+    },
+    "portable": {
+      "artifactName": "Sharedown.exe"
+    }
+  },
+  "keywords": [],
+  "author": "kylon",
+  "homepage": "https://github.com/kylon/Sharedown",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "electron": "*",
+    "electron-builder": "^22.10.5"
+  },
+  "dependencies": {
+    "@tedconf/fessonia": "*",
+    "axios": "*",
+    "bootstrap": "^5.0.0-beta3",
+    "font-awesome": "*",
+    "iso8601-duration": "*",
+    "md5": "*",
+    "puppeteer": "*"
+  }
+}

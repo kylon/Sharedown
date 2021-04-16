@@ -1,0 +1,410 @@
+/**
+ * This file is part of the Sharedown (https://github.com/kylon/Sharedown).
+ * Copyright (c) 2021 Kylon.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+"use strict";
+
+const sharedownApi = window.sharedown;
+
+const globalSettings = {
+    _version: 1, // internal
+    outputPath: '',
+    downloader: 'yt-dlp',
+    loginModule: 0,
+    autoSaveState: true
+};
+
+const resources = {
+    downQueObj: new downloadQue(),
+    downloading: null,
+    downloadingFPath: '',
+    template: null,
+    videoSettModal: null,
+    videoSettModalInstance: null,
+    videoSettModalSaveMsg: null,
+    globalSetModal: null,
+    globalSetModalSaveMsg: null,
+    downlStartBtn: null,
+    downlStopBtn: null,
+    addURLBtn: null,
+    downQueElm: null,
+    queLenElm: null,
+    completeCElm: null,
+    loadingScr: null
+};
+
+function initResources() {
+    resources.template                = document.getElementById('videoitem').content;
+    resources.videoSettModal          = document.getElementById('videosett');
+    resources.videoSettModalInstance  = new bootstrap.Modal(resources.videoSettModal);
+    resources.videoSettModalSaveMsg   = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
+    resources.globalSetModal          = document.getElementById('sharedownsett');
+    resources.globalSetModalSaveMsg   = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
+    resources.downlStartBtn           = document.getElementById('start-dwnl');
+    resources.downlStopBtn            = document.getElementById('stop-dwnl');
+    resources.addURLBtn               = document.getElementById('addurlbtn');
+    resources.downQueElm              = document.getElementById('dque');
+    resources.queLenElm               = document.getElementById('quelen');
+    resources.completeCElm            = document.getElementById('completec');
+    resources.loadingScr              = document.getElementById('loadingscr');
+}
+
+function toggleLoadingScr() {
+    resources.loadingScr.classList.toggle('d-none');
+}
+
+function addVideoURL() {
+    if (resources.addURLBtn.classList.contains('btn-disabled'))
+        return;
+
+    const urlInpt = resources.addURLBtn.parentElement.querySelector('#addurlinp');
+    const url = urlInpt.value;
+
+    if (url === '' || !Utils.isValidURL(url)) {
+        if (url !== '')
+            sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURL, SharedownMessage.EGeneric);
+
+        return;
+    }
+
+    toggleLoadingScr();
+
+    const vid = new video(url);
+
+    addVideoToUI(vid);
+    resources.downQueObj.addVideo(vid);
+    urlInpt.value = '';
+
+    exportAppState();
+    toggleLoadingScr();
+}
+
+function addVideoToUI(vid) {
+    const node = resources.template.cloneNode(true);
+    const span = node.querySelector('.progress').querySelector('span');
+
+    span.textContent = vid.url;
+    span.setAttribute('title', vid.url);
+    node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
+    node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
+    node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
+    resources.downQueElm.appendChild(node);
+    resources.queLenElm.textContent = parseInt(resources.queLenElm.textContent, 10) + 1;
+}
+
+function removeVideoFromQue(removeBtn) {
+    if (removeBtn.classList.contains('btn-disabled'))
+        return;
+
+    const parent = removeBtn.parentElement;
+    const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
+
+    toggleLoadingScr();
+
+    if (parent.querySelector('.progress-bar').classList.contains('w-100')) {
+        const newComplC = parseInt(resources.completeCElm.textContent, 10) - 1;
+
+        resources.completeCElm.textContent = newComplC < 0 ? 0:newComplC;
+
+    } else {
+        resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
+    }
+
+    resources.downQueObj.remove(parent.getAttribute('data-video-id'));
+    parent.parentElement.remove();
+    exportAppState();
+    toggleLoadingScr();
+}
+
+function loadVideoSettings(elem) {
+    if (elem.classList.contains('btn-disabled'))
+        return;
+
+    const videoId = elem.parentElement.getAttribute('data-video-id');
+    const video = resources.downQueObj.getByID(videoId);
+
+    if (video === null) {
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidID, SharedownMessage.EGeneric);
+        return false;
+    }
+
+    toggleLoadingScr();
+
+    const saveas = resources.videoSettModal.querySelector('#saveas');
+    const outdir = resources.videoSettModal.querySelector('#voutdirp');
+
+    saveas.value = video.settings.saveas;
+    outdir.value = video.settings.outputPath;
+
+    saveas.setAttribute('title', video.settings.saveas);
+    outdir.setAttribute('title', video.settings.outputPath);
+    resources.videoSettModal.querySelector('#save-sett').setAttribute('data-video-id', videoId);
+    resources.videoSettModalSaveMsg.reset();
+    toggleLoadingScr();
+
+    resources.videoSettModalInstance.show();
+}
+
+function saveVideoSettings(elem) {
+    const video = resources.downQueObj.getByID(elem.getAttribute('data-video-id'));
+
+    if (video === null) {
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidID, SharedownMessage.EGeneric);
+        return false;
+    }
+
+    toggleLoadingScr();
+    video.settings.saveas = resources.videoSettModal.querySelector('#saveas').value;
+    video.settings.outputPath = resources.videoSettModal.querySelector('#voutdirp').value;
+    exportAppState();
+    toggleLoadingScr();
+    resources.videoSettModalSaveMsg.show();
+}
+
+function loadGlobalSettings() {
+    toggleLoadingScr();
+
+    const outdir = resources.globalSetModal.querySelector('#soutdirp');
+
+    outdir.value = globalSettings.outputPath;
+
+    sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
+    Utils.addLoginModuleFields(resources.globalSetModal);
+    outdir.setAttribute('title', globalSettings.outputPath);
+    resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
+    resources.globalSetModal.querySelector('#loginmodlist').value = globalSettings.loginModule;
+    resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
+    toggleLoadingScr();
+}
+
+function saveGlobalSettings() {
+    toggleLoadingScr();
+    globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
+    globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
+    globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
+    globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
+    exportAppSettings();
+    toggleLoadingScr();
+    resources.globalSetModalSaveMsg.show();
+}
+
+function exportAppSettings() {
+    sharedownApi.saveAppSettings(JSON.stringify(globalSettings));
+}
+
+function importAppSettings() {
+    const sett = sharedownApi.loadAppSettings();
+
+    if (sett === '')
+        return;
+
+    const data = JSON.parse(sett);
+
+    globalSettings.autoSaveState = data.autoSaveState ?? true;
+    globalSettings.outputPath = data.outputPath ?? '';
+    globalSettings.loginModule = data.loginModule ?? 0;
+    globalSettings.downloader = data.downloader ?? 'yt-dlp';
+}
+
+function exportAppState(force = false) {
+    if (!globalSettings.autoSaveState && !force)
+        return;
+
+    const data = {
+        downque: resources.downQueObj.exportDownloadQue(),
+        downloading: JSON.stringify(resources.downloading)
+    }
+
+    return sharedownApi.saveAppState(JSON.stringify(data));
+}
+
+function importAppState() {
+    const json = sharedownApi.loadAppState();
+
+    if (json === '')
+        return;
+
+    try {
+        const data = JSON.parse(json);
+
+        data['downque'].push(data['downloading'])
+
+        const ret = resources.downQueObj.importDownloadQue(data['downque']);
+        if (!ret)
+            sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadQueFromDisk, SharedownMessage.EJsonParse);
+
+        const videoList = resources.downQueObj.getQue();
+        for (const v of videoList)
+            addVideoToUI(v);
+
+    } catch (e) {
+        sharedownApi.showMessage(messageBoxType.Error, `${SharedownMessage.EImportAppState}\n\n${e.message}`, SharedownMessage.EJsonParse)
+    }
+}
+
+async function downloadVideo() {
+    return new Promise(async (res, rej) => {
+        const curSettings = Object.assign({}, globalSettings);
+        const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+        const outputFolder = Utils.getOutputFolder(curSettings.outputPath, resources.downloading.settings.outputPath);
+        let vdata;
+        let ret;
+
+        videoElem.querySelector('.vsett-btn').classList.add('btn-disabled');
+        videoElem.querySelector('.deque-btn').classList.add('btn-disabled');
+
+        ret = sharedownApi.makeOutputDirectory(outputFolder);
+        if (!ret)
+            return rej();
+
+        toggleLoadingScr();
+        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading);
+        toggleLoadingScr();
+
+        if (!vdata)
+            return rej();
+
+        if (vdata.t === '') // unnamed video ??, give it a name and try to download
+            vdata.t = 'sharedownVideo' + sharedownApi.md5sum(Date.now().toString().substring(5));
+
+        // generate output file path (apply user settings, if any)
+        resources.downloadingFPath = sharedownApi.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
+
+        if (curSettings.downloader === 'ffmpeg')
+            ret = await sharedownApi.downloadWithFFmpeg(vdata, resources.downloading, resources.downloadingFPath);
+        else
+            ret = sharedownApi.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath);
+
+        return !ret ? rej() : res();
+    });
+}
+
+async function startDownload() {
+    if (resources.downlStartBtn.classList.contains('btn-disabled') || !resources.downQueObj.hasNext())
+        return;
+
+    resources.downloading = resources.downQueObj.getNext();
+
+    downloadVideo().then(() => {
+        resources.downlStartBtn.classList.add('btn-disabled');
+        resources.downlStopBtn.classList.remove('btn-disabled');
+        resources.addURLBtn.classList.add('btn-disabled');
+        resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
+
+    }).catch(() => {
+        const elem = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
+
+        elem.querySelector('.vsett-btn').classList.remove('btn-disabled');
+        elem.querySelector('.deque-btn').classList.remove('btn-disabled');
+        resources.downQueObj.addVideo(resources.downloading); // add back video to que
+
+        resources.downloading = null;
+    });
+}
+
+function stopDownload() {
+    if (resources.downlStopBtn.classList.contains('btn-disabled'))
+        return;
+
+    toggleLoadingScr();
+    const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+
+    sharedownApi.stopDownload();
+
+    resources.downlStopBtn.classList.add('btn-disabled');
+    resources.downlStartBtn.classList.remove('btn-disabled');
+    resources.addURLBtn.classList.remove('btn-disabled');
+    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+    videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
+    videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
+    resources.downQueObj.addVideo(resources.downloading); // add back video to que
+
+    resources.downloading = null;
+    videoElem.querySelector('.progress-bar').style.width = '0%';
+
+    toggleLoadingScr();
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    initResources();
+
+    toggleLoadingScr();
+
+    if (!sharedownApi.hasFFmpeg()) {
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EFFmpegNotFound, SharedownMessage.EGeneric);
+        sharedownApi.quitApp();
+    }
+
+    if (!sharedownApi.hasYTdlp()) {
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EYTdlpNotFound, SharedownMessage.EGeneric);
+        sharedownApi.quitApp();
+    }
+
+    Utils.initLoginModuleSelect();
+    importAppSettings();
+    importAppState();
+    loadGlobalSettings();
+
+    resources.addURLBtn.addEventListener('click', () => addVideoURL());
+    resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
+    resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
+    resources.downlStartBtn.addEventListener('click', () => startDownload());
+    resources.downlStopBtn.addEventListener('click', () => stopDownload());
+    resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
+    resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
+
+    document.getElementById('loginmodlist').addEventListener('change', e => {
+        const v = e.currentTarget.value;
+
+        globalSettings.loginModule = v;
+        sharedownApi.sharedownLoginModule.setModule(v);
+        Utils.addLoginModuleFields(resources.globalSetModal);
+    });
+
+    resources.globalSetModal.querySelector('#mexportstate').addEventListener('click', e => {
+        toggleLoadingScr();
+
+        if (exportAppState(true))
+            resources.globalSetModalSaveMsg.show();
+
+        toggleLoadingScr();
+    });
+
+    toggleLoadingScr();
+});
+
+window.addEventListener('DownloadFail', (e) => {
+    stopDownload();
+    sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadFail + '\n\n' + e.detail, SharedownMessage.EGeneric);
+});
+
+window.addEventListener('DownloadSuccess', () => {
+    const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
+    const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
+
+    resources.addURLBtn.classList.remove('btn-disabled');
+    resources.downlStartBtn.classList.remove('btn-disabled');
+    resources.downlStopBtn.classList.add('btn-disabled');
+    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+    videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
+    videoElm.querySelector('.progress-bar').classList.add('w-100');
+    resources.downQueElm.appendChild(videoElm.parentElement);
+    resources.completeCElm.textContent = parseInt(resources.completeCElm.textContent, 10) + 1;
+    resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
+    resources.downloading = null;
+
+    exportAppState(true);
+    startDownload(); // start next download, if any
+});

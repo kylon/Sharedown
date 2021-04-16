@@ -1,0 +1,97 @@
+body {
+    background-color: whitesmoke;
+}
+
+#sharedownhead {
+    z-index: 99;
+}
+
+.shinfo {
+    top: 248px;
+    background: whitesmoke;
+    z-index: 99;
+}
+
+.progtext {
+    left: 10px;
+    padding: 0.6rem;
+    max-width: 95%;
+}
+
+.progress {
+    height: auto;
+}
+
+#loadingscr {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1061;
+    background-color: rgba(0, 0, 0, 0.52);
+}
+
+.downloadque {
+    top: 295px;
+    position: relative;
+}
+
+#loadingscr > div {
+    position: relative;
+    top: 50%;
+}
+
+.text-darkyellow {
+    color: #ad8610!important;
+}
+
+.text-lightgrey {
+    color: #4a4949!important;
+}
+
+.bg-sharepoint1 {
+    background-color: #026265;
+    color: white;
+}
+
+.bg-sharepoint1:hover, .bg-sharepoint1:active, .bg-sharepoint1:focus {
+    color: white;
+    background-color: #025456;
+}
+
+.bg-sharepoint2 {
+    background-color: #375166;
+    color: white;
+}
+
+.bg-sharepoint3 {
+    background-color: #404F63;
+}
+
+.bg-sharepoint4 {
+    background-color: #6C737C;
+}
+
+.btn-light:hover {
+    background-color: #1d1c1c;
+    color: whitesmoke;
+    border-color: #2f2f2f;
+}
+
+.btn-disabled, .btn-disabled:hover, .btn-disabled:focus, .btn-disabled:active, .btn-disabled:visited {
+    cursor: default;
+    color: #4c4b4b !important;
+    background-color: #cacaca !important;
+    border-color: #bebebf !important;
+    box-shadow: none !important;
+}
+
+.spinner-5x {
+    width: 5rem;
+    height: 5rem;
+}
+
+#mexportstate {
+    transform: translateY(50%);
+}
