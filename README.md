@@ -2,6 +2,8 @@
 
 Sharedown is an Electron application to download Sharepoint videos, especially meant for students.
 
+**We take NO responsibility for your actions, do not violate your tenant rules!**
+
 ### Requirements
 * A recent version of FFmpeg
 * YT-dlp
