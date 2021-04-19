@@ -94,13 +94,28 @@ function addVideoURL() {
 function addVideoToUI(vid) {
     const node = resources.template.cloneNode(true);
     const span = node.querySelector('.progress').querySelector('span');
+    const children = resources.downQueElm.children;
+    let firstComplete = null;
 
     span.textContent = vid.url;
     span.setAttribute('title', vid.url);
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
     node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
-    resources.downQueElm.appendChild(node);
+
+    for (const n of children) {
+        if (!n.querySelector('.progress-bar').classList.contains('w-100'))
+            continue;
+
+        firstComplete = n;
+        break;
+    }
+
+    if (firstComplete === null)
+        resources.downQueElm.appendChild(node);
+    else
+        resources.downQueElm.insertBefore(node, firstComplete);
+
     resources.queLenElm.textContent = parseInt(resources.queLenElm.textContent, 10) + 1;
 }
 
