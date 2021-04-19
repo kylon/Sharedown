@@ -38,7 +38,6 @@ const resources = {
     globalSetModalSaveMsg: null,
     downlStartBtn: null,
     downlStopBtn: null,
-    addURLBtn: null,
     downQueElm: null,
     queLenElm: null,
     completeCElm: null,
@@ -54,7 +53,6 @@ function initResources() {
     resources.globalSetModalSaveMsg   = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
     resources.downlStartBtn           = document.getElementById('start-dwnl');
     resources.downlStopBtn            = document.getElementById('stop-dwnl');
-    resources.addURLBtn               = document.getElementById('addurlbtn');
     resources.downQueElm              = document.getElementById('dque');
     resources.queLenElm               = document.getElementById('quelen');
     resources.completeCElm            = document.getElementById('completec');
@@ -66,10 +64,12 @@ function toggleLoadingScr() {
 }
 
 function addVideoURL() {
-    if (resources.addURLBtn.classList.contains('btn-disabled'))
+    const btn = document.getElementById('addurlbtn');
+
+    if (btn.classList.contains('btn-disabled'))
         return;
 
-    const urlInpt = resources.addURLBtn.parentElement.querySelector('#addurlinp');
+    const urlInpt = btn.parentElement.querySelector('#addurlinp');
     const url = urlInpt.value;
 
     if (url === '' || !Utils.isValidURL(url)) {
@@ -300,7 +300,6 @@ async function startDownload() {
     downloadVideo().then(() => {
         resources.downlStartBtn.classList.add('btn-disabled');
         resources.downlStopBtn.classList.remove('btn-disabled');
-        resources.addURLBtn.classList.add('btn-disabled');
         resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
 
     }).catch(() => {
@@ -325,7 +324,6 @@ function stopDownload() {
 
     resources.downlStopBtn.classList.add('btn-disabled');
     resources.downlStartBtn.classList.remove('btn-disabled');
-    resources.addURLBtn.classList.remove('btn-disabled');
     resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
     videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
@@ -357,7 +355,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     loadGlobalSettings();
 
-    resources.addURLBtn.addEventListener('click', () => addVideoURL());
+    document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.downlStartBtn.addEventListener('click', () => startDownload());
@@ -394,7 +392,6 @@ window.addEventListener('DownloadSuccess', () => {
     const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
     const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
 
-    resources.addURLBtn.classList.remove('btn-disabled');
     resources.downlStartBtn.classList.remove('btn-disabled');
     resources.downlStopBtn.classList.add('btn-disabled');
     resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
