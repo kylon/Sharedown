@@ -102,6 +102,7 @@ function addVideoToUI(vid) {
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
     node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
+    node.querySelector('.copy-btn').addEventListener('click', e => sharedownApi.copyURLToClipboard(e.currentTarget.parentElement.querySelector('.progtext').textContent));
 
     for (const n of children) {
         if (!n.querySelector('.progress-bar').classList.contains('w-100'))

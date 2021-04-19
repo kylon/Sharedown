@@ -34,6 +34,8 @@
     "@tedconf/fessonia": "*",
     "axios": "*",
     "bootstrap": "^5.0.0-beta3",
+    "clipboardy": "^2.3.0",
+    "dompurify": "^2.2.7",
     "font-awesome": "*",
     "iso8601-duration": "*",
     "md5": "*",

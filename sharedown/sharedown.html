@@ -42,6 +42,7 @@
 
             <div class="col-12 d-flex justify-content-end pt-4">
                 <div class="btn-group">
+                    <a id="shd-logs" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownlogs"><i class="fa fa-file-text-o"></i> Logs</a>
                     <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa fa-cog"></i> Settings</a>
                     <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa fa-stop"></i> Stop download</a>
                     <a id="start-dwnl" href="#" class="btn btn-light"><i class="fa fa-arrow-down"></i> Start download</a>
@@ -171,6 +172,25 @@
         </div>
     </div>
 
+    <!-- logs -->
+    <div id="sharedownlogs" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sharedown logs</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <p id="stderrCont" class="text-break text-lightgrey"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="loadingscr" class="d-none text-center">
         <div class="spinner-border spinner-5x text-warning" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -184,6 +204,7 @@
                     <span class="progtext position-absolute text-truncate text-white fw-bold"></span>
                     <div class="progress-bar rounded-0 bg-sharepoint4" role="progressbar" data-tmp-perc="0"></div>
                 </div>
+                <button type="button" class="copy-btn btn btn-outline-primary" title="Copy video URL"><i class="fa fa-copy"></i></button>
                 <button type="button" class="vsett-btn btn btn-outline-secondary" title="Sharedown video options"><i class="fa fa-cog"></i></button>
                 <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa fa-times"></i></button>
             </div>

@@ -44,6 +44,7 @@ const SharedownAPI = (() => {
         getNormalizedUniqueOutputFilePath: null,
         getDefaultOutputFolder: null,
         showSelectFolderDialog: null,
+        copyURLToClipboard: null,
         saveAppSettings: null,
         loadAppSettings: null,
         saveAppState: null,
@@ -276,11 +277,13 @@ const SharedownAPI = (() => {
 
     api.downloadWithYtdlp = (videoData, video, outFile) => {
         const { spawn } = require('child_process');
+        const dompurify = require('dompurify');
         const path = require('path');
         const fs = require('fs');
 
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
+            const logsContainer = document.querySelector('#stderrCont');
             const pathAr = outFile.split(path.sep);
             const filename = pathAr[pathAr.length - 1];
 
@@ -295,6 +298,7 @@ const SharedownAPI = (() => {
 
             fs.mkdirSync(tmpFold);
             videoProgBar.setAttribute('data-tmp-perc', '0');
+            logsContainer.innerHTML = '';
 
             const ytdlp = spawn('yt-dlp', ['-N', '5', '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
 
@@ -329,7 +333,9 @@ const SharedownAPI = (() => {
                     videoProgBar.style.width = ffperc > 100 ? '100%' : `${ffperc}%`;
             });
 
-            ytdlp.stderr.on('data', (data) => {});
+            ytdlp.stderr.on('data', (data) => {
+                logsContainer.innerHTML += dompurify.sanitize(`${data}<br><br>`);
+            });
 
             ytdlp.on('close', (code) => {
                     try {
@@ -426,6 +432,12 @@ const SharedownAPI = (() => {
 
     api.showSelectFolderDialog = () => {
         return ipcRenderer.sendSync('sharedown-sync', {cmd: 'selectFoldDialog'});
+    }
+
+    api.copyURLToClipboard = (url) => {
+        const clipboardy = require('clipboardy');
+
+        clipboardy.writeSync(url);
     }
 
     api.saveAppSettings = data => {
