@@ -294,9 +294,9 @@ const SharedownAPI = (() => {
                 fs.rmSync(tmpFold, {force: true, recursive: true});
 
             fs.mkdirSync(tmpFold);
-			videoProgBar.setAttribute('data-tmp-perc', '0');
+            videoProgBar.setAttribute('data-tmp-perc', '0');
 
-            const ytdlp = spawn('yt-dlp', ['-N', '4', '-o', tmpOutFile, '-v', videoData.m]);
+            const ytdlp = spawn('yt-dlp', ['-N', '5', '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
 
             ytdlp.stdout.on('data', (data) => {
                 const regex = new RegExp(/\s(\d+.\d+)%\s/);
