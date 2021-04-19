@@ -308,7 +308,7 @@ async function startDownload() {
 
         elem.querySelector('.vsett-btn').classList.remove('btn-disabled');
         elem.querySelector('.deque-btn').classList.remove('btn-disabled');
-        resources.downQueObj.addVideo(resources.downloading); // add back video to que
+        resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
         resources.downloading = null;
     });
@@ -329,7 +329,7 @@ function stopDownload() {
     resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
     videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
-    resources.downQueObj.addVideo(resources.downloading); // add back video to que
+    resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
     resources.downloading = null;
     videoElem.querySelector('.progress-bar').style.width = '0%';

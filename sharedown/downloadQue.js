@@ -23,6 +23,10 @@ class downloadQue {
         this.#list.push(video);
     }
 
+    reinsert(video) {
+        this.#list.unshift(video);
+    }
+
     getQue() {
         return this.#list;
     }
