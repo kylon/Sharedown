@@ -16,7 +16,10 @@
       "category": "kylon.sharedown"
     },
     "win": {
-      "target": ["nsis","portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "portable": {
       "artifactName": "Sharedown.exe"
