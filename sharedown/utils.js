@@ -166,6 +166,15 @@ const Utils = (() => {
         return url.includes('sharepoint') && url.substring(0, 8) === 'https://';
     }
 
+    util.setAsWebPlayerURL = url => {
+        const urlObj = new URL(url);
+
+        if (urlObj.searchParams.get('web') === null)
+            urlObj.searchParams.set('web', '1');
+
+        return urlObj.href;
+    }
+
     Object.freeze(util);
     return util;
 })();

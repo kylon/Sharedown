@@ -70,7 +70,7 @@ function addVideoURL() {
         return;
 
     const urlInpt = btn.parentElement.querySelector('#addurlinp');
-    const url = urlInpt.value;
+    let url = urlInpt.value;
 
     if (url === '' || !Utils.isValidURL(url)) {
         if (url !== '')
@@ -81,7 +81,7 @@ function addVideoURL() {
 
     toggleLoadingScr();
 
-    const vid = new video(url);
+    const vid = new video(Utils.setAsWebPlayerURL(url));
 
     addVideoToUI(vid);
     resources.downQueObj.addVideo(vid);
