@@ -21,14 +21,6 @@ Sharedown is an Electron application to download Sharepoint videos, especially m
 
 Default output folder is your OS _**Downloads**_ folder, or, in Linux, if not found, your _**Home**_ folder.
 
-**Note to MacOS users:**
-
-There is currently an unknown issue with the builder.
-
-_**Sharedown.app**_ cannot find ffmped and yt-dlp binaries if you run the **.app** directly.
-
-A workaround is to run _**Sharedown**_ executable inside the _**.app**_ package in **MacOS** folder or just download the source and run it from there.
-
 ### Build
 
 ```
