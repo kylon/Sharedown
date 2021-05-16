@@ -31,14 +31,14 @@
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "electron": "*",
-    "electron-builder": "^22.10.5"
+    "electron-builder": "22.11.4"
   },
   "dependencies": {
     "@tedconf/fessonia": "*",
     "axios": "*",
     "bootstrap": "^5.0.0-beta3",
     "clipboardy": "^2.3.0",
-    "dompurify": "^2.2.7",
+    "dompurify": "^2.2.8",
     "font-awesome": "*",
     "iso8601-duration": "*",
     "md5": "*",
