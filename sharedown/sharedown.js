@@ -70,7 +70,7 @@ function addVideoURL() {
         return;
 
     const urlInpt = btn.parentElement.querySelector('#addurlinp');
-    let url = urlInpt.value;
+    const url = urlInpt.value;
 
     if (url === '' || !Utils.isValidURL(url)) {
         if (url !== '')

@@ -17,7 +17,10 @@
 "use strict";
 
 const { contextBridge, ipcRenderer } = require('electron');
-const { request } = require('http');
+
+// macOS PATH workaround
+if (process.platform === 'darwin' && !process.env.PATH.includes('node_modules'))
+    process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', process.env.PATH].join(':');
 
 const SharedownAPI = (() => {
     const _LoginModule = require('./sharedown/loginModules/loginModule');
@@ -55,7 +58,7 @@ const SharedownAPI = (() => {
     };
 
     function _getPuppeteerExecutablePath(curExecPath) {
-        if (curExecPath.includes('resources'))
+        if (curExecPath.toLowerCase().includes('resources'))
             return curExecPath.replace('app.asar', 'app.asar.unpacked');
 
         return curExecPath;
@@ -157,7 +160,7 @@ const SharedownAPI = (() => {
             proc.execSync('ffmpeg -version').toString();
             return true;
 
-        } catch (e) { }
+        } catch (e) {}
 
         return false;
     }
@@ -169,7 +172,7 @@ const SharedownAPI = (() => {
             proc.execSync('yt-dlp -help').toString();
             return true;
 
-        } catch (e) { }
+        } catch (e) {}
 
         return false;
     }
