@@ -31,17 +31,17 @@
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "electron": "*",
-    "electron-builder": "22.11.5"
+    "electron-builder": "22.11.7"
   },
   "dependencies": {
     "@tedconf/fessonia": "*",
     "axios": "*",
-    "bootstrap": "5.0.1",
+    "bootstrap": "5.0.2",
     "clipboardy": "^2.3.0",
     "dompurify": "^2.2.8",
     "font-awesome": "*",
     "iso8601-duration": "*",
     "md5": "*",
-    "puppeteer": "9.1.1"
+    "puppeteer": "10.0.0"
   }
 }
