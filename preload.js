@@ -227,7 +227,7 @@ const SharedownAPI = (() => {
             const ffmpegOutput = new FFmpegOutput(outFile, new Map([
                 ['c:v', 'copy'],
                 ['c:a', 'copy'],
-                ['crf', '25']
+                ['crf', '26']
             ]));
             const ffmpegCmd = new FFmpegCommand();
             const totalTime = await _getVideoDuration(videoData.m);
