@@ -19,9 +19,10 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 1, // internal
+    _version: 2, // internal
     outputPath: '',
     downloader: 'yt-dlp',
+    timeout: 30000, // 30 secs, puppeteer default
     loginModule: 0,
     autoSaveState: true
 };
@@ -202,15 +203,19 @@ function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#loginmodlist').value = globalSettings.loginModule;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
+    resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     toggleLoadingScr();
 }
 
 function saveGlobalSettings() {
     toggleLoadingScr();
+    const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
+
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
+    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30000 : timeout;
     exportAppSettings();
     toggleLoadingScr();
     resources.globalSetModalSaveMsg.show();
@@ -232,6 +237,7 @@ function importAppSettings() {
     globalSettings.outputPath = data.outputPath ?? '';
     globalSettings.loginModule = data.loginModule ?? 0;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
+    globalSettings.timeout = data.timeout ?? 30000;
 }
 
 function exportAppState(force = false) {
@@ -286,7 +292,7 @@ async function downloadVideo() {
             return rej();
 
         toggleLoadingScr();
-        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading);
+        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading, globalSettings.timeout);
         toggleLoadingScr();
 
         if (!vdata)
