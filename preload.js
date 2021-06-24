@@ -194,7 +194,7 @@ const SharedownAPI = (() => {
             let manifestURLObj;
             let title;
 
-            page.setDefaultNavigationTimeout(tmout);
+            page.setDefaultNavigationTimeout(tmout * 1000);
 
             await page.goto(video.url, {waitUntil: 'networkidle0'});
             await _sharepointLogin(page, loginData);

@@ -22,7 +22,7 @@ const globalSettings = {
     _version: 2, // internal
     outputPath: '',
     downloader: 'yt-dlp',
-    timeout: 30000, // 30 secs, puppeteer default
+    timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
     autoSaveState: true
 };
@@ -215,7 +215,7 @@ function saveGlobalSettings() {
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
-    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30000 : timeout;
+    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     exportAppSettings();
     toggleLoadingScr();
     resources.globalSetModalSaveMsg.show();
