@@ -30,6 +30,7 @@ const SharedownAPI = (() => {
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
     let _runningProcess = null;
+    let _stoppingProcess = false;
 
     const api = {
         sharedownLoginModule: {
@@ -236,7 +237,12 @@ const SharedownAPI = (() => {
             ffmpegCmd.addInput(ffmpegInput);
             ffmpegCmd.addOutput(ffmpegOutput);
 
+            _stoppingProcess = false;
+
             ffmpegCmd.on('update', (data) => {
+                if (_stoppingProcess)
+                    return;
+
                 const sec = Math.floor(data.out_time_ms / 1000);
                 const prog = Math.floor((sec / totalTime) * 100).toString(10);
 
@@ -305,10 +311,14 @@ const SharedownAPI = (() => {
             fs.mkdirSync(tmpFold);
             videoProgBar.setAttribute('data-tmp-perc', '0');
             logsContainer.innerHTML = '';
+            _stoppingProcess = false;
 
             const ytdlp = spawn('yt-dlp', ['-N', '5', '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
 
             ytdlp.stdout.on('data', (data) => {
+                if (_stoppingProcess)
+                    return;
+
                 const regex = new RegExp(/\s(\d+.\d+)%\s/);
                 const out = data.toString();
                 const isProgress = out.includes('[download]');
@@ -394,6 +404,7 @@ const SharedownAPI = (() => {
 
     api.stopDownload = () => {
         try {
+            _stoppingProcess = true;
             _runningProcess?.kill();
 
         } catch (e) {
