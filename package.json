@@ -38,10 +38,10 @@
     "axios": "*",
     "bootstrap": "5.0.2",
     "clipboardy": "^2.3.0",
-    "dompurify": "^2.2.8",
+    "dompurify": "^2.3.0",
     "font-awesome": "*",
     "iso8601-duration": "*",
     "md5": "*",
-    "puppeteer": "10.0.0"
+    "puppeteer": "10.1.0"
   }
 }
