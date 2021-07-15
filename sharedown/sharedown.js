@@ -364,11 +364,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     if (!sharedownApi.hasFFmpeg()) {
         sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EFFmpegNotFound, SharedownMessage.EGeneric);
+
+        const ret = sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.OpenFFmpegWiki, SharedownMessage.EGeneric);
+        if (ret === 1)
+            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-FFmpeg');
+
         sharedownApi.quitApp();
     }
 
     if (!sharedownApi.hasYTdlp()) {
         sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EYTdlpNotFound, SharedownMessage.EGeneric);
+
+        const ret = sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.OpenYtdlpWiki, SharedownMessage.EGeneric);
+        if (ret === 1)
+            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-YTdlp');
+
         sharedownApi.quitApp();
     }
 
@@ -377,6 +387,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     loadGlobalSettings();
 
+    document.getElementById('shd-wiki').addEventListener('click', () => sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki'));
     document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));

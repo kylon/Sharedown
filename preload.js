@@ -16,7 +16,7 @@
  */
 "use strict";
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, shell } = require('electron');
 
 // macOS PATH workaround
 if (process.platform === 'darwin' && !process.env.PATH.includes('node_modules'))
@@ -54,6 +54,7 @@ const SharedownAPI = (() => {
         loadAppState: null,
         showMessage: null,
         md5sum: null,
+        openLink: null,
         quitApp: null,
     };
 
@@ -467,6 +468,10 @@ const SharedownAPI = (() => {
         const md5 = require('md5');
 
         return md5(s);
+    }
+
+    api.openLink = async l => {
+        await shell.openExternal(l);
     }
 
     api.quitApp = () => {

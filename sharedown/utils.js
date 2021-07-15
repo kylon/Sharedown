@@ -19,7 +19,9 @@
 const SharedownMessage = (() => {
     return Object.freeze({
         EFFmpegNotFound: 'FFmpeg was not found on your system.\nSharedown requires FFmpeg to work, please install it.\n\nSharedown will now exit.',
+        OpenFFmpegWiki: 'Open Sharedown Wiki for instructions on how to install FFmpeg?',
         EYTdlpNotFound: 'yt-dlp was not found on your system.\nSharedown requires yt-dlp to work, please install it.\n\nSharedown will now exit.',
+        OpenYtdlpWiki: 'Open Sharedown Wiki for instructions on how to install YT-dlp?',
         EDownloadQueFromDisk: 'Unable to load download queue from disk',
         EEmptyCustomLoginField: 'A required login field is empty!\nAutomatic login will be disabled.\n\nDo you want to continue?',
         EImportAppState: 'Could not import app state from disk',
