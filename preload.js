@@ -181,6 +181,7 @@ const SharedownAPI = (() => {
 
     api.runPuppeteerGetManifestAndTitle = async (video, loginData, tmout) => {
         const puppy = require('puppeteer');
+        const puppyTimeout = tmout * 1000;
         let browser = null;
 
         try {
@@ -196,14 +197,14 @@ const SharedownAPI = (() => {
             let manifestURLObj;
             let title;
 
-            page.setDefaultNavigationTimeout(tmout * 1000);
+            page.setDefaultNavigationTimeout(puppyTimeout);
 
             await page.goto(video.url, {waitUntil: 'networkidle0'});
             await _sharepointLogin(page, loginData);
 
             donorResponse = await page.waitForResponse(response => {
                 return response.url().includes('RenderListDataAsStream?@a1=');
-            });
+            }, {timeout: puppyTimeout});
             donorRespData = await donorResponse.json();
 
             manifestURLObj = _makeVideoManifestFetchURL(donorRespData);
