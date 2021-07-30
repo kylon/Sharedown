@@ -18,12 +18,14 @@
 
 const basic = require('./Basic');
 const simpleUniversity = require('./SimpleUniversity');
+const BypassLogin = require('./BypassLogin');
 
 class LoginModule {
     // Sharedown UI module label
     #modules = [
         'Basic - Manual login',
-        'University [Simple]'
+        'University [Simple]',     // 1
+        'Bypass login'             // 2
     ];
     #active;
 
@@ -38,6 +40,9 @@ class LoginModule {
             case 1:
                 this.#active = new simpleUniversity();
                 break;
+            case 2:
+                this.#active = new BypassLogin();
+                break;
             default:
                 this.#active = new basic.BasicLogin();
                 break;
@@ -46,6 +51,10 @@ class LoginModule {
 
     getLoginModuleFields() {
         return this.#active?.getFields();
+    }
+
+    shouldBypass(){
+        return this.#active?.shouldByPass();
     }
 
     async doLogin(puppeteerPage, loginData) {

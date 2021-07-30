@@ -199,8 +199,12 @@ const SharedownAPI = (() => {
 
             page.setDefaultNavigationTimeout(puppyTimeout);
 
-            await page.goto(video.url, {waitUntil: 'networkidle0'});
-            await _sharepointLogin(page, loginData);
+            if(_loginModule.shouldBypass()){
+                await page.goto(video.url, {waitUntil: 'domcontentloaded'});
+            }else{
+                await page.goto(video.url, {waitUntil: 'networkidle0'});
+                await _sharepointLogin(page, loginData);
+            }
 
             donorResponse = await page.waitForResponse(response => {
                 return response.url().includes('RenderListDataAsStream?@a1=');

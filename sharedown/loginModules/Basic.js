@@ -39,6 +39,10 @@ class Basic {
         return this.#fields;
     }
 
+    shouldByPass(){
+        return false;
+    }
+
     /**
      * @param sharedownUIInputLabel string
      * @param inptType InputType
