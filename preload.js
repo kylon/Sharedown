@@ -291,20 +291,19 @@ const SharedownAPI = (() => {
     api.downloadWithYtdlp = (videoData, video, outFile) => {
         const { spawn } = require('child_process');
         const dompurify = require('dompurify');
-        const path = require('path');
         const fs = require('fs');
 
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
             const logsContainer = document.querySelector('#stderrCont');
-            const pathAr = outFile.split(path.sep);
+            const pathAr = outFile.split(_path.sep);
             const filename = pathAr[pathAr.length - 1];
 
             pathAr.pop();
 
-            const outFolder = pathAr.join(path.sep);
-            const tmpFold = path.normalize(path.join(outFolder, 'sharedownTmp'));
-            const tmpOutFile = path.normalize(path.join(tmpFold, filename));
+            const outFolder = pathAr.join(_path.sep);
+            const tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
+            const tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
 
             if (fs.existsSync(tmpFold))
                 fs.rmSync(tmpFold, {force: true, recursive: true});
@@ -374,12 +373,12 @@ const SharedownAPI = (() => {
                             if (!f.includes(filename))
                                 continue;
 
-                            fs.copyFileSync(path.resolve(tmpOutFile), path.resolve(outFile));
+                            fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
                             found = true;
                             break;
                         }
 
-                        fs.rmSync(path.resolve(tmpFold), { force: true, recursive: true });
+                        fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
 
                         if (!found)
                             throw new Error(`Unable to copy video file to output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
@@ -442,10 +441,9 @@ const SharedownAPI = (() => {
     }
 
     api.getDefaultOutputFolder = () => {
-        const path = require('path');
         const downloadsPath = ipcRenderer.sendSync('sharedown-sync', { cmd: 'getDownloadsPath' });
 
-        return path.normalize(path.join(downloadsPath, 'sharedownVideos'));
+        return _path.normalize(_path.join(downloadsPath, 'sharedownVideos'));
     }
 
     api.showSelectFolderDialog = () => {
