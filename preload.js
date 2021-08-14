@@ -122,21 +122,59 @@ const SharedownAPI = (() => {
             await _loginModule.doLogin(puppeteerPage, logData.custom);
     }
 
-    function _makeVideoManifestFetchURL(donorRespData) {
-        const replaceAr = [
-            '{.mediaBaseUrl}', donorRespData.ListSchema['.mediaBaseUrl'] ?? '',
-            '{.fileType}', 'mp4', // cant find this
-            '{.callerStack}', donorRespData.ListSchema['.callerStack'] ?? '',
-            '{.spItemUrl}', donorRespData.ListData['CurrentFolderSpItemUrl'] ?? '',
-            '{.driveAccessToken}', donorRespData.ListSchema['.driveAccessToken'] ?? ''
+    function _getDataFromResponse(donorRespData, pageUrl) {
+        const ret = {
+            'mediaBaseUrl': donorRespData.ListSchema['.mediaBaseUrl'] ?? '',
+            'fileType': 'mp4', // should be fine
+            'callerStack': donorRespData.ListSchema['.callerStack'] ?? '',
+            'spItmUrl': donorRespData.ListData['CurrentFolderSpItemUrl'] ?? '',
+            'token': donorRespData.ListSchema['.driveAccessToken'] ?? '',
+        };
+
+        if (ret.spItmUrl !== '')
+            return ret;
+
+        const vUrlObj = new URL(pageUrl);
+        const vID = vUrlObj.searchParams.get('id').trim();
+        const row = donorRespData.ListData.Row;
+
+        _writeLog(`_getDataFromResponse: vID: ${vID}`);
+
+        if (!row || !donorRespData.ListData.Row.length)
+            return ret;
+
+        for (const f of row) {
+            if (f['FileRef'] !== vID)
+                continue;
+
+            _writeLog("_getDataFromResponse: found spItemUrl: "+f['.spItemUrl']);
+
+            ret.spItmUrl = f['.spItemUrl'];
+            break;
+        }
+
+        return ret;
+    }
+
+    function _makeVideoManifestFetchURL(donorRespData, pageUrl) {
+        const placeholders = [
+            '{.mediaBaseUrl}', '{.fileType}', '{.callerStack}', '{.spItemUrl}', '{.driveAccessToken}',
         ];
+        const placeholderData = Object.values(_getDataFromResponse(donorRespData, pageUrl));
         let manifestUrlSchema = donorRespData.ListSchema[".videoManifestUrl"];
         let urlObj;
 
         _writeLog("_makeVideoManifestFetchURL: manifest template: "+manifestUrlSchema);
 
-        for (let i=0,l=replaceAr.length; i<l; i+=2)
-            manifestUrlSchema = manifestUrlSchema.replace(replaceAr[i], replaceAr[i+1]);
+        for (let i=0,l=placeholders.length; i<l; ++i){
+            if (placeholderData[i] === '')
+                _writeLog(`_makeVideoManifestFetchURL: make url error: empty value ${placeholders[i]}`);
+
+            if (!manifestUrlSchema.includes(placeholders[i]))
+                _writeLog(`_makeVideoManifestFetchURL: make url error: cannot find ${placeholders[i]}`);
+
+            manifestUrlSchema = manifestUrlSchema.replace(placeholders[i], placeholderData[i]);
+        }
 
         urlObj = new URL(manifestUrlSchema);
 
@@ -147,7 +185,8 @@ const SharedownAPI = (() => {
         urlObj.searchParams.set('pretranscode', '0');
         urlObj.searchParams.set('transcodeahead', '0');
 
-        _writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString())+'\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
+        _writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
+            '\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
 
         return urlObj;
     }
@@ -255,7 +294,7 @@ const SharedownAPI = (() => {
             }, {timeout: puppyTimeout});
             donorRespData = await donorResponse.json();
 
-            manifestURLObj = _makeVideoManifestFetchURL(donorRespData);
+            manifestURLObj = _makeVideoManifestFetchURL(donorRespData, page.url());
             title = await _getFileName(manifestURLObj);
 
             await browser.close();
