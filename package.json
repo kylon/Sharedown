@@ -38,7 +38,6 @@
     "axios": "*",
     "bootstrap": "5.0.2",
     "clipboardy": "^2.3.0",
-    "dompurify": "^2.3.0",
     "font-awesome": "*",
     "iso8601-duration": "*",
     "md5": "*",

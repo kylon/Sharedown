@@ -58,6 +58,7 @@ const SharedownAPI = (() => {
         loadAppState: null,
         showMessage: null,
         setLogging: null,
+        openLogsFolder: null,
         md5sum: null,
         openLink: null,
         quitApp: null,
@@ -336,11 +337,9 @@ const SharedownAPI = (() => {
 
     api.downloadWithYtdlp = (videoData, video, outFile) => {
         const { spawn } = require('child_process');
-        const dompurify = require('dompurify');
 
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
-            const logsContainer = document.querySelector('#stderrCont');
             const pathAr = outFile.split(_path.sep);
             const filename = pathAr[pathAr.length - 1];
 
@@ -355,7 +354,6 @@ const SharedownAPI = (() => {
 
             _fs.mkdirSync(tmpFold);
             videoProgBar.setAttribute('data-tmp-perc', '0');
-            logsContainer.innerHTML = '';
             _stoppingProcess = false;
 
             const ytdlp = spawn('yt-dlp', ['-N', '5', '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
@@ -395,7 +393,7 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.stderr.on('data', (data) => {
-                logsContainer.innerHTML += dompurify.sanitize(`${data}<br><br>`);
+                _writeLog('ytdlp log: \n\n'+data.toString());
             });
 
             ytdlp.on('close', (code) => {
@@ -517,6 +515,13 @@ const SharedownAPI = (() => {
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
 
     api.setLogging = (enableLg) => _enableLogs = enableLg;
+
+    api.openLogsFolder = () => {
+        shell.openPath(_sharedownAppDataPath).then(res => {
+            if (res !== '')
+                ipcRenderer.sendSync('showMessage', res);
+        });
+    }
 
     api.md5sum = s => {
         const md5 = require('md5');

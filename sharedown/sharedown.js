@@ -393,6 +393,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadGlobalSettings();
 
     document.getElementById('shd-wiki').addEventListener('click', () => sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki'));
+    document.getElementById('shd-logs').addEventListener('click', () => sharedownApi.openLogsFolder());
     document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
