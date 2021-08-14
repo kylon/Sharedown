@@ -25,12 +25,15 @@ if (process.platform === 'darwin' && !process.env.PATH.includes('node_modules'))
 const SharedownAPI = (() => {
     const _LoginModule = require('./sharedown/loginModules/loginModule');
     const _path = require('path');
+    const _fs = require('fs');
     const _loginModule = new _LoginModule();
     const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
+    const _logFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
     let _runningProcess = null;
     let _stoppingProcess = false;
+    let _enableLogs = false;
 
     const api = {
         sharedownLoginModule: {
@@ -54,10 +57,50 @@ const SharedownAPI = (() => {
         saveAppState: null,
         loadAppState: null,
         showMessage: null,
+        setLogging: null,
         md5sum: null,
         openLink: null,
         quitApp: null,
     };
+
+    function _initLogFile() {
+        const oldF = _logFilePath+'.old';
+
+        if (_fs.existsSync(oldF))
+            _fs.unlinkSync(oldF);
+
+        if (_fs.existsSync(_logFilePath))
+            _fs.renameSync(_logFilePath, oldF)
+    }
+
+    function _writeLog(msg) {
+        if (!_enableLogs)
+            return;
+
+        _fs.appendFileSync(_logFilePath, '\n'+msg+'\n\n');
+    }
+
+    function _hideToken(token, str) {
+        return str.replaceAll(token, '<hidden>');
+    }
+
+    function _tryRemoveUserDataFromRespDumpForLog(respData) {
+        const rows = respData.ListData['Row'];
+        let i = 0;
+
+        for (const row of rows) {
+            delete respData.ListData['Row'][i]['SharedWithUsers'];
+
+            ++i;
+        }
+
+        for (const k of Object.keys(respData.ListSchema)) {
+            if (k.includes('Token'))
+                respData.ListSchema[k] = '<hidden>';
+        }
+
+        return JSON.stringify(respData);
+    }
 
     function _getPuppeteerExecutablePath(curExecPath) {
         if (curExecPath.toLowerCase().includes('resources'))
@@ -89,6 +132,8 @@ const SharedownAPI = (() => {
         let manifestUrlSchema = donorRespData.ListSchema[".videoManifestUrl"];
         let urlObj;
 
+        _writeLog("_makeVideoManifestFetchURL: manifest template: "+manifestUrlSchema);
+
         for (let i=0,l=replaceAr.length; i<l; i+=2)
             manifestUrlSchema = manifestUrlSchema.replace(replaceAr[i], replaceAr[i+1]);
 
@@ -101,12 +146,17 @@ const SharedownAPI = (() => {
         urlObj.searchParams.set('pretranscode', '0');
         urlObj.searchParams.set('transcodeahead', '0');
 
+        _writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString())+'\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
+
         return urlObj;
     }
 
     async function _getFileName(donorURLObj) {
         const axios = require('axios');
         const resp = await axios.get(donorURLObj.searchParams.get('docid') + '&access_token=' + donorURLObj.searchParams.get('access_token'));
+
+        _writeLog("_getFileName:\ndocid: "+donorURLObj.searchParams.get('docid')+'\n\n' +
+            "url: "+_hideToken(donorURLObj.searchParams.get('access_token'), donorURLObj.toString()));
 
         return resp.data.hasOwnProperty('name') ? resp.data['name'] : '';
     }
@@ -124,16 +174,14 @@ const SharedownAPI = (() => {
     }
 
     function _writeSettingsToDisk(data, path, erMsg) {
-        const fs = require('fs');
-
         try {
-            if (!fs.existsSync(_sharedownAppDataPath))
-                fs.mkdirSync(_sharedownAppDataPath, {recursive: true});
+            if (!_fs.existsSync(_sharedownAppDataPath))
+                _fs.mkdirSync(_sharedownAppDataPath, {recursive: true});
 
-            if (!fs.existsSync(_sharedownAppDataPath))
+            if (!_fs.existsSync(_sharedownAppDataPath))
                 return false;
 
-            fs.writeFileSync(path, data, 'utf8');
+            _fs.writeFileSync(path, data, 'utf8');
             return true;
 
         } catch (e) { api.showMessage('error', `${erMsg}\n${e.message}`, 'I/O Error'); }
@@ -142,13 +190,11 @@ const SharedownAPI = (() => {
     }
 
     function _loadSettingsFromDisk(path, erMsg) {
-        const fs = require('fs');
-
         try {
-            if (!fs.existsSync(path))
+            if (!_fs.existsSync(path))
                 return '';
 
-            return fs.readFileSync(path, 'utf8');
+            return _fs.readFileSync(path, 'utf8');
 
         } catch (e) { api.showMessage('error', `${erMsg}\n${e.message}`, 'I/O Error'); }
 
@@ -197,6 +243,7 @@ const SharedownAPI = (() => {
             let manifestURLObj;
             let title;
 
+            _initLogFile();
             page.setDefaultNavigationTimeout(puppyTimeout);
 
             await page.goto(video.url, {waitUntil: 'networkidle0'});
@@ -264,15 +311,14 @@ const SharedownAPI = (() => {
 
             ffmpegCmd.on('error', (err) => {
                 if (!err.message.includes('Exiting normally, received signal 15')) {
-                    const fs = require('fs');
-
                     const failEvt = new CustomEvent('DownloadFail', { detail: err });
 
+                    _writeLog("ffmpegCmd.on(error):\n"+err.log);
                     window.dispatchEvent(failEvt);
 
                     try {
-                        if (fs.existsSync(outFile))
-                            fs.unlinkSync(outFile);
+                        if (_fs.existsSync(outFile))
+                            _fs.unlinkSync(outFile);
 
                     } catch (e) {
                         api.showMessage('error', e.message, 'FFmpeg');
@@ -291,7 +337,6 @@ const SharedownAPI = (() => {
     api.downloadWithYtdlp = (videoData, video, outFile) => {
         const { spawn } = require('child_process');
         const dompurify = require('dompurify');
-        const fs = require('fs');
 
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
@@ -305,10 +350,10 @@ const SharedownAPI = (() => {
             const tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
             const tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
 
-            if (fs.existsSync(tmpFold))
-                fs.rmSync(tmpFold, {force: true, recursive: true});
+            if (_fs.existsSync(tmpFold))
+                _fs.rmSync(tmpFold, {force: true, recursive: true});
 
-            fs.mkdirSync(tmpFold);
+            _fs.mkdirSync(tmpFold);
             videoProgBar.setAttribute('data-tmp-perc', '0');
             logsContainer.innerHTML = '';
             _stoppingProcess = false;
@@ -356,7 +401,7 @@ const SharedownAPI = (() => {
             ytdlp.on('close', (code) => {
                     try {
                         if (code !== 0) {
-                            fs.rmSync(tmpFold, { force: true, recursive: true });
+                            _fs.rmSync(tmpFold, { force: true, recursive: true });
                             videoProgBar.style.width = '0%'; // windows workaround
 
                             if (code !== null)
@@ -366,19 +411,19 @@ const SharedownAPI = (() => {
                         }
 
                         const evt = new CustomEvent('DownloadSuccess');
-                        const files = fs.readdirSync(tmpFold);
+                        const files = _fs.readdirSync(tmpFold);
                         let found = false;
 
                         for (const f of files) {
                             if (!f.includes(filename))
                                 continue;
 
-                            fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
+                            _fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
                             found = true;
                             break;
                         }
 
-                        fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
+                        _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
 
                         if (!found)
                             throw new Error(`Unable to copy video file to output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
@@ -413,15 +458,13 @@ const SharedownAPI = (() => {
     }
 
     api.makeOutputDirectory = outFold => {
-        const fs = require('fs');
-
         try {
             outFold = _path.normalize(outFold);
 
-            if (!fs.existsSync(outFold))
-                fs.mkdirSync(outFold, {recursive: true});
+            if (!_fs.existsSync(outFold))
+                _fs.mkdirSync(outFold, {recursive: true});
 
-            return fs.existsSync(outFold);
+            return _fs.existsSync(outFold);
 
         } catch (e) { api.showMessage('error', e.message, 'Output directory I/O Error'); }
 
@@ -429,12 +472,11 @@ const SharedownAPI = (() => {
     }
 
     api.getNormalizedUniqueOutputFilePath = (outFolder, fileName) => {
-        const fs = require('fs');
         let p = _path.normalize(_path.join(outFolder, fileName));
         const name = p.substring(0, p.length - 4);
         let i = 1;
 
-        while (fs.existsSync(p))
+        while (_fs.existsSync(p))
             p = name + " " + (i++) + '.mp4';
 
         return _path.extname(p) !== '.mp4' ? p.substring(0, p.length - 3) + 'mp4' : p;
@@ -473,6 +515,8 @@ const SharedownAPI = (() => {
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
+
+    api.setLogging = (enableLg) => _enableLogs = enableLg;
 
     api.md5sum = s => {
         const md5 = require('md5');

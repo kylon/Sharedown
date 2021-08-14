@@ -19,12 +19,13 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 2, // internal
+    _version: 3, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
-    autoSaveState: true
+    autoSaveState: true,
+    logging: false
 };
 
 const resources = {
@@ -204,6 +205,7 @@ function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#loginmodlist').value = globalSettings.loginModule;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
+    resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     toggleLoadingScr();
 }
 
@@ -216,6 +218,7 @@ function saveGlobalSettings() {
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
+    globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
     exportAppSettings();
     toggleLoadingScr();
     resources.globalSetModalSaveMsg.show();
@@ -238,6 +241,7 @@ function importAppSettings() {
     globalSettings.loginModule = data.loginModule ?? 0;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.timeout = data.timeout ?? 30000;
+    globalSettings.logging = data.logging ?? false;
 }
 
 function exportAppState(force = false) {
@@ -292,6 +296,7 @@ async function downloadVideo() {
             return rej();
 
         toggleLoadingScr();
+        sharedownApi.setLogging(globalSettings.logging);
         vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading, globalSettings.timeout);
         toggleLoadingScr();
 

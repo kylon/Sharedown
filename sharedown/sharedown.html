@@ -132,9 +132,21 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label">Puppeteer timeout (seconds)</label>
+                                <label class="form-label">Browser timeout (seconds)</label>
                                 <input id="ppttmout" type="number" class="form-control" aria-describedby="ppttmouthelp" placeholder="30" min="0">
                                 <div id="ppttmouthelp" class="form-text">Set this to 0 to disable the timeout</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Sharedown Logs</label>
+                                <select id="shlogs" class="form-select" aria-label="Logging">
+                                    <option value="1">Enable</option>
+                                    <option selected value="0">Disable</option>
+                                </select>
+                                <div id="shlogshelp" class="form-text">Remember to remove any sentive data before uploading!</div>
                             </div>
                         </div>
                     </div>
