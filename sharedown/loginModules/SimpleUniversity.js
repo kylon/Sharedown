@@ -35,9 +35,12 @@ class SimpleUniversity extends basic.BasicLogin {
         await puppeteerPage.keyboard.type(loginData.field1);
         await puppeteerPage.click('input[type="submit"]');
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2' });
-        await puppeteerPage.waitForSelector('input[id="idBtn_Back"]', { timeout: 10000 });
-        await puppeteerPage.focus('input[id="idBtn_Back"]');
-        await puppeteerPage.click('input[id="idBtn_Back"]');
+
+        if ((await puppeteerPage.$('input[id="idBtn_Back"]')) !== null) {
+            await puppeteerPage.waitForSelector('input[id="idBtn_Back"]', {timeout: 6000});
+            await puppeteerPage.focus('input[id="idBtn_Back"]');
+            await puppeteerPage.click('input[id="idBtn_Back"]');
+        }
     }
 }
 
