@@ -290,7 +290,7 @@ const SharedownAPI = (() => {
             _initLogFile();
             page.setDefaultNavigationTimeout(puppyTimeout);
 
-            await page.goto(video.url, {waitUntil: 'networkidle0'});
+            await page.goto(video.url, {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData);
 
             donorResponse = await page.waitForResponse(response => {
