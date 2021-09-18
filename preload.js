@@ -30,7 +30,8 @@ const SharedownAPI = (() => {
     const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
-    const _logFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
+    const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
+    const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
     let _runningProcess = null;
     let _stoppingProcess = false;
     let _enableLogs = false;
@@ -56,6 +57,7 @@ const SharedownAPI = (() => {
         loadAppSettings: null,
         saveAppState: null,
         loadAppState: null,
+        upgradeSett: null,
         showMessage: null,
         setLogging: null,
         openLogsFolder: null,
@@ -66,6 +68,9 @@ const SharedownAPI = (() => {
 
     function _initLogFile() {
         const oldF = _logFilePath+'.old';
+
+        if (!_fs.existsSync(_logsFolderPath))
+            _fs.mkdirSync(_logsFolderPath);
 
         if (_fs.existsSync(oldF))
             _fs.unlinkSync(oldF);
@@ -166,7 +171,7 @@ const SharedownAPI = (() => {
 
         _writeLog("_makeVideoManifestFetchURL: manifest template: "+manifestUrlSchema);
 
-        for (let i=0,l=placeholders.length; i<l; ++i){
+        for (let i=0,l=placeholders.length; i<l; ++i) {
             if (placeholderData[i] === '')
                 _writeLog(`_makeVideoManifestFetchURL: make url error: empty value ${placeholders[i]}`);
 
@@ -543,6 +548,19 @@ const SharedownAPI = (() => {
         return _loadSettingsFromDisk(_sharedownSettFile, "Unable to load Sharedown settings");
     }
 
+    api.upgradeSett = (version) => {
+        if (version < 4) {
+            const _ologFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
+            const oldF = _ologFilePath+'.old';
+
+            if (_fs.existsSync(oldF))
+                _fs.unlinkSync(oldF);
+
+            if (_fs.existsSync(_logFilePath))
+                _fs.unlinkSync(_ologFilePath)
+        }
+    }
+
     api.saveAppState = data => {
         return _writeSettingsToDisk(data, _sharedownStateFile, "Unable to save Sharedown state");
     }
@@ -556,9 +574,9 @@ const SharedownAPI = (() => {
     api.setLogging = (enableLg) => _enableLogs = enableLg;
 
     api.openLogsFolder = () => {
-        shell.openPath(_sharedownAppDataPath).then(res => {
+        shell.openPath(_logsFolderPath).then(res => {
             if (res !== '')
-                ipcRenderer.sendSync('showMessage', res);
+                ipcRenderer.sendSync('showMessage', {m: res, title: 'Open Sharedown logs'});
         });
     }
 

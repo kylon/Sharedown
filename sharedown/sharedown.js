@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 3, // internal
+    _version: 4, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     timeout: 30, // 30 secs, puppeteer default
@@ -242,6 +242,11 @@ function importAppSettings() {
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.timeout = data.timeout ?? 30000;
     globalSettings.logging = data.logging ?? false;
+
+    if (data['_version'] < globalSettings['_version']) {
+        sharedownApi.upgradeSett(data['_version']);
+        exportAppSettings(); // update settings version
+    }
 }
 
 function exportAppState(force = false) {
