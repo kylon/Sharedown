@@ -116,9 +116,8 @@ const SharedownAPI = (() => {
     }
 
     async function _sharepointLogin(puppeteerPage, logData) {
-        await puppeteerPage.waitForSelector('input[type="email"]');
-
         if (logData.msid !== '') {
+            await puppeteerPage.waitForSelector('input[type="email"]', {timeout: 8000});
             await puppeteerPage.keyboard.type(logData.msid);
             await puppeteerPage.click('input[type="submit"]');
         }
