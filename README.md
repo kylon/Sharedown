@@ -6,7 +6,7 @@ Sharedown is an Electron application to download Sharepoint videos, especially m
 
 ### Requirements
 * A recent version of FFmpeg
-* YT-dlp
+* YT-dlp - [releases](https://github.com/yt-dlp/yt-dlp/releases)
 * Python 3
 * A recent OS (Windows, Linux, or MacOS)
 
