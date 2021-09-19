@@ -19,11 +19,12 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 4, // internal
+    _version: 5, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
+    userdataFold: false,
     autoSaveState: true,
     logging: false
 };
@@ -195,14 +196,24 @@ function loadGlobalSettings() {
     toggleLoadingScr();
 
     const outdir = resources.globalSetModal.querySelector('#soutdirp');
+    const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
 
-    outdir.value = globalSettings.outputPath;
+    if (!globalSettings.userdataFold) {
+        sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
+        loginModuleInpt.value = globalSettings.loginModule;
 
-    sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
+    } else {
+        sharedownApi.sharedownLoginModule.setModule(0);
+        loginModuleInpt.setAttribute('disabled', '');
+        resources.globalSetModal.querySelector('#username').setAttribute('disabled', '');
+    }
+
     Utils.addLoginModuleFields(resources.globalSetModal);
     outdir.setAttribute('title', globalSettings.outputPath);
+
+    outdir.value = globalSettings.outputPath;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
-    resources.globalSetModal.querySelector('#loginmodlist').value = globalSettings.loginModule;
+    resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
@@ -214,11 +225,13 @@ function saveGlobalSettings() {
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
+    globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
+
     exportAppSettings();
     toggleLoadingScr();
     resources.globalSetModalSaveMsg.show();
@@ -236,8 +249,9 @@ function importAppSettings() {
 
     const data = JSON.parse(sett);
 
-    globalSettings.autoSaveState = data.autoSaveState ?? true;
     globalSettings.outputPath = data.outputPath ?? '';
+    globalSettings.userdataFold = data.userdataFold ?? false;
+    globalSettings.autoSaveState = data.autoSaveState ?? true;
     globalSettings.loginModule = data.loginModule ?? 0;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.timeout = data.timeout ?? 30000;
@@ -302,7 +316,7 @@ async function downloadVideo() {
 
         toggleLoadingScr();
         sharedownApi.setLogging(globalSettings.logging);
-        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading, globalSettings.timeout);
+        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading, globalSettings.timeout, globalSettings.userdataFold);
         toggleLoadingScr();
 
         if (!vdata)
@@ -332,6 +346,8 @@ async function startDownload() {
     downloadVideo().then(() => {
         resources.downlStartBtn.classList.add('btn-disabled');
         resources.downlStopBtn.classList.remove('btn-disabled');
+        resources.globalSetModal.querySelector('#delchdfold').setAttribute('disabled', '');
+        resources.globalSetModal.querySelector('#mexportstate').setAttribute('disabled', '');
         resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
 
     }).catch(() => {
@@ -357,6 +373,8 @@ function stopDownload() {
     resources.downlStopBtn.classList.add('btn-disabled');
     resources.downlStartBtn.classList.remove('btn-disabled');
     resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
+    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
     videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
@@ -371,6 +389,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     initResources();
 
     toggleLoadingScr();
+
+    sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now
 
     if (!sharedownApi.hasFFmpeg()) {
         sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EFFmpegNotFound, SharedownMessage.EGeneric);
@@ -416,11 +436,40 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 
     resources.globalSetModal.querySelector('#mexportstate').addEventListener('click', e => {
+        if (e.target.hasAttribute('disabled'))
+            return;
+
         toggleLoadingScr();
 
         if (exportAppState(true))
             resources.globalSetModalSaveMsg.show();
 
+        toggleLoadingScr();
+    });
+
+    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => {
+        const msidInpt = resources.globalSetModal.querySelector('#username');
+        const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
+
+        if (e.target.checked) {
+            msidInpt.setAttribute('disabled', '');
+
+            loginModuleInpt.value = 0;
+            loginModuleInpt.dispatchEvent(new Event('change'));
+            loginModuleInpt.setAttribute('disabled', '');
+
+        } else {
+            msidInpt.removeAttribute('disabled');
+            loginModuleInpt.removeAttribute('disabled');
+        }
+    });
+
+    resources.globalSetModal.querySelector('#delchdfold').addEventListener('click', e => {
+        if (e.target.hasAttribute('disabled') || resources.downloading !== null)
+            return;
+
+        toggleLoadingScr();
+        sharedownApi.deleteUserdataFold();
         toggleLoadingScr();
     });
 
@@ -448,4 +497,8 @@ window.addEventListener('DownloadSuccess', () => {
 
     exportAppState(true);
     startDownload(); // start next download, if any
+});
+
+window.addEventListener('beforeunload', () => {
+    sharedownApi.deleteUserdataFold();
 });

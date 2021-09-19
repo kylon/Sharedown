@@ -79,10 +79,10 @@
                     </div>
                     <div class="row">
                         <div class="col-12">
-                            <label for="voutdirp" class="form-label">Video output directory</label>
+                            <label for="voutdirp" class="form-label">Output directory</label>
                             <div class="input-group mb-3">
                                 <button class="btn btn-outline-secondary" type="button" id="voutdirinp">Select folder</button>
-                                <input id="voutdirp" type="text" class="form-control outpath" aria-label="Video output directory">
+                                <input id="voutdirp" type="text" class="form-control outpath" aria-label="Video output directory" placeholder="Downloads/sharedownVideos">
                             </div>
                         </div>
                     </div>
@@ -111,7 +111,7 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label for="soutdirp" class="form-label">Sharedown output directory</label>
+                            <label for="soutdirp" class="form-label">Output directory</label>
                             <div class="input-group mb-3">
                                 <button class="btn btn-outline-secondary" type="button" id="soutdirinp">Select folder</button>
                                 <input id="soutdirp" type="text" class="form-control outpath" aria-label="Sharedown output directory" placeholder="Downloads/sharedownVideos">
@@ -168,6 +168,28 @@
                         </div>
                     </div>
                     <div class="row logfieldscont"><!--login module additional fields--></div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="chuserdata">
+                                <label class="form-check-label" for="chuserdata">Enable Chrome userdata folder</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <p>
+                                This lets you save your login session.<br>
+                                Login module is ignored when this is set.<br>
+                                You will be prompted to login again when the session expires.<br><br>
+                                <i>All data will be deleted on application exit.</i>
+                            </p>
+                        </div>
+                        <div class="col-6 offset-6">
+                            <button id="delchdfold" type="button" class="btn bg-sharepoint1 float-end">Delete data folder</button>
+                        </div>
+                    </div>
                     <hr>
                     <div class="row">
                         <div class="col-12">

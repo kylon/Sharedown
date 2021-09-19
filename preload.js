@@ -30,6 +30,7 @@ const SharedownAPI = (() => {
     const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
+    const _chromeUserdataPath = _path.normalize(_sharedownAppDataPath+'/data');
     const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
     const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
     let _runningProcess = null;
@@ -61,6 +62,7 @@ const SharedownAPI = (() => {
         showMessage: null,
         setLogging: null,
         openLogsFolder: null,
+        deleteUserdataFold: null,
         md5sum: null,
         openLink: null,
         quitApp: null,
@@ -115,7 +117,23 @@ const SharedownAPI = (() => {
         return curExecPath;
     }
 
+    function _getPuppeteerArgs(puppyExePath, userdataFold) {
+        const pargs = {
+            executablePath: _getPuppeteerExecutablePath(puppyExePath),
+            headless: false,
+            args: ['--disable-dev-shm-usage']
+        };
+
+        if (userdataFold)
+            pargs['userDataDir'] = _path.normalize(_sharedownAppDataPath+'/data');
+
+        return pargs;
+    }
+
     async function _sharepointLogin(puppeteerPage, logData) {
+        if (logData === null)
+            return;
+
         if (logData.msid !== '') {
             await puppeteerPage.waitForSelector('input[type="email"]', {timeout: 8000});
             await puppeteerPage.keyboard.type(logData.msid);
@@ -269,17 +287,13 @@ const SharedownAPI = (() => {
         return false;
     }
 
-    api.runPuppeteerGetManifestAndTitle = async (video, loginData, tmout) => {
+    api.runPuppeteerGetManifestAndTitle = async (video, loginData, tmout, enableUserdataFold) => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
 
         try {
-            browser = await puppy.launch({
-                executablePath: _getPuppeteerExecutablePath(puppy.executablePath()),
-                headless: false,
-                args: ['--disable-dev-shm-usage']
-            });
+            browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
 
             const page = (await browser.pages())[0];
             let donorResponse;
@@ -577,6 +591,11 @@ const SharedownAPI = (() => {
             if (res !== '')
                 ipcRenderer.sendSync('showMessage', {m: res, title: 'Open Sharedown logs'});
         });
+    }
+
+    api.deleteUserdataFold = () => {
+        if (_fs.existsSync(_chromeUserdataPath))
+            _fs.rmSync(_chromeUserdataPath, {force: true, recursive: true});
     }
 
     api.md5sum = s => {
