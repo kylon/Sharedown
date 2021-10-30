@@ -587,10 +587,7 @@ const SharedownAPI = (() => {
     api.setLogging = (enableLg) => _enableLogs = enableLg;
 
     api.openLogsFolder = () => {
-        shell.openPath(_logsFolderPath).then(res => {
-            if (res !== '')
-                ipcRenderer.sendSync('showMessage', {m: res, title: 'Open Sharedown logs'});
-        });
+        shell.showItemInFolder(_logsFolderPath);
     }
 
     api.deleteUserdataFold = () => {
