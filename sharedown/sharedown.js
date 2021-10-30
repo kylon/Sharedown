@@ -19,11 +19,12 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 5, // internal
+    _version: 6, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
+    retryOnFail: false,
     userdataFold: false,
     autoSaveState: true,
     logging: false
@@ -217,6 +218,7 @@ function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
+    resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
     toggleLoadingScr();
 }
 
@@ -228,6 +230,7 @@ function saveGlobalSettings() {
     globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
+    globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
@@ -253,6 +256,7 @@ function importAppSettings() {
     globalSettings.userdataFold = data.userdataFold ?? false;
     globalSettings.autoSaveState = data.autoSaveState ?? true;
     globalSettings.loginModule = data.loginModule ?? 0;
+    globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.timeout = data.timeout ?? 30000;
     globalSettings.logging = data.logging ?? false;
@@ -477,8 +481,22 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('DownloadFail', (e) => {
-    stopDownload();
-    sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadFail + '\n\n' + e.detail, SharedownMessage.EGeneric);
+    if (globalSettings.retryOnFail) {
+        const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+
+        resources.downlStartBtn.classList.remove('btn-disabled');
+        resources.downlStopBtn.classList.add('btn-disabled');
+        resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+        resources.downQueObj.reinsert(resources.downloading); // add back video to que
+        videoElem.querySelector('.progress-bar').style.width = '0%';
+        resources.downloading = null;
+
+        startDownload();
+
+    } else {
+        stopDownload();
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadFail + '\n\n' + e.detail, SharedownMessage.EGeneric);
+    }
 });
 
 window.addEventListener('DownloadSuccess', () => {

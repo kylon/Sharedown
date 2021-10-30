@@ -358,13 +358,15 @@ const SharedownAPI = (() => {
             ffmpegCmd.on('success', (data) => {
                 let evt;
 
-                if (data.exitCode === 0)
+                if (data.exitCode === 0) {
                     evt = new CustomEvent('DownloadSuccess');
-                else
-                    evt = new CustomEvent('DownloadFail', { detail: `Exit code: ${data.exitCode}` });
+                } else {
+                    evt = new CustomEvent('DownloadFail', {detail: `Exit code: ${data.exitCode}`});
+
+                    _writeLog(`FFMPEG: download filed: exit code ${data.exitCode}`);
+                }
 
                 window.dispatchEvent(evt);
-
             });
 
             ffmpegCmd.on('error', (err) => {
@@ -488,6 +490,7 @@ const SharedownAPI = (() => {
                     } catch (e) {
                         const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
 
+                        _writeLog(`YT-dlp: download failed:\n${e.message}`);
                         window.dispatchEvent(failEvt);
                     }
             });
