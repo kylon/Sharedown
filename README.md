@@ -4,6 +4,9 @@ Sharedown is an Electron application to download Sharepoint videos, especially m
 
 **We take NO responsibility for your actions, do not violate your tenant rules!**
 
+### Sharedown Wiki
+See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or help!
+
 ### Requirements
 * A recent version of FFmpeg
 * YT-dlp - [releases](https://github.com/yt-dlp/yt-dlp/releases)
@@ -35,9 +38,12 @@ yarn install
 yarn start
 ```
 
-### Sharedown Wiki
-See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or help!
-
 ---
 
 ![](sharedown.jpg)
+
+### Users content
+
+**No support is provided for unofficial versions.**
+
+[Sharedown spanish tutorial](https://fgp555.com/support/sharepoint-download-videos/) - by [fgp555](https://github.com/fgp555)
