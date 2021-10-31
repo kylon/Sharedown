@@ -1,7 +1,11 @@
 {
   "name": "sharedown",
+  "author": "kylon",
+  "repository": "https://github.com/kylon/Sharedown",
+  "homepage": "https://github.com/kylon/Sharedown",
+  "license": "GPL-3.0-or-later",
   "version": "2.1.0",
-  "description": "An application to save your Sharepoint videos for offline usage (especially meant for students)",
+  "description": "Electron application to save your Sharepoint videos for offline usage (especially meant for students)",
   "main": "app.js",
   "scripts": {
     "start": "electron .",
@@ -13,22 +17,42 @@
     "appId": "com.electron.sharedown",
     "copyright": "Copyright © 2021 kylon",
     "mac": {
-      "category": "kylon.sharedown"
+      "category": "public.app-category.video",
+      "target": {
+        "target": "dmg",
+        "arch": ["arm64", "x64"]
+      }
     },
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
       ]
     },
+    "linux": {
+      "category": "AudioVideo",
+      "target": "AppImage"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/wicon.ico",
+      "uninstallerIcon": "build/wicon.ico"
+    },
     "portable": {
-      "artifactName": "Sharedown.exe"
+      "artifactName": "${productName} ${version} portable.exe"
+    },
+    "appImage": {
+      "license": "LICENSE"
     }
   },
   "keywords": [],
-  "author": "kylon",
-  "homepage": "https://github.com/kylon/Sharedown",
-  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "electron": "*",
     "electron-builder": "^22.13.1"
