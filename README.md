@@ -42,6 +42,8 @@ yarn start
 
 ![](sharedown.jpg)
 
+---
+
 ### Users content
 
 **No support is provided for unofficial versions.**
