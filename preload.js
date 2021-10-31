@@ -184,16 +184,21 @@ const SharedownAPI = (() => {
         ];
         const placeholderData = Object.values(_getDataFromResponse(donorRespData, pageUrl));
         let manifestUrlSchema = donorRespData.ListSchema[".videoManifestUrl"];
+        let hasErr = false;
         let urlObj;
 
         _writeLog("_makeVideoManifestFetchURL: manifest template: "+manifestUrlSchema);
 
         for (let i=0,l=placeholders.length; i<l; ++i) {
-            if (placeholderData[i] === '')
+            if (placeholderData[i] === '') {
                 _writeLog(`_makeVideoManifestFetchURL: make url error: empty value ${placeholders[i]}`);
+                hasErr = true;
+            }
 
-            if (!manifestUrlSchema.includes(placeholders[i]))
+            if (!manifestUrlSchema.includes(placeholders[i])) {
                 _writeLog(`_makeVideoManifestFetchURL: make url error: cannot find ${placeholders[i]}`);
+                hasErr = true;
+            }
 
             manifestUrlSchema = manifestUrlSchema.replace(placeholders[i], placeholderData[i]);
         }
@@ -210,7 +215,7 @@ const SharedownAPI = (() => {
         _writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
             '\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
 
-        return urlObj;
+        return {uobj: urlObj, err: hasErr};
     }
 
     async function _getFileName(donorURLObj) {
@@ -288,6 +293,7 @@ const SharedownAPI = (() => {
     }
 
     api.runPuppeteerGetManifestAndTitle = async (video, loginData, tmout, enableUserdataFold) => {
+        const knownResponses = ['a1=', 'listUrl'];
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
@@ -300,6 +306,7 @@ const SharedownAPI = (() => {
             let donorRespData;
             let manifestURLObj;
             let title;
+            let ret;
 
             _initLogFile();
             page.setDefaultNavigationTimeout(puppyTimeout);
@@ -307,12 +314,21 @@ const SharedownAPI = (() => {
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData);
 
-            donorResponse = await page.waitForResponse(response => {
-                return response.url().includes('RenderListDataAsStream?@a1=');
-            }, {timeout: puppyTimeout});
-            donorRespData = await donorResponse.json();
+            for (const type of knownResponses) {
+                donorResponse = await page.waitForResponse(response => {
+                    return response.url().includes(`RenderListDataAsStream?@${type}`);
+                }, {timeout: puppyTimeout});
+                donorRespData = await donorResponse.json();
 
-            manifestURLObj = _makeVideoManifestFetchURL(donorRespData, page.url());
+                ret = _makeVideoManifestFetchURL(donorRespData, page.url());
+                if (!ret.err)
+                    break;
+
+                _writeLog(`no video data found in ${type}`);
+                await page.reload({ waitUntil: 'domcontentloaded'});
+            }
+
+            manifestURLObj = ret.uobj;
             title = await _getFileName(manifestURLObj);
 
             await browser.close();
