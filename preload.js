@@ -33,6 +33,7 @@ const SharedownAPI = (() => {
     const _chromeUserdataPath = _path.normalize(_sharedownAppDataPath+'/data');
     const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
     const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
+    const _ytdlpLogFilePath = _path.normalize(_logsFolderPath+'/ytdlp.log');
     let _runningProcess = null;
     let _stoppingProcess = false;
     let _enableLogs = false;
@@ -81,11 +82,22 @@ const SharedownAPI = (() => {
             _fs.renameSync(_logFilePath, oldF)
     }
 
-    function _writeLog(msg) {
+    function _writeLog(msg, type='shd') {
         if (!_enableLogs)
             return;
 
-        _fs.appendFileSync(_logFilePath, '\n'+msg+'\n\n');
+        let logf;
+
+        switch (type) {
+            case 'ytdlp':
+                logf = _ytdlpLogFilePath;
+                break;
+            default:
+                logf = _logFilePath;
+                break;
+        }
+
+        _fs.appendFileSync(logf, '\n'+msg+'\n\n');
     }
 
     function _hideToken(token, str) {
@@ -162,8 +174,10 @@ const SharedownAPI = (() => {
 
         _writeLog(`_getDataFromResponse: vID: ${vID}`);
 
-        if (!row || !donorRespData.ListData.Row.length)
+        if (!row || !row.length) {
+            _writeLog('No rows: ' + (row.length ?? null));
             return ret;
+        }
 
         for (const f of row) {
             if (f['FileRef'] !== vID)
@@ -437,6 +451,8 @@ const SharedownAPI = (() => {
                 if (_stoppingProcess)
                     return;
 
+                _writeLog(data.toString(), 'ytdlp');
+
                 const regex = new RegExp(/\s(\d+.\d+)%\s/);
                 const out = data.toString();
                 const isProgress = out.includes('[download]');
@@ -468,7 +484,7 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.stderr.on('data', (data) => {
-                _writeLog('ytdlp log: \n\n'+data.toString());
+                _writeLog(data.toString(), 'ytdlp');
             });
 
             ytdlp.on('close', (code) => {
