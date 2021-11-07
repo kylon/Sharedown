@@ -428,7 +428,10 @@ const SharedownAPI = (() => {
         const { spawn } = require('child_process');
 
         try {
-            const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
+            const videoElem = document.querySelector(`[data-video-id="${video.id}"]`);
+            const progressElem = videoElem.querySelector('.progress').querySelector('span');
+            const oldTooltipTitle = progressElem.title;
+            const videoProgBar = videoElem.querySelector('.progress-bar');
             const pathAr = outFile.split(_path.sep);
             const filename = pathAr[pathAr.length - 1];
 
@@ -453,7 +456,7 @@ const SharedownAPI = (() => {
 
                 _writeLog(data.toString(), 'ytdlp');
 
-                const regex = new RegExp(/\s(\d+.\d+)%\s/);
+                const regex = new RegExp(/\s(\d+.\d+)%\s.*/);
                 const out = data.toString();
                 const isProgress = out.includes('[download]');
                 const match = out.match(regex);
@@ -481,6 +484,8 @@ const SharedownAPI = (() => {
 
                 if (ffperc > curPercInt)
                     videoProgBar.style.width = ffperc > 100 ? '100%' : `${ffperc}%`;
+
+                progressElem.setAttribute('title', match[0]);
             });
 
             ytdlp.stderr.on('data', (data) => {
@@ -488,6 +493,8 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.on('close', (code) => {
+                    progressElem.setAttribute('title', oldTooltipTitle);
+
                     try {
                         if (code !== 0) {
                             _fs.rmSync(tmpFold, { force: true, recursive: true });
