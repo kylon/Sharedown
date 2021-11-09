@@ -424,7 +424,7 @@ const SharedownAPI = (() => {
         return false;
     }
 
-    api.downloadWithYtdlp = (videoData, video, outFile) => {
+    api.downloadWithYtdlp = (videoData, video, outFile, settings) => {
         const { spawn } = require('child_process');
 
         try {
@@ -448,7 +448,7 @@ const SharedownAPI = (() => {
             videoProgBar.setAttribute('data-tmp-perc', '0');
             _stoppingProcess = false;
 
-            const ytdlp = spawn('yt-dlp', ['-N', '5', '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
+            const ytdlp = spawn('yt-dlp', ['-N', settings.ytdlpN.toString(), '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
 
             ytdlp.stdout.on('data', (data) => {
                 if (_stoppingProcess)

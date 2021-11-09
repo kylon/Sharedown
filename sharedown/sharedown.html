@@ -129,11 +129,20 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Parallel fragment downloads</label>
+                                <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="5">
+                                <div id="ytdlpnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 5)</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Browser timeout (seconds)</label>
-                                <input id="ppttmout" type="number" class="form-control" aria-describedby="ppttmouthelp" placeholder="30" min="0">
+                                <input id="ppttmout" type="number" class="form-control" aria-describedby="ppttmouthelp" placeholder="30 (default)" min="0">
                                 <div id="ppttmouthelp" class="form-text">Set this to 0 to disable the timeout</div>
                             </div>
                         </div>

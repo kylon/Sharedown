@@ -19,9 +19,10 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 6, // internal
+    _version: 7, // internal
     outputPath: '',
     downloader: 'yt-dlp',
+    ytdlpN: 5,
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
     retryOnFail: false,
@@ -39,6 +40,7 @@ const resources = {
     videoSettModalInstance: null,
     videoSettModalSaveMsg: null,
     globalSetModal: null,
+    globalSetDownldrOpts: null,
     globalSetModalSaveMsg: null,
     downlStartBtn: null,
     downlStopBtn: null,
@@ -54,6 +56,7 @@ function initResources() {
     resources.videoSettModalInstance  = new bootstrap.Modal(resources.videoSettModal);
     resources.videoSettModalSaveMsg   = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
     resources.globalSetModal          = document.getElementById('sharedownsett');
+    resources.globalSetDownldrOpts    = resources.globalSetModal.querySelectorAll('.downldr-opt');
     resources.globalSetModalSaveMsg   = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
     resources.downlStartBtn           = document.getElementById('start-dwnl');
     resources.downlStopBtn            = document.getElementById('stop-dwnl');
@@ -65,6 +68,17 @@ function initResources() {
 
 function toggleLoadingScr() {
     resources.loadingScr.classList.toggle('d-none');
+}
+
+function setDownloaderSettingsUI(selectedDownloader) {
+    for (const opt of resources.globalSetDownldrOpts) {
+        const clList = opt.classList;
+
+        if (clList.contains(`${selectedDownloader}-opt`))
+            clList.remove('d-none');
+        else
+            clList.add('d-none');
+    }
 }
 
 function addVideoURL() {
@@ -214,11 +228,14 @@ function loadGlobalSettings() {
 
     outdir.value = globalSettings.outputPath;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
+    resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
     resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
+
+    setDownloaderSettingsUI(globalSettings.downloader);
     toggleLoadingScr();
 }
 
@@ -232,6 +249,7 @@ function saveGlobalSettings() {
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
+    globalSettings.ytdlpN = resources.globalSetModal.querySelector('#ytdlpn').value;
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
 
@@ -258,6 +276,7 @@ function importAppSettings() {
     globalSettings.loginModule = data.loginModule ?? 0;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
+    globalSettings.ytdlpN = data.ytdlpN ?? 5;
     globalSettings.timeout = data.timeout ?? 30000;
     globalSettings.logging = data.logging ?? false;
 
@@ -335,7 +354,7 @@ async function downloadVideo() {
         if (curSettings.downloader === 'ffmpeg')
             ret = await sharedownApi.downloadWithFFmpeg(vdata, resources.downloading, resources.downloadingFPath);
         else
-            ret = sharedownApi.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath);
+            ret = sharedownApi.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath, curSettings);
 
         return !ret ? rej() : res();
     });
@@ -430,6 +449,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.downlStopBtn.addEventListener('click', () => stopDownload());
     resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
     resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
+    resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
 
     document.getElementById('loginmodlist').addEventListener('change', e => {
         const v = e.currentTarget.value;
