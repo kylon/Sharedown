@@ -16,9 +16,30 @@
  */
 "use strict";
 
-const { app, ipcMain, dialog, BrowserWindow } = require('electron');
+const { app, ipcMain, dialog, Menu, BrowserWindow } = require('electron');
+const menu = Menu.buildFromTemplate([
+    {
+        label: 'File',
+        submenu: [
+            { mact: 'odlfold', label: 'Open output folder', click: menuOnClick },
+            { mact: 'ologsfold', label: 'Open logs folder', click: menuOnClick },
+        ]
+    },
+    {
+        label: 'Sharedown',
+        submenu: [
+            { mact: 'owiki', label: 'Open Wiki (external)', click: menuOnClick },
+            { mact: 'osrc', label: 'Open repository (external)', click: menuOnClick },
+        ]
+    },
+    {
+        mact: 'about', label: 'About', click: menuOnClick
+    }
+]);
 const path = require('path');
 let mainW = null;
+
+Menu.setApplicationMenu(menu);
 
 function createWindow () {
     const win = new BrowserWindow({
@@ -31,10 +52,13 @@ function createWindow () {
     })
 
     win.loadFile('sharedown/sharedown.html');
-    win.setMenuBarVisibility(false);
     win.setResizable(false);
 
     return win;
+}
+
+function menuOnClick(item, window, e) {
+    mainW.webContents.send('appmenu', {cmd: item.mact});
 }
 
 app.whenReady().then(() => {
@@ -70,6 +94,32 @@ ipcMain.on('showMessage', (e, args) => {
         title: args.title ?? 'Sharedown',
         buttons: btns
     });
+});
+
+ipcMain.on('sharedown-async', (e, args) => {
+    switch (args.cmd) {
+        case "showabout": {
+            const win = new BrowserWindow({
+                width: 250,
+                height: 150,
+                webPreferences: {
+                    devTools: false,
+                }
+            })
+
+            win.loadFile('sharedown/about.html');
+            win.setMenuBarVisibility(false);
+            win.setResizable(false);
+            win.setSkipTaskbar(true);
+            win.setParentWindow(mainW);
+            mainW.setEnabled(false);
+
+            win.once('closed', () => mainW.setEnabled(true));
+        }
+            break;
+        default:
+            break;
+    }
 });
 
 ipcMain.on('sharedown-sync', (e, args) => {

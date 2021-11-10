@@ -63,6 +63,7 @@ const SharedownAPI = (() => {
         showMessage: null,
         setLogging: null,
         openLogsFolder: null,
+        openFolder: null,
         deleteUserdataFold: null,
         md5sum: null,
         openLink: null,
@@ -624,12 +625,15 @@ const SharedownAPI = (() => {
         return _loadSettingsFromDisk(_sharedownStateFile, "Unable to load Sharedown state");
     }
 
-    api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
-
-    api.setLogging = (enableLg) => _enableLogs = enableLg;
+    api.openFolder = (fold) => {
+        shell.openPath(fold).then(res => {
+            if (res !== '')
+                api.showMessage('error', res);
+        });
+    }
 
     api.openLogsFolder = () => {
-        shell.showItemInFolder(_logsFolderPath);
+        api.openFolder(_logsFolderPath);
     }
 
     api.deleteUserdataFold = () => {
@@ -651,8 +655,23 @@ const SharedownAPI = (() => {
         ipcRenderer.sendSync('sharedown-sync', {cmd: 'quit'});
     }
 
+    api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
+    api.setLogging = (enableLg) => _enableLogs = enableLg;
+
     Object.freeze(api);
     return api;
 })();
+
+ipcRenderer.on('appmenu', async (e, args) => {
+    switch (args.cmd) {
+        case 'about': {
+            ipcRenderer.send('sharedown-async', {cmd: 'showabout'});
+        }
+            break;
+        default:
+            window.dispatchEvent(new CustomEvent('appmenu', {detail: args}));
+            break;
+    }
+});
 
 contextBridge.exposeInMainWorld('sharedown', SharedownAPI);

@@ -440,8 +440,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     loadGlobalSettings();
 
-    document.getElementById('shd-wiki').addEventListener('click', () => sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki'));
-    document.getElementById('shd-logs').addEventListener('click', () => sharedownApi.openLogsFolder());
     document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
@@ -539,4 +537,23 @@ window.addEventListener('DownloadSuccess', () => {
 
 window.addEventListener('beforeunload', () => {
     sharedownApi.deleteUserdataFold();
+});
+
+window.addEventListener('appmenu', (e) => {
+    switch (e.detail.cmd) {
+        case 'odlfold':
+            sharedownApi.openFolder(Utils.getOutputFolder(globalSettings.outputPath, ''));
+            break;
+        case 'ologsfold':
+            sharedownApi.openLogsFolder();
+            break;
+        case 'owiki':
+            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki');
+            break;
+        case 'osrc':
+            sharedownApi.openLink('https://github.com/kylon/Sharedown');
+            break;
+        default:
+            break;
+    }
 });
