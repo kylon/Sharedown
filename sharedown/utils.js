@@ -180,6 +180,10 @@ const Utils = (() => {
         return urlObj.href;
     }
 
+    util.getYtdlpNVal = n => {
+        return Math.min(Math.max(parseInt(n, 10), 1), 5);
+    }
+
     Object.freeze(util);
     return util;
 })();

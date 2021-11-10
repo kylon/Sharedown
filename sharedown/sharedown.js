@@ -249,7 +249,7 @@ function saveGlobalSettings() {
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
-    globalSettings.ytdlpN = resources.globalSetModal.querySelector('#ytdlpn').value;
+    globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
 
@@ -276,7 +276,7 @@ function importAppSettings() {
     globalSettings.loginModule = data.loginModule ?? 0;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
-    globalSettings.ytdlpN = data.ytdlpN ?? 5;
+    globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
     globalSettings.timeout = data.timeout ?? 30000;
     globalSettings.logging = data.logging ?? false;
 
