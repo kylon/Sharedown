@@ -71,16 +71,20 @@ const SharedownAPI = (() => {
     };
 
     function _initLogFile() {
-        const oldF = _logFilePath+'.old';
+        const logsP = [_logFilePath, _ytdlpLogFilePath];
 
         if (!_fs.existsSync(_logsFolderPath))
             _fs.mkdirSync(_logsFolderPath);
 
-        if (_fs.existsSync(oldF))
-            _fs.unlinkSync(oldF);
+        for (const logf of logsP) {
+            const old = `${logf}.old`;
 
-        if (_fs.existsSync(_logFilePath))
-            _fs.renameSync(_logFilePath, oldF)
+            if (_fs.existsSync(old))
+                _fs.unlinkSync(old);
+
+            if (_fs.existsSync(logf))
+                _fs.renameSync(logf, old);
+        }
     }
 
     function _writeLog(msg, type='shd') {
@@ -111,7 +115,6 @@ const SharedownAPI = (() => {
 
         for (const row of rows) {
             delete respData.ListData['Row'][i]['SharedWithUsers'];
-
             ++i;
         }
 
