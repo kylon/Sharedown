@@ -404,19 +404,19 @@ const SharedownAPI = (() => {
             });
 
             ffmpegCmd.on('error', (err) => {
+                try {
+                    if (_fs.existsSync(outFile))
+                        _fs.unlinkSync(outFile);
+
+                } catch (e) {
+                    api.showMessage('error', e.message, 'FFmpeg');
+                }
+
                 if (!err.message.includes('Exiting normally, received signal 15')) {
                     const failEvt = new CustomEvent('DownloadFail', { detail: err });
 
                     _writeLog("ffmpegCmd.on(error):\n"+err.log);
                     window.dispatchEvent(failEvt);
-
-                    try {
-                        if (_fs.existsSync(outFile))
-                            _fs.unlinkSync(outFile);
-
-                    } catch (e) {
-                        api.showMessage('error', e.message, 'FFmpeg');
-                    }
                 }
             });
 
