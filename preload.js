@@ -46,7 +46,7 @@ const SharedownAPI = (() => {
         },
         hasFFmpeg: null,
         hasYTdlp: null,
-        runPuppeteerGetManifestAndTitle: null,
+        runPuppeteerGetVideoData: null,
         downloadWithFFmpeg: null,
         downloadWithYtdlp: null,
         stopDownload: null,
@@ -126,6 +126,15 @@ const SharedownAPI = (() => {
         return JSON.stringify(respData);
     }
 
+    function _removeUserDataFromCookiesForLog(cookiesData) {
+        const ret = [];
+
+        for (const c of cookiesData)
+            ret.push(c.name);
+
+        return JSON.stringify(ret);
+    }
+
     function _getPuppeteerExecutablePath(curExecPath) {
         if (curExecPath.toLowerCase().includes('resources'))
             return curExecPath.replace('app.asar', 'app.asar.unpacked');
@@ -160,7 +169,24 @@ const SharedownAPI = (() => {
             await _loginModule.doLogin(puppeteerPage, logData.custom);
     }
 
-    function _getDataFromResponse(donorRespData, pageUrl) {
+    function _getDataFromResponseListDataRow(rows, vID) {
+        if (!rows || !rows.length) {
+            _writeLog('_getDataFromResponseListDataRow: No rows: ' + (rows?.length ?? null));
+            return null;
+        }
+
+        for (const f of rows) {
+            if (f['FileRef'] !== vID)
+                continue;
+
+            return f;
+        }
+
+        _writeLog(`_getDataFromResponseListDataRow: No match for ${vID}`);
+        return null;
+    }
+
+    function _getDataFromResponse(donorRespData, vID) {
         const ret = {
             'mediaBaseUrl': donorRespData.ListSchema['.mediaBaseUrl'] ?? '',
             'fileType': 'mp4', // should be fine
@@ -172,35 +198,43 @@ const SharedownAPI = (() => {
         if (ret.spItmUrl !== '')
             return ret;
 
-        const vUrlObj = new URL(pageUrl);
-        const vID = vUrlObj.searchParams.get('id').trim();
-        const row = donorRespData.ListData.Row;
+        _writeLog(`_getDataFromResponse: no spItmUrl\nvID: ${vID}`);
 
-        _writeLog(`_getDataFromResponse: vID: ${vID}`);
-
-        if (!row || !row.length) {
-            _writeLog('No rows: ' + (row.length ?? null));
+        const rowData = _getDataFromResponseListDataRow(donorRespData.ListData['Row'], vID);
+        if (rowData === null)
             return ret;
-        }
 
-        for (const f of row) {
-            if (f['FileRef'] !== vID)
-                continue;
+        ret.spItmUrl = rowData['.spItemUrl'] ?? '';
 
-            _writeLog("_getDataFromResponse: found spItemUrl: "+f['.spItemUrl']);
-
-            ret.spItmUrl = f['.spItemUrl'];
-            break;
-        }
-
+        _writeLog(`_getDataFromResponse: row spItemUrl: ${ret.spItmUrl}`);
         return ret;
     }
 
-    function _makeVideoManifestFetchURL(donorRespData, pageUrl) {
+    function _getDataFromCookies(cookiesAr) {
+        const ret = {rtfa: '', fedauth: ''};
+
+        for (const c of cookiesAr) {
+            switch (c.name) {
+                case 'rtFa':
+                    ret.rtfa = c.value;
+                    break;
+                case 'FedAuth':
+                    ret.fedauth = c.value;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        _writeLog('cookies: ' + _removeUserDataFromCookiesForLog(cookiesAr));
+        return ret;
+    }
+
+    function _makeVideoManifestFetchURL(donorRespData, vID) {
         const placeholders = [
             '{.mediaBaseUrl}', '{.fileType}', '{.callerStack}', '{.spItemUrl}', '{.driveAccessToken}',
         ];
-        const placeholderData = Object.values(_getDataFromResponse(donorRespData, pageUrl));
+        const placeholderData = Object.values(_getDataFromResponse(donorRespData, vID));
         let manifestUrlSchema = donorRespData.ListSchema[".videoManifestUrl"];
         let hasErr = false;
         let urlObj;
@@ -236,6 +270,31 @@ const SharedownAPI = (() => {
         return {uobj: urlObj, err: hasErr};
     }
 
+    function _makeDirectUrl(donorRespData, vID) {
+        const listData = donorRespData.ListData;
+        const webUrlAr = donorRespData['WebUrl'].split('/');
+        let rootFolder = (new URLSearchParams(listData['FilterLink'] ?? '')).get('RootFolder');
+        const ret = {link: '', err: false};
+
+        if (rootFolder === null) {
+            const rowData = _getDataFromResponseListDataRow(listData['Row'], vID);
+
+            _writeLog(`_makeDirectUrl: no filterlink in vID:\n${vID}`);
+
+            if (rowData === null) {
+                ret.err = true;
+                return ret;
+            }
+
+            rootFolder = rowData['FileRef'] ?? '';
+        }
+
+        ret.link = `${webUrlAr[0]}//${webUrlAr[2]}${rootFolder}`; // https://xxxx...
+
+        _writeLog(`makeDirectUrl:\nrootfolder: ${rootFolder}\nwebUrl: ${webUrlAr}\nfinal: ${ret.link}`);
+        return ret;
+    }
+
     async function _getFileName(donorURLObj) {
         const axios = require('axios');
         const resp = await axios.get(donorURLObj.searchParams.get('docid') + '&access_token=' + donorURLObj.searchParams.get('access_token'));
@@ -256,6 +315,35 @@ const SharedownAPI = (() => {
         const duration = iso8601Parse.parse(rawDuration);
 
         return Math.ceil(iso8601Parse.toSeconds(duration));
+    }
+
+    function _setYTdlpProgressForManifest(rexMatch, videoProgBar) {
+        const curPerc = videoProgBar.style.width;
+        const curPercInt = curPerc ? parseInt(curPerc.substring(0, curPerc.length-1), 10) : 0;
+        const perc = Math.floor(parseInt(rexMatch[1], 10) / 2);
+        const fperc = perc < 0 ? 0 : perc;
+        let ffperc = fperc;
+
+        if (curPercInt >= 50) { // merge audio download progress to current progress
+            const oldPerc = parseInt(videoProgBar.getAttribute('data-tmp-perc'), 10);
+
+            ffperc = curPercInt;
+
+            if (fperc < 50 && fperc > oldPerc) {
+                ffperc = curPercInt + Math.abs(oldPerc-fperc);
+
+                videoProgBar.setAttribute('data-tmp-perc', fperc.toString(10));
+            }
+        }
+
+        if (ffperc > curPercInt)
+            videoProgBar.style.width = ffperc > 100 ? '100%' : `${ffperc}%`;
+    }
+
+    function _setYTdlpProgressForDirect(rexMatch, videoProgBar) {
+        const perc = Math.floor(parseInt(rexMatch[1], 10));
+
+        videoProgBar.style.width = perc > 100 ? '100%' : `${perc}%`;
     }
 
     function _writeSettingsToDisk(data, path, erMsg) {
@@ -310,7 +398,7 @@ const SharedownAPI = (() => {
         return false;
     }
 
-    api.runPuppeteerGetManifestAndTitle = async (video, loginData, tmout, enableUserdataFold) => {
+    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, isDirect = false) => {
         const knownResponses = ['a1=', 'listUrl'];
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
@@ -322,7 +410,8 @@ const SharedownAPI = (() => {
             const page = (await browser.pages())[0];
             let donorResponse;
             let donorRespData;
-            let manifestURLObj;
+            let videoUrl;
+            let cookies;
             let title;
             let ret;
 
@@ -338,7 +427,9 @@ const SharedownAPI = (() => {
                 }, {timeout: puppyTimeout});
                 donorRespData = await donorResponse.json();
 
-                ret = _makeVideoManifestFetchURL(donorRespData, page.url());
+                const vID = (new URL(page.url())).searchParams.get('id')?.trim();
+
+                ret = isDirect ? _makeDirectUrl(donorRespData, vID) : _makeVideoManifestFetchURL(donorRespData, vID);
                 if (!ret.err)
                     break;
 
@@ -346,11 +437,28 @@ const SharedownAPI = (() => {
                 await page.reload({ waitUntil: 'domcontentloaded'});
             }
 
-            manifestURLObj = ret.uobj;
-            title = await _getFileName(manifestURLObj);
+            if (isDirect) {
+                const linkAr = ret.link.split('/');
+
+                videoUrl = ret.link;
+                title = '';
+
+                _writeLog('runPuppeteerGetVideoData: direct mode: linkAr:\n' + JSON.stringify(linkAr));
+
+                if (linkAr.length > 0) {
+                    cookies = _getDataFromCookies(await page.cookies());
+                    title = linkAr[linkAr.length - 1];
+                }
+            } else {
+                const manifestURLObj = ret.uobj;
+
+                title = await _getFileName(manifestURLObj);
+                videoUrl = manifestURLObj.toString();
+                cookies = null;
+            }
 
             await browser.close();
-            return {m: manifestURLObj.toString(), t: title};
+            return {m: videoUrl, t: title, c: cookies};
 
         } catch (e) {
             if (browser)
@@ -436,23 +544,37 @@ const SharedownAPI = (() => {
             const progressElem = videoElem.querySelector('.progress').querySelector('span');
             const oldTooltipTitle = progressElem.title;
             const videoProgBar = videoElem.querySelector('.progress-bar');
-            const pathAr = outFile.split(_path.sep);
-            const filename = pathAr[pathAr.length - 1];
+            const args = ['-N', settings.ytdlpN.toString(), '--no-part'];
+            const isDirect = videoData.c !== null;
+            let tmpFold = '';
+            let tmpOutFile = '';
+            let filename = '';
 
-            pathAr.pop();
+            if (!isDirect) {
+                const outFPath = _path.parse(outFile);
+                const outFolder = outFPath.dir;
 
-            const outFolder = pathAr.join(_path.sep);
-            const tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
-            const tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
+                filename = outFPath.name;
+                tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
+                tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
 
-            if (_fs.existsSync(tmpFold))
-                _fs.rmSync(tmpFold, {force: true, recursive: true});
+                if (_fs.existsSync(tmpFold))
+                    _fs.rmSync(tmpFold, {force: true, recursive: true});
 
-            _fs.mkdirSync(tmpFold);
+                _fs.mkdirSync(tmpFold);
+                args.push('-o', tmpOutFile, '-v', videoData.m);
+
+            } else {
+                const cookieH = `Cookie: FedAuth=${videoData.c.fedauth}; rtFa=${videoData.c.rtfa}`;
+                const vurl = (new URL(videoData.m)).toString();
+
+                args.push('--add-header', cookieH, '-o', outFile, vurl);
+            }
+
             videoProgBar.setAttribute('data-tmp-perc', '0');
             _stoppingProcess = false;
 
-            const ytdlp = spawn('yt-dlp', ['-N', settings.ytdlpN.toString(), '-o', tmpOutFile, '-v', videoData.m, '--no-part']);
+            const ytdlp = spawn('yt-dlp', args);
 
             ytdlp.stdout.on('data', (data) => {
                 if (_stoppingProcess)
@@ -468,26 +590,10 @@ const SharedownAPI = (() => {
                 if (!isProgress || match === null || match.length < 2)
                     return;
 
-                const curPerc = videoProgBar.style.width;
-                const curPercInt = curPerc ? parseInt(curPerc.substring(0, curPerc.length-1), 10) : 0;
-                const perc = Math.floor(parseInt(match[1], 10) / 2);
-                const fperc = perc < 0 ? 0 : perc;
-                let ffperc = fperc;
-
-                if (curPercInt >= 50) { // merge audio download progress to current progress
-                    const oldPerc = parseInt(videoProgBar.getAttribute('data-tmp-perc'), 10);
-
-                    ffperc = curPercInt;
-
-                    if (fperc < 50 && fperc > oldPerc) {
-                        ffperc = curPercInt + Math.abs(oldPerc-fperc);
-
-                        videoProgBar.setAttribute('data-tmp-perc', fperc.toString(10));
-                    }
-                }
-
-                if (ffperc > curPercInt)
-                    videoProgBar.style.width = ffperc > 100 ? '100%' : `${ffperc}%`;
+                if (isDirect)
+                    _setYTdlpProgressForDirect(match, videoProgBar);
+                else
+                    _setYTdlpProgressForManifest(match, videoProgBar);
 
                 progressElem.setAttribute('title', match[0]);
             });
@@ -497,45 +603,55 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.on('close', (code) => {
-                    progressElem.setAttribute('title', oldTooltipTitle);
+                progressElem.setAttribute('title', oldTooltipTitle);
 
-                    try {
-                        if (code !== 0) {
+                try {
+                    const evt = new CustomEvent('DownloadSuccess');
+                    let found = false;
+                    let files;
+
+                    if (code !== 0) {
+                        videoProgBar.style.width = '0%'; // windows workaround
+
+                        if (isDirect)
+                            _fs.rmSync(outFile);
+                        else
                             _fs.rmSync(tmpFold, { force: true, recursive: true });
-                            videoProgBar.style.width = '0%'; // windows workaround
 
-                            if (code !== null)
-                                throw new Error(`Exit code: ${code}`);
+                        if (code !== null)
+                            throw new Error(`Exit code: ${code}`);
 
-                            return;
-                        }
-
-                        const evt = new CustomEvent('DownloadSuccess');
-                        const files = _fs.readdirSync(tmpFold);
-                        let found = false;
-
-                        for (const f of files) {
-                            if (!f.includes(filename))
-                                continue;
-
-                            _fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
-                            found = true;
-                            break;
-                        }
-
-                        _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
-
-                        if (!found)
-                            throw new Error(`Unable to copy video file to output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
-
-                        window.dispatchEvent(evt);
-
-                    } catch (e) {
-                        const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
-
-                        _writeLog(`YT-dlp: download failed:\n${e.message}`);
-                        window.dispatchEvent(failEvt);
+                        return;
                     }
+
+                    if (isDirect) {
+                        window.dispatchEvent(evt);
+                        return;
+                    }
+
+                    files = _fs.readdirSync(tmpFold);
+                    for (const f of files) {
+                        if (!f.includes(filename))
+                            continue;
+
+                        _fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
+                        found = true;
+                        break;
+                    }
+
+                    _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
+
+                    if (!found)
+                        throw new Error(`Unable to copy video file to output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
+
+                    window.dispatchEvent(evt);
+
+                } catch (e) {
+                    const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
+
+                    _writeLog(`YT-dlp: download failed:\n${e.message}`);
+                    window.dispatchEvent(failEvt);
+                }
             });
 
             _runningProcess = ytdlp;

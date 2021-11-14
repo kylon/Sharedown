@@ -327,6 +327,7 @@ async function downloadVideo() {
         const curSettings = Object.assign({}, globalSettings);
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
         const outputFolder = Utils.getOutputFolder(curSettings.outputPath, resources.downloading.settings.outputPath);
+        const isDirectDownloader = curSettings.downloader === 'direct';
         let vdata;
         let ret;
 
@@ -339,7 +340,9 @@ async function downloadVideo() {
 
         toggleLoadingScr();
         sharedownApi.setLogging(globalSettings.logging);
-        vdata = await Utils.getVideoManifestAndTitle(resources.globalSetModal, resources.downloading, globalSettings.timeout, globalSettings.userdataFold);
+
+        vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
+                                         globalSettings.userdataFold, isDirectDownloader);
         toggleLoadingScr();
 
         if (!vdata)

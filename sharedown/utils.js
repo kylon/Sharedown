@@ -126,9 +126,9 @@ const Utils = (() => {
         container.appendChild(frag);
     }
 
-    util.getVideoManifestAndTitle = async (globalSettingsModal, video, timeout, enableUserdataFold) => {
+    util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, isDirect) => {
         if (enableUserdataFold)
-            return ( await _sharedownApi.runPuppeteerGetManifestAndTitle(video, null, timeout, true) );
+            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, true, isDirect) );
 
         const loginD = getLoginData(globalSettingsModal);
 
@@ -141,7 +141,7 @@ const Utils = (() => {
             delete loginD.custom; // disable automatic login and proceed
         }
 
-        return ( await _sharedownApi.runPuppeteerGetManifestAndTitle(video, loginD, timeout, false) );
+        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, isDirect) );
     }
 
     util.getOutputFolder = (globalFolder, videoFolder) => {
