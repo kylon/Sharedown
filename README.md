@@ -22,6 +22,11 @@ See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or h
 * Download latest release from [here](https://github.com/kylon/Sharedown/releases/latest)
 * Place Sharedown app in your preferred location
 
+**ArchLinux**:
+
+The official AUR package [sharedown](https://aur.archlinux.org/packages/sharedown/) is available.
+
+
 Default output folder is your OS _**Downloads**_ folder, or, in Linux, if not found, your _**Home**_ folder.
 
 ### Build
