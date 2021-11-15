@@ -23,6 +23,7 @@ const menu = Menu.buildFromTemplate([
         submenu: [
             { mact: 'odlfold', label: 'Open output folder', click: menuOnClick },
             { mact: 'ologsfold', label: 'Open logs folder', click: menuOnClick },
+            { mact: 'aexit', label: 'Quit', click: menuOnClick },
         ]
     },
     {

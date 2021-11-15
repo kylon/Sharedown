@@ -783,9 +783,11 @@ const SharedownAPI = (() => {
 
 ipcRenderer.on('appmenu', async (e, args) => {
     switch (args.cmd) {
-        case 'about': {
+        case 'about':
             ipcRenderer.send('sharedown-async', {cmd: 'showabout'});
-        }
+            break;
+        case 'aexit':
+            SharedownAPI.quitApp();
             break;
         default:
             window.dispatchEvent(new CustomEvent('appmenu', {detail: args}));
