@@ -101,8 +101,8 @@ ipcMain.on('sharedown-async', (e, args) => {
     switch (args.cmd) {
         case "showabout": {
             const win = new BrowserWindow({
-                width: 250,
-                height: 150,
+                width: 350,
+                height: 230,
                 webPreferences: {
                     devTools: false,
                 }
