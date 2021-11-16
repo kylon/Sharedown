@@ -382,6 +382,7 @@ async function startDownload() {
         elem.querySelector('.vsett-btn').classList.remove('btn-disabled');
         elem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
+        sharedownApi.stopDownload();
 
         resources.downloading = null;
     });
