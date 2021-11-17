@@ -322,10 +322,9 @@ function importAppState() {
     }
 }
 
-async function downloadVideo() {
+async function downloadVideo(videoElem) {
     return new Promise(async (res, rej) => {
         const curSettings = Object.assign({}, globalSettings);
-        const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
         const outputFolder = Utils.getOutputFolder(curSettings.outputPath, resources.downloading.settings.outputPath);
         const isDirectDownloader = curSettings.downloader === 'direct';
         let vdata;
@@ -369,7 +368,9 @@ async function startDownload() {
 
     resources.downloading = resources.downQueObj.getNext();
 
-    downloadVideo().then(() => {
+    const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+
+    downloadVideo(videoElem).then(() => {
         resources.downlStartBtn.classList.add('btn-disabled');
         resources.downlStopBtn.classList.remove('btn-disabled');
         resources.globalSetModal.querySelector('#delchdfold').setAttribute('disabled', '');
@@ -377,10 +378,8 @@ async function startDownload() {
         resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
 
     }).catch(() => {
-        const elem = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
-
-        elem.querySelector('.vsett-btn').classList.remove('btn-disabled');
-        elem.querySelector('.deque-btn').classList.remove('btn-disabled');
+        videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
+        videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         sharedownApi.stopDownload();
 
