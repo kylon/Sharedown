@@ -503,7 +503,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('DownloadFail', (e) => {
-    if (globalSettings.retryOnFail) {
+    if (globalSettings.retryOnFail && resources.downloading instanceof video) {
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
         resources.downlStartBtn.classList.remove('btn-disabled');
