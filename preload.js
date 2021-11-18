@@ -562,7 +562,7 @@ const SharedownAPI = (() => {
                 const outFPath = _path.parse(outFile);
                 const outFolder = outFPath.dir;
 
-                filename = outFPath.name;
+                filename = outFPath.base;
                 tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
                 tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
 
@@ -649,7 +649,7 @@ const SharedownAPI = (() => {
                     _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
 
                     if (!found)
-                        throw new Error(`Unable to copy video file to output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
+                        throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
 
                     window.dispatchEvent(evt);
 
