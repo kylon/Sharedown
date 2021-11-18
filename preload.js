@@ -656,6 +656,7 @@ const SharedownAPI = (() => {
                 } catch (e) {
                     const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
 
+                    _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
                     _writeLog(`YT-dlp: download failed:\n${e.message}`);
                     window.dispatchEvent(failEvt);
                 }
