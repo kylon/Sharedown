@@ -111,12 +111,14 @@ function addVideoURL() {
 
 function addVideoToUI(vid) {
     const node = resources.template.cloneNode(true);
-    const span = node.querySelector('.progress').querySelector('span');
+    const progBar = node.querySelector('#shdprogbar');
+    const span = progBar.querySelector('span');
     const children = resources.downQueElm.children;
     let firstComplete = null;
 
     span.textContent = vid.url;
     span.setAttribute('title', vid.url);
+    progBar.addEventListener('click', e => toggleDownloadStats(e.currentTarget.querySelector('span')));
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
     node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
@@ -136,6 +138,21 @@ function addVideoToUI(vid) {
         resources.downQueElm.insertBefore(node, firstComplete);
 
     resources.queLenElm.textContent = parseInt(resources.queLenElm.textContent, 10) + 1;
+}
+
+function toggleDownloadStats(elem) {
+    if (!sharedownApi.isShowDlInfoSet()) {
+        elem.setAttribute('data-original-text', elem.textContent);
+
+        elem.textContent = 'Waiting for download data..';
+        sharedownApi.setShowDlInfo(true);
+
+    } else {
+        const origText = elem.getAttribute('data-original-text');
+
+        sharedownApi.setShowDlInfo(false);
+        elem.textContent = origText === '' || origText === null ? 'Error: no text':origText;
+    }
 }
 
 function removeVideoFromQue(removeBtn) {
@@ -405,6 +422,9 @@ function stopDownload() {
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
+    if (sharedownApi.isShowDlInfoSet())
+        videoElem.querySelector('span').click();
+
     resources.downloading = null;
     videoElem.querySelector('.progress-bar').style.width = '0%';
 
@@ -512,6 +532,9 @@ window.addEventListener('DownloadFail', (e) => {
         videoElem.querySelector('.progress-bar').style.width = '0%';
         resources.downloading = null;
 
+        if (sharedownApi.isShowDlInfoSet())
+            videoElem.querySelector('span').click();
+
         startDownload();
 
     } else {
@@ -533,6 +556,9 @@ window.addEventListener('DownloadSuccess', () => {
     resources.completeCElm.textContent = parseInt(resources.completeCElm.textContent, 10) + 1;
     resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
     resources.downloading = null;
+
+    if (sharedownApi.isShowDlInfoSet())
+        videoElm.querySelector('span').click();
 
     exportAppState(true);
     startDownload(); // start next download, if any

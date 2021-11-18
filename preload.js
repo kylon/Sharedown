@@ -34,6 +34,7 @@ const SharedownAPI = (() => {
     const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
     const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
     const _ytdlpLogFilePath = _path.normalize(_logsFolderPath+'/ytdlp.log');
+    let _showDownlInfo = false;
     let _runningProcess = null;
     let _stoppingProcess = false;
     let _enableLogs = false;
@@ -60,6 +61,8 @@ const SharedownAPI = (() => {
         saveAppState: null,
         loadAppState: null,
         upgradeSett: null,
+        setShowDlInfo: null,
+        isShowDlInfoSet: null,
         showMessage: null,
         setLogging: null,
         openLogsFolder: null,
@@ -473,6 +476,7 @@ const SharedownAPI = (() => {
         try {
             const { FFmpegCommand, FFmpegInput, FFmpegOutput } = require('@tedconf/fessonia')();
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
+            const videoProgBarTx = videoProgBar.parentNode.querySelector('.progtext');
             const ffmpegInput = new FFmpegInput(videoData.m);
             const ffmpegOutput = new FFmpegOutput(outFile, new Map([
                 ['c:v', 'copy'],
@@ -495,6 +499,12 @@ const SharedownAPI = (() => {
                 const prog = Math.floor((sec / totalTime) * 100).toString(10);
 
                 videoProgBar.style.width = prog >= 100 ? '100%' : `${prog}%`;
+
+                if (_showDownlInfo) {
+                    const dlInfo = `frame: ${data.frame}, speed: ${data.speed}, bitrate: ${data.bitrate}, estimated time: ${sec}`;
+
+                    videoProgBarTx.textContent = dlInfo;
+                }
             });
 
             ffmpegCmd.on('success', (data) => {
@@ -540,10 +550,8 @@ const SharedownAPI = (() => {
         const { spawn } = require('child_process');
 
         try {
-            const videoElem = document.querySelector(`[data-video-id="${video.id}"]`);
-            const progressElem = videoElem.querySelector('.progress').querySelector('span');
-            const oldTooltipTitle = progressElem.title;
-            const videoProgBar = videoElem.querySelector('.progress-bar');
+            const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
+            const videoProgBarTx = videoProgBar.parentNode.querySelector('.progtext');
             const args = ['-N', settings.ytdlpN.toString(), '--no-part'];
             const isDirect = videoData.c !== null;
             let tmpFold = '';
@@ -595,7 +603,8 @@ const SharedownAPI = (() => {
                 else
                     _setYTdlpProgressForManifest(match, videoProgBar);
 
-                progressElem.setAttribute('title', match[0]);
+                if (_showDownlInfo)
+                    videoProgBarTx.textContent = match[0];
             });
 
             ytdlp.stderr.on('data', (data) => {
@@ -603,8 +612,6 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.on('close', (code) => {
-                progressElem.setAttribute('title', oldTooltipTitle);
-
                 try {
                     const evt = new CustomEvent('DownloadSuccess');
                     let found = false;
@@ -734,6 +741,14 @@ const SharedownAPI = (() => {
             if (_fs.existsSync(_logFilePath))
                 _fs.unlinkSync(_ologFilePath)
         }
+    }
+
+    api.setShowDlInfo = state => {
+        _showDownlInfo = state;
+    }
+
+    api.isShowDlInfoSet = () => {
+        return _showDownlInfo;
     }
 
     api.saveAppState = data => {

@@ -91,6 +91,10 @@ body {
     height: auto;
 }
 
+#shdprogbar {
+    cursor: pointer;
+}
+
 #loadingscr {
     position: absolute;
     top: 0;
