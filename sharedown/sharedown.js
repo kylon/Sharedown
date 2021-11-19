@@ -527,6 +527,8 @@ window.addEventListener('DownloadFail', (e) => {
 
         resources.downlStartBtn.classList.remove('btn-disabled');
         resources.downlStopBtn.classList.add('btn-disabled');
+        resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
+        resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
         resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         videoElem.querySelector('.progress-bar').style.width = '0%';
@@ -549,10 +551,13 @@ window.addEventListener('DownloadSuccess', () => {
 
     resources.downlStartBtn.classList.remove('btn-disabled');
     resources.downlStopBtn.classList.add('btn-disabled');
+    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
+    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
     resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
     videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
     videoElm.querySelector('.progress-bar').classList.add('w-100');
     resources.downQueElm.appendChild(videoElm.parentElement);
+
     resources.completeCElm.textContent = parseInt(resources.completeCElm.textContent, 10) + 1;
     resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
     resources.downloading = null;
