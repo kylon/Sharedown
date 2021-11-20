@@ -17,30 +17,40 @@
 "use strict";
 
 const { app, ipcMain, dialog, Menu, BrowserWindow } = require('electron');
-const menu = Menu.buildFromTemplate([
+const isDarwin = process.platform === 'darwin';
+const menuTemplate = [
     {
         label: 'File',
         submenu: [
             { mact: 'odlfold', label: 'Open output folder', click: menuOnClick },
             { mact: 'ologsfold', label: 'Open logs folder', click: menuOnClick },
-            { mact: 'aexit', label: 'Quit', click: menuOnClick },
-        ]
+            { mact: 'aexit', label: 'Quit', click: menuOnClick, visible: !isDarwin }
+        ],
+        role: 'appMenu'
     },
     {
-        label: 'Sharedown',
+        label: 'Help',
         submenu: [
             { mact: 'owiki', label: 'Open Wiki (external)', click: menuOnClick },
-            { mact: 'osrc', label: 'Open repository (external)', click: menuOnClick },
-        ]
+            { mact: 'osrc', label: 'Open repository (external)', click: menuOnClick }
+        ],
+        role: 'help'
     },
     {
-        mact: 'about', label: 'About', click: menuOnClick
+        label: 'About',
+        submenu: [
+            { mact: 'about', label: 'About Sharedown', click: menuOnClick }
+        ],
+        role: 'about'
     }
-]);
+];
 const path = require('path');
 let mainW = null;
 
-Menu.setApplicationMenu(menu);
+if (isDarwin) // about must be first on macOS
+    menuTemplate.unshift(menuTemplate.pop());
+
+Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
 function createWindow () {
     const win = new BrowserWindow({
@@ -72,7 +82,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin')
+    if (!isDarwin)
         app.quit();
 });
 
@@ -102,7 +112,7 @@ ipcMain.on('sharedown-async', (e, args) => {
         case "showabout": {
             const win = new BrowserWindow({
                 width: 350,
-                height: 230,
+                height: 250,
                 webPreferences: {
                     devTools: false,
                 }
@@ -113,9 +123,6 @@ ipcMain.on('sharedown-async', (e, args) => {
             win.setResizable(false);
             win.setSkipTaskbar(true);
             win.setParentWindow(mainW);
-            mainW.setEnabled(false);
-
-            win.once('closed', () => mainW.setEnabled(true));
         }
             break;
         default:
