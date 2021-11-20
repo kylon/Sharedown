@@ -552,7 +552,7 @@ const SharedownAPI = (() => {
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
             const videoProgBarTx = videoProgBar.parentNode.querySelector('.progtext');
-            const args = ['-N', settings.ytdlpN.toString(), '--no-part'];
+            const args = ['--no-part'];
             const isDirect = videoData.c !== null;
             let tmpFold = '';
             let tmpOutFile = '';
@@ -570,13 +570,13 @@ const SharedownAPI = (() => {
                     _fs.rmSync(tmpFold, {force: true, recursive: true});
 
                 _fs.mkdirSync(tmpFold);
-                args.push('-o', tmpOutFile, '-v', videoData.m);
+                args.push('-N', settings.ytdlpN.toString(), '-o', tmpOutFile, '-v', videoData.m);
 
             } else {
                 const cookieH = `Cookie: FedAuth=${videoData.c.fedauth}; rtFa=${videoData.c.rtfa}`;
                 const vurl = (new URL(videoData.m)).toString();
 
-                args.push('--add-header', cookieH, '-o', outFile, vurl);
+                args.push('-N', settings.directN.toString(), '--add-header', cookieH, '-o', outFile, vurl);
             }
 
             videoProgBar.setAttribute('data-tmp-perc', '0');

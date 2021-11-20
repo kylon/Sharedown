@@ -19,10 +19,11 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 7, // internal
+    _version: 8, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpN: 5,
+    directN: 5,
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
     retryOnFail: false,
@@ -246,6 +247,7 @@ function loadGlobalSettings() {
     outdir.value = globalSettings.outputPath;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
+    resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
     resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
@@ -267,6 +269,7 @@ function saveGlobalSettings() {
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
+    globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
 
@@ -294,6 +297,7 @@ function importAppSettings() {
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
+    globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 30000;
     globalSettings.logging = data.logging ?? false;
 
