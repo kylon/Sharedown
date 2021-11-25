@@ -82,8 +82,7 @@ const SharedownAPI = (() => {
         for (const logf of logsP) {
             const old = `${logf}.old`;
 
-            if (_fs.existsSync(old))
-                _fs.unlinkSync(old);
+            _unlinkSync(old);
 
             if (_fs.existsSync(logf))
                 _fs.renameSync(logf, old);
@@ -377,6 +376,16 @@ const SharedownAPI = (() => {
         return '';
     }
 
+    function _rmSync(path, recur = true) {
+        if (_fs.existsSync(path))
+            _fs.rmSync(path, {recursive: recur, force: true});
+    }
+
+    function _unlinkSync(path) {
+        if (_fs.existsSync(path))
+            _fs.unlinkSync(path);
+    }
+
     api.hasFFmpeg = () => {
         const proc = require('child_process');
 
@@ -523,8 +532,7 @@ const SharedownAPI = (() => {
 
             ffmpegCmd.on('error', (err) => {
                 try {
-                    if (_fs.existsSync(outFile))
-                        _fs.unlinkSync(outFile);
+                    _unlinkSync(outFile);
 
                 } catch (e) {
                     api.showMessage('error', e.message, 'FFmpeg');
@@ -554,9 +562,9 @@ const SharedownAPI = (() => {
             const videoProgBarTx = videoProgBar.parentNode.querySelector('.progtext');
             const args = ['--no-part'];
             const isDirect = videoData.c !== null;
-            let tmpFold = '';
-            let tmpOutFile = '';
-            let filename = '';
+            let tmpFold = null;
+            let tmpOutFile = null;
+            let filename = null;
 
             if (!isDirect) {
                 const outFPath = _path.parse(outFile);
@@ -566,9 +574,7 @@ const SharedownAPI = (() => {
                 tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
                 tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
 
-                if (_fs.existsSync(tmpFold))
-                    _fs.rmSync(tmpFold, {force: true, recursive: true});
-
+                _rmSync(tmpFold);
                 _fs.mkdirSync(tmpFold);
                 args.push('-N', settings.ytdlpN.toString(), '-o', tmpOutFile, '-v', videoData.m);
 
@@ -621,14 +627,11 @@ const SharedownAPI = (() => {
                         videoProgBar.style.width = '0%'; // windows workaround
 
                         if (isDirect)
-                            _fs.rmSync(outFile);
+                            _unlinkSync(outFile);
                         else
-                            _fs.rmSync(tmpFold, { force: true, recursive: true });
+                            _rmSync(tmpFold);
 
-                        if (code !== null)
-                            throw new Error(`Exit code: ${code}`);
-
-                        return;
+                        throw new Error("Exit code: " + (code ?? "aborted"));
                     }
 
                     if (isDirect) {
@@ -641,12 +644,12 @@ const SharedownAPI = (() => {
                         if (!f.includes(filename))
                             continue;
 
-                        _fs.copyFileSync(_path.resolve(tmpOutFile), _path.resolve(outFile));
+                        _fs.copyFileSync(tmpOutFile, outFile);
                         found = true;
                         break;
                     }
 
-                    _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
+                    _rmSync(tmpFold);
 
                     if (!found)
                         throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
@@ -656,7 +659,11 @@ const SharedownAPI = (() => {
                 } catch (e) {
                     const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
 
-                    _fs.rmSync(_path.resolve(tmpFold), { force: true, recursive: true });
+                    if (isDirect)
+                        _unlinkSync(outFile);
+                    else
+                        _rmSync(tmpFold);
+
                     _writeLog(`YT-dlp: download failed:\n${e.message}`);
                     window.dispatchEvent(failEvt);
                 }
@@ -736,11 +743,10 @@ const SharedownAPI = (() => {
             const _ologFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
             const oldF = _ologFilePath+'.old';
 
-            if (_fs.existsSync(oldF))
-                _fs.unlinkSync(oldF);
+            _unlinkSync(oldF);
 
             if (_fs.existsSync(_logFilePath))
-                _fs.unlinkSync(_ologFilePath)
+                _unlinkSync(_ologFilePath);
         }
     }
 
@@ -772,8 +778,7 @@ const SharedownAPI = (() => {
     }
 
     api.deleteUserdataFold = () => {
-        if (_fs.existsSync(_chromeUserdataPath))
-            _fs.rmSync(_chromeUserdataPath, {force: true, recursive: true});
+        _rmSync(_chromeUserdataPath);
     }
 
     api.md5sum = s => {
