@@ -71,6 +71,22 @@ function toggleLoadingScr() {
     resources.loadingScr.classList.toggle('d-none');
 }
 
+function unlockUIElemsForDownload() {
+    resources.downlStartBtn.classList.remove('btn-disabled');
+    resources.downlStopBtn.classList.add('btn-disabled');
+    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
+    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
+    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+}
+
+function lockUIElemsForDownload() {
+    resources.downlStartBtn.classList.add('btn-disabled');
+    resources.downlStopBtn.classList.remove('btn-disabled');
+    resources.globalSetModal.querySelector('#delchdfold').setAttribute('disabled', '');
+    resources.globalSetModal.querySelector('#mexportstate').setAttribute('disabled', '');
+    resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
+}
+
 function setDownloaderSettingsUI(selectedDownloader) {
     for (const opt of resources.globalSetDownldrOpts) {
         const clList = opt.classList;
@@ -226,8 +242,6 @@ function saveVideoSettings(elem) {
 }
 
 function loadGlobalSettings() {
-    toggleLoadingScr();
-
     const outdir = resources.globalSetModal.querySelector('#soutdirp');
     const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
 
@@ -255,7 +269,6 @@ function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
 
     setDownloaderSettingsUI(globalSettings.downloader);
-    toggleLoadingScr();
 }
 
 function saveGlobalSettings() {
@@ -265,7 +278,6 @@ function saveGlobalSettings() {
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
-    globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
@@ -392,11 +404,7 @@ async function startDownload() {
     const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
     downloadVideo(videoElem).then(() => {
-        resources.downlStartBtn.classList.add('btn-disabled');
-        resources.downlStopBtn.classList.remove('btn-disabled');
-        resources.globalSetModal.querySelector('#delchdfold').setAttribute('disabled', '');
-        resources.globalSetModal.querySelector('#mexportstate').setAttribute('disabled', '');
-        resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
+        lockUIElemsForDownload();
 
     }).catch(() => {
         videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
@@ -417,11 +425,7 @@ function stopDownload() {
 
     sharedownApi.stopDownload();
 
-    resources.downlStopBtn.classList.add('btn-disabled');
-    resources.downlStartBtn.classList.remove('btn-disabled');
-    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
-    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
-    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
+    unlockUIElemsForDownload();
     videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
@@ -513,13 +517,9 @@ window.addEventListener('DownloadFail', (e) => {
     if (globalSettings.retryOnFail && resources.downloading instanceof video) {
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
-        resources.downlStartBtn.classList.remove('btn-disabled');
-        resources.downlStopBtn.classList.add('btn-disabled');
-        resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
-        resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
-        resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         videoElem.querySelector('.progress-bar').style.width = '0%';
+        unlockUIElemsForDownload();
         resources.downloading = null;
 
         if (sharedownApi.isShowDlInfoSet())
@@ -537,11 +537,7 @@ window.addEventListener('DownloadSuccess', () => {
     const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
     const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
 
-    resources.downlStartBtn.classList.remove('btn-disabled');
-    resources.downlStopBtn.classList.add('btn-disabled');
-    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
-    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
-    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+    unlockUIElemsForDownload();
     videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
     videoElm.querySelector('.progress-bar').classList.add('w-100');
     resources.downQueElm.appendChild(videoElm.parentElement);
