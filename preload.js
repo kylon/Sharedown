@@ -48,6 +48,9 @@ const SharedownAPI = (() => {
         },
         hasFFmpeg: null,
         hasYTdlp: null,
+        keytarSaveLogin: null,
+        keytarGetLogin: null,
+        keytarRemoveLogin: null,
         runPuppeteerGetVideoData: null,
         downloadWithFFmpeg: null,
         downloadWithYtdlp: null,
@@ -409,6 +412,44 @@ const SharedownAPI = (() => {
         } catch (e) {}
 
         return false;
+    }
+
+    api.keytarSaveLogin = async (credentials) => {
+        const kt = require('keytar');
+
+        if (credentials.msid !== '') {
+            await kt.setPassword('sharedown', 'msid', credentials.msid).catch(e => {
+                api.showMessage('error', e.message, 'keytar error');
+            });
+        }
+
+        if (credentials.lm !== '') {
+            await kt.setPassword('sharedown', 'loginmodule', credentials.lm).catch(e => {
+                api.showMessage('error', e.message, 'keytar error');
+            });
+        }
+    }
+
+    api.keytarGetLogin = async () => {
+        const kt = require('keytar');
+        const id = await kt.getPassword('sharedown', 'msid').catch(e => {
+            api.showMessage('error', e.message, 'keytar error');
+        });
+        const loginMod = await kt.getPassword('sharedown', 'loginmodule').catch(e => {
+            api.showMessage('error', e.message, 'keytar error');
+        });
+
+        return {
+            msid: id,
+            lm: loginMod?.split(':') ?? null
+        }
+    }
+
+    api.keytarRemoveLogin = async () => {
+        const kt = require('keytar');
+
+        await kt.deletePassword('sharedown', 'msid');
+        await kt.deletePassword('sharedown', 'loginmodule');
     }
 
     api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, isDirect = false) => {

@@ -83,8 +83,33 @@ const UIUtils = (() => {
         container.appendChild(frag);
     }
 
+    UIutil.fillLoginFieldsFromPwdManager = async (globalSetModal, curLoginModule) => {
+        const creds = await _sharedownApi.keytarGetLogin();
+        const lmCreds = creds.lm;
+
+        globalSetModal.querySelector('#username').value = creds.msid ?? '';
+
+        if (lmCreds === null)
+            return;
+
+        const loginModuleFieldsC = _sharedownApi.sharedownLoginModule.getFieldsCount();
+        const pwdManLoginModule = lmCreds.pop();
+
+        if (pwdManLoginModule !== curLoginModule) {
+            return;
+
+        } else if (loginModuleFieldsC !== lmCreds.length) {
+            _sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EPwdManLoginModuleFormat, 'Sharedown');
+            return;
+        }
+
+        for (let i=0; i<loginModuleFieldsC; ++i)
+            globalSetModal.querySelector(`#loginModuleField${i}`).value = lmCreds[i];
+    }
+
     UIutil.chromeUsrDataChangeEvt = (isChecked, globalSetModal) => {
         const loginModuleInpt = globalSetModal.querySelector('#loginmodlist');
+        const keytarInpt = globalSetModal.querySelector('#keytar');
         const msIDInpt = globalSetModal.querySelector('#username');
 
         if (isChecked) {
@@ -93,12 +118,32 @@ const UIUtils = (() => {
                 loginModuleInpt.dispatchEvent(new Event('change'));
             }
 
+            keytarInpt.checked = false;
             msIDInpt.setAttribute('disabled', '');
             loginModuleInpt.setAttribute('disabled', '');
+            keytarInpt.setAttribute('disabled', '');
 
         } else {
             msIDInpt.removeAttribute('disabled');
             loginModuleInpt.removeAttribute('disabled');
+            keytarInpt.removeAttribute('disabled');
+        }
+    }
+
+    UIutil.keytarCheckChangeEvt = async (isChecked, globalSetModal, curLoginModule) => {
+        const chromeUsrDataChkb = globalSetModal.querySelector('#chuserdata');
+
+        if (isChecked) {
+            if (chromeUsrDataChkb.checked) {
+                chromeUsrDataChkb.checked = false;
+                chromeUsrDataChkb.dispatchEvent(new Event('change'));
+            }
+
+            chromeUsrDataChkb.setAttribute('disabled', '');
+            await UIutil.fillLoginFieldsFromPwdManager(globalSetModal, curLoginModule);
+
+        } else {
+            chromeUsrDataChkb.removeAttribute('disabled');
         }
     }
 

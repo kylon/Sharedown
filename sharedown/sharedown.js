@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 8, // internal
+    _version: 9, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpN: 5,
@@ -27,6 +27,7 @@ const globalSettings = {
     timeout: 30, // 30 secs, puppeteer default
     loginModule: 0,
     retryOnFail: false,
+    useKeytar: false,
     userdataFold: false,
     autoSaveState: true,
     logging: false
@@ -239,19 +240,12 @@ function saveVideoSettings(elem) {
     resources.videoSettModalSaveMsg.show();
 }
 
-function loadGlobalSettings() {
+async function loadGlobalSettings() {
     const outdir = resources.globalSetModal.querySelector('#soutdirp');
     const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
 
-    if (!globalSettings.userdataFold) {
-        sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
-        loginModuleInpt.value = globalSettings.loginModule;
-
-    } else {
-        sharedownApi.sharedownLoginModule.setModule(0);
-        loginModuleInpt.setAttribute('disabled', '');
-        resources.globalSetModal.querySelector('#username').setAttribute('disabled', '');
-    }
+    sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
+    loginModuleInpt.value = globalSettings.loginModule;
 
     UIUtils.addLoginModuleFields(resources.globalSetModal);
     outdir.setAttribute('title', globalSettings.outputPath);
@@ -260,20 +254,27 @@ function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
     resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
+    resources.globalSetModal.querySelector('#keytar').checked = globalSettings.useKeytar;
     resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
 
+    if (globalSettings.userdataFold)
+        UIUtils.chromeUsrDataChangeEvt(true, resources.globalSetModal);
+    else if (globalSettings.useKeytar)
+        await UIUtils.keytarCheckChangeEvt(true, resources.globalSetModal, globalSettings.loginModule);
+
     setDownloaderSettingsUI(globalSettings.downloader);
 }
 
-function saveGlobalSettings() {
+async function saveGlobalSettings() {
     toggleLoadingScr();
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
+    globalSettings.useKeytar = resources.globalSetModal.querySelector('#keytar').checked;
     globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
     globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
@@ -283,6 +284,9 @@ function saveGlobalSettings() {
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
+
+    if (globalSettings.useKeytar)
+        await Utils.keytarSaveCredentials(resources.globalSetModal, globalSettings.loginModule);
 
     exportAppSettings();
     toggleLoadingScr();
@@ -302,9 +306,10 @@ function importAppSettings() {
     const data = JSON.parse(sett);
 
     globalSettings.outputPath = data.outputPath ?? '';
-    globalSettings.userdataFold = data.userdataFold ?? false;
+    globalSettings.useKeytar = data.useKeytar ?? false;
+    globalSettings.userdataFold = !globalSettings.useKeytar && (data.userdataFold ?? false);
     globalSettings.autoSaveState = data.autoSaveState ?? true;
-    globalSettings.loginModule = data.loginModule ?? 0;
+    globalSettings.loginModule = !globalSettings.userdataFold ? (data.loginModule ?? 0) : 0;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
@@ -468,7 +473,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     UIUtils.initLoginModuleSelect();
     importAppSettings();
     importAppState();
-    loadGlobalSettings();
+    await loadGlobalSettings();
 
     document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
@@ -480,12 +485,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
     resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.chromeUsrDataChangeEvt(e.target.checked, resources.globalSetModal));
 
-    document.getElementById('loginmodlist').addEventListener('change', e => {
+    document.getElementById('loginmodlist').addEventListener('change', async (e) => {
+        const keytarInpt = resources.globalSetModal.querySelector('#keytar');
         const v = e.currentTarget.value;
 
         globalSettings.loginModule = v;
         sharedownApi.sharedownLoginModule.setModule(v);
         UIUtils.addLoginModuleFields(resources.globalSetModal);
+
+        if (keytarInpt.checked) {
+            toggleLoadingScr();
+            await UIUtils.fillLoginFieldsFromPwdManager(resources.globalSetModal, v);
+            toggleLoadingScr();
+        }
     });
 
     resources.globalSetModal.querySelector('#mexportstate').addEventListener('click', e => {
@@ -507,6 +519,19 @@ window.addEventListener('DOMContentLoaded', async () => {
         toggleLoadingScr();
         sharedownApi.deleteUserdataFold();
         toggleLoadingScr();
+    });
+
+    resources.globalSetModal.querySelector('#keytar').addEventListener('change', async (e) => {
+        toggleLoadingScr();
+        await UIUtils.keytarCheckChangeEvt(e.target.checked, resources.globalSetModal, globalSettings.loginModule);
+        toggleLoadingScr();
+    });
+
+    resources.globalSetModal.querySelector('#delcreds').addEventListener('click', async () => {
+        toggleLoadingScr();
+        await Utils.keytarDeleteCredentials();
+        toggleLoadingScr();
+        sharedownApi.showMessage(messageBoxType.Info, 'Done!', 'Sharedown');
     });
 
     toggleLoadingScr();

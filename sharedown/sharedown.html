@@ -181,7 +181,6 @@
                             <div class="mb-3">
                                 <label for="username" class="form-label">Microsoft ID</label>
                                 <input id="username" type="text" class="form-control" aria-describedby="unamehelp" placeholder="Email, phone or skype">
-                                <div id="unamehelp" class="form-text">Your ID will be deleted on application exit</div>
                             </div>
                         </div>
                     </div>
@@ -200,6 +199,28 @@
                                 <input class="form-check-input" type="checkbox" id="retryonfail">
                                 <label class="form-check-label" for="retryonfail">Restart download on failure</label>
                             </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="keytar">
+                                <label class="form-check-label" for="keytar">Remember login credentials</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <p>
+                                This will store your credentials on save.<br><br>
+                                Save your Microsoft ID and login module credentials.<br>
+                                Your system password manager will be used.<br>
+                                Linux users require a properly configured password manager.
+                            </p>
+                        </div>
+                        <div class="col-6 offset-6">
+                            <button id="delcreds" type="button" class="btn bg-sharepoint1 float-end">Forget login credentials</button>
                         </div>
                     </div>
                     <hr>

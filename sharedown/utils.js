@@ -30,7 +30,8 @@ const SharedownMessage = (() => {
         EInvalidID: 'Invalid video ID',
         EGeneric: 'Sharedown error',
         EJsonParse: 'JSON parse error',
-        ELoginModule: 'Login Module Error'
+        ELoginModule: 'Login Module Error',
+        EPwdManLoginModuleFormat: 'Invalid credential format for login module!\n\nPlease, delete your credentials and save them again.'
     });
 })();
 
@@ -61,6 +62,24 @@ const Utils = (() => {
         }
 
         return loginData;
+    }
+
+    util.keytarSaveCredentials = async (globalSettingsModal, loginModule) => {
+        const loginModuleVals = [];
+
+        for (let i=0,l=_sharedownApi.sharedownLoginModule.getFieldsCount(); i<l; ++i)
+            loginModuleVals.push(globalSettingsModal.querySelector(`#loginModuleField${i}`).value);
+
+        loginModuleVals.push(loginModule);
+
+        await _sharedownApi.keytarSaveLogin({
+            msid: globalSettingsModal.querySelector('#username').value,
+            lm: loginModuleVals.length > 1 ? loginModuleVals.join(':') : ''
+        });
+    }
+
+    util.keytarDeleteCredentials = async () => {
+        await _sharedownApi.keytarRemoveLogin();
     }
 
     util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, isDirect) => {
