@@ -107,10 +107,8 @@ function addVideoURL() {
     const urlInpt = btn.parentElement.querySelector('#addurlinp');
     const url = urlInpt.value;
 
-    if (url === '' || !Utils.isValidURL(url)) {
-        if (url !== '')
-            sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURL, SharedownMessage.EGeneric);
-
+    if (!Utils.isValidURL(url)) {
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURL, SharedownMessage.EGeneric);
         return;
     }
 
@@ -278,6 +276,7 @@ function saveGlobalSettings() {
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
+    globalSettings.loginModule = resources.globalSetModal.querySelector('#loginmodlist').value;
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);

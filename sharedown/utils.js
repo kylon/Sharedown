@@ -105,7 +105,7 @@ const Utils = (() => {
     }
 
     util.isValidURL = url => {
-        return url.includes('sharepoint') && url.substring(0, 8) === 'https://';
+        return url !== '' && url.includes('sharepoint') && url.substring(0, 8) === 'https://';
     }
 
     util.setAsWebPlayerURL = url => {
