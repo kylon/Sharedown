@@ -39,6 +39,10 @@ class Basic {
         return this.#fields;
     }
 
+    getFieldsCount() {
+        return this.#fields.length;
+    }
+
     /**
      * @param sharedownUIInputLabel string
      * @param inptType InputType

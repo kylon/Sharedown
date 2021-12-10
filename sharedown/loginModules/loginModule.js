@@ -48,6 +48,10 @@ class LoginModule {
         return this.#active?.getFields();
     }
 
+    getLoginModuleFieldsCount() {
+        return this.#active.getFieldsCount();
+    }
+
     async doLogin(puppeteerPage, loginData) {
         await this.#active?.doLogin(puppeteerPage, loginData);
     }
