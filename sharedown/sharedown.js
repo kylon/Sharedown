@@ -241,7 +241,7 @@ function loadGlobalSettings() {
         resources.globalSetModal.querySelector('#username').setAttribute('disabled', '');
     }
 
-    Utils.addLoginModuleFields(resources.globalSetModal);
+    UIUtils.addLoginModuleFields(resources.globalSetModal);
     outdir.setAttribute('title', globalSettings.outputPath);
 
     outdir.value = globalSettings.outputPath;
@@ -462,7 +462,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         sharedownApi.quitApp();
     }
 
-    Utils.initLoginModuleSelect();
+    UIUtils.initLoginModuleSelect();
     importAppSettings();
     importAppState();
     loadGlobalSettings();
@@ -475,13 +475,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
     resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
+    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.chromeUsrDataChangeEvt(e.target.checked, resources.globalSetModal));
 
     document.getElementById('loginmodlist').addEventListener('change', e => {
         const v = e.currentTarget.value;
 
         globalSettings.loginModule = v;
         sharedownApi.sharedownLoginModule.setModule(v);
-        Utils.addLoginModuleFields(resources.globalSetModal);
+        UIUtils.addLoginModuleFields(resources.globalSetModal);
     });
 
     resources.globalSetModal.querySelector('#mexportstate').addEventListener('click', e => {
@@ -494,23 +495,6 @@ window.addEventListener('DOMContentLoaded', async () => {
             resources.globalSetModalSaveMsg.show();
 
         toggleLoadingScr();
-    });
-
-    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => {
-        const msidInpt = resources.globalSetModal.querySelector('#username');
-        const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
-
-        if (e.target.checked) {
-            msidInpt.setAttribute('disabled', '');
-
-            loginModuleInpt.value = 0;
-            loginModuleInpt.dispatchEvent(new Event('change'));
-            loginModuleInpt.setAttribute('disabled', '');
-
-        } else {
-            msidInpt.removeAttribute('disabled');
-            loginModuleInpt.removeAttribute('disabled');
-        }
     });
 
     resources.globalSetModal.querySelector('#delchdfold').addEventListener('click', e => {
