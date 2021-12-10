@@ -43,7 +43,8 @@ const SharedownAPI = (() => {
         sharedownLoginModule: {
             getModuleList: _loginModule.getModuleList(),
             setModule: idx => _loginModule.setLoginModule(idx),
-            getFields: () => { return _loginModule.getLoginModuleFields(); }
+            getFields: () => _loginModule.getLoginModuleFields(),
+            getFieldsCount: () => _loginModule.getLoginModuleFieldsCount()
         },
         hasFFmpeg: null,
         hasYTdlp: null,
