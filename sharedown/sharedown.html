@@ -42,11 +42,10 @@
                 </div>
             </div>
 
-            <div class="col-12">
-                <div class="input-group">
-                    <input id="addurlinp" type="text" class="form-control" placeholder="Sharepoint video link" aria-label="video link">
-                    <button id="addurlbtn" class="btn btn-warning text-white" type="button" title="Add video to download list"><i class="fa fa-plus"></i></button>
-                </div>
+            <div class="col-12 text-center">
+                <button type="button" class="btn btn-warning text-lightblack" title="Add Sharepoint link to download queue" data-bs-toggle="modal" data-bs-target="#urlsaddmodal">
+                    <i class="fa fa-plus"></i> Add Sharepoint video URLs
+                </button>
             </div>
 
             <div class="col-12 d-flex justify-content-end pt-4">
@@ -65,6 +64,26 @@
         </div>
 
         <div id="dque" class="downloadque row pb-3"></div>
+    </div>
+
+    <!-- import video urls modal -->
+    <div id="urlsaddmodal" class="modal fade" tabindex="-1" aria-labelledby="urlsaddmodal" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Sharepoint URLs to download queue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="h-100">
+                        <textarea class="form-control h-100 text-nowrap" id="vurlslist" placeholder="Paste URLs here, one URL per line"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="importurlsbtn" type="button" class="btn bg-sharepoint1">Add</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- video settings modal -->

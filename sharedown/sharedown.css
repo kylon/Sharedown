@@ -6,6 +6,10 @@ body {
     z-index: 99;
 }
 
+.text-lightblack {
+    color: #322f2f!important;
+}
+
 .logo-top-arrow {
     right: 13px;
     top: 12px;

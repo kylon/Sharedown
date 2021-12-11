@@ -26,7 +26,7 @@ const SharedownMessage = (() => {
         EEmptyCustomLoginField: 'A required login field is empty!\nAutomatic login will be disabled.\n\nDo you want to continue?',
         EImportAppState: 'Could not import app state from disk',
         EDownloadFail: 'Download failed',
-        EInvalidURL: 'Invalid video URL',
+        EInvalidURLsInAddList: 'Some URLs were invalid and they were skipped',
         EInvalidID: 'Invalid video ID',
         EGeneric: 'Sharedown error',
         EJsonParse: 'JSON parse error',

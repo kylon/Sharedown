@@ -38,6 +38,8 @@ const resources = {
     downloading: null,
     downloadingFPath: '',
     template: null,
+    addVideoURLsList: null,
+    addURLsModalInstance: null,
     videoSettModal: null,
     videoSettModalInstance: null,
     videoSettModalSaveMsg: null,
@@ -54,6 +56,8 @@ const resources = {
 
 function initResources() {
     resources.template                = document.getElementById('videoitem').content;
+    resources.addVideoURLsList        = document.getElementById('vurlslist');
+    resources.addURLsModalInstance    = new bootstrap.Modal(document.getElementById('urlsaddmodal'));
     resources.videoSettModal          = document.getElementById('videosett');
     resources.videoSettModalInstance  = new bootstrap.Modal(resources.videoSettModal);
     resources.videoSettModalSaveMsg   = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
@@ -99,27 +103,37 @@ function setDownloaderSettingsUI(selectedDownloader) {
     }
 }
 
-function addVideoURL() {
-    const btn = document.getElementById('addurlbtn');
+function addVideoURLs() {
+    const urls = resources.addVideoURLsList.value.trim();
 
-    if (btn.classList.contains('btn-disabled'))
+    if (urls === '')
         return;
 
-    const urlInpt = btn.parentElement.querySelector('#addurlinp');
-    const url = urlInpt.value;
-
-    if (!Utils.isValidURL(url)) {
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURL, SharedownMessage.EGeneric);
-        return;
-    }
+    const urlsList = urls.split(/\r?\n/);
+    const invalid = [];
 
     toggleLoadingScr();
 
-    const vid = new video(Utils.setAsWebPlayerURL(url));
+    for (const url of urlsList) {
+        if (!Utils.isValidURL(url)) {
+            invalid.push(url);
+            continue;
+        }
 
-    addVideoToUI(vid);
-    resources.downQueObj.addVideo(vid);
-    urlInpt.value = '';
+        const vid = new video(Utils.setAsWebPlayerURL(url));
+
+        addVideoToUI(vid);
+        resources.downQueObj.addVideo(vid);
+    }
+
+    if (invalid.length > 0) {
+        resources.addVideoURLsList.value = invalid.join('\n');
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURLsInAddList, 'Sharedown');
+
+    } else {
+        resources.addVideoURLsList.value = '';
+        resources.addURLsModalInstance.hide();
+    }
 
     exportAppState();
     toggleLoadingScr();
@@ -475,7 +489,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     await loadGlobalSettings();
 
-    document.getElementById('addurlbtn').addEventListener('click', () => addVideoURL());
+    document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.downlStartBtn.addEventListener('click', () => startDownload());
