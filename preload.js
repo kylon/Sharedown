@@ -453,7 +453,10 @@ const SharedownAPI = (() => {
     }
 
     api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, isDirect = false) => {
-        const knownResponses = ['a1=', 'listUrl'];
+        const knownResponses = [
+            'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
+            'SP.List.GetListDataAsStream?listFullUrl'
+        ];
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
@@ -477,7 +480,7 @@ const SharedownAPI = (() => {
 
             for (const type of knownResponses) {
                 donorResponse = await page.waitForResponse(response => {
-                    return response.url().includes(`RenderListDataAsStream?@${type}`);
+                    return response.url().includes(type);
                 }, {timeout: puppyTimeout});
                 donorRespData = await donorResponse.json();
 
