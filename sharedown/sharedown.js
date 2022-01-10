@@ -171,6 +171,11 @@ function addVideoToUI(vid) {
 }
 
 function toggleDownloadStats(elem) {
+    const cid = elem.parentElement.parentElement.getAttribute('data-video-id');
+
+    if (cid !== resources.downloading?.id)
+        return;
+
     if (!sharedownApi.isShowDlInfoSet()) {
         elem.setAttribute('data-original-text', elem.textContent);
 
