@@ -18,7 +18,7 @@
 
 const basic = require('./Basic');
 
-class SimpleUniversity extends basic.BasicLogin {
+class SimpleUniversity365 extends basic.BasicLogin {
     constructor() {
         super();
         this.registerField('Username', basic.InputType.Text, 'Username provied by your university');
@@ -27,13 +27,14 @@ class SimpleUniversity extends basic.BasicLogin {
 
     async doLogin(puppeteerPage, loginData) {
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
-        await puppeteerPage.waitForSelector('input[type="text"]');
-        await puppeteerPage.focus('input[type="text"]');
+        await puppeteerPage.waitForSelector('input[type="email"]');
+        await puppeteerPage.focus('input[type="email"]');
+        await puppeteerPage.evaluate(() => document.querySelector('input[type="email"]').value = '');
         await puppeteerPage.keyboard.type(loginData.field0);
         await puppeteerPage.waitForSelector('input[type="password"]');
         await puppeteerPage.focus('input[type="password"]');
         await puppeteerPage.keyboard.type(loginData.field1);
-        await puppeteerPage.click('[type="submit"]');
+        await puppeteerPage.click('span[id="submitButton"]');
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
 
         if ((await puppeteerPage.$('input[id="idBtn_Back"]')) !== null) {
@@ -44,4 +45,4 @@ class SimpleUniversity extends basic.BasicLogin {
     }
 }
 
-module.exports = SimpleUniversity;
+module.exports = SimpleUniversity365;

@@ -18,12 +18,14 @@
 
 const basic = require('./Basic');
 const simpleUniversity = require('./SimpleUniversity');
+const simpleUniversity365 = require('./SimpleUniversity365');
 
 class LoginModule {
     // Sharedown UI module label
     #modules = [
         'Basic - Manual login',
-        'University [Simple]'
+        'University [Simple]',
+        'University [MS 365]'
     ];
     #active;
 
@@ -37,6 +39,9 @@ class LoginModule {
         switch (parseInt(idx, 10)) {
             case 1:
                 this.#active = new simpleUniversity();
+                break;
+            case 2:
+                this.#active = new simpleUniversity365();
                 break;
             default:
                 this.#active = new basic.BasicLogin();
