@@ -155,8 +155,14 @@ const SharedownAPI = (() => {
             args: ['--disable-dev-shm-usage']
         };
 
-        if (userdataFold)
-            pargs['userDataDir'] = _path.normalize(_sharedownAppDataPath+'/data');
+        if (userdataFold) {
+            const dataPath = _path.normalize(_sharedownAppDataPath + '/data');
+
+            if (!_fs.existsSync(dataPath))
+                _fs.mkdirSync(dataPath);
+
+            pargs['userDataDir'] = dataPath;
+        }
 
         return pargs;
     }
