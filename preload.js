@@ -19,8 +19,8 @@
 const { contextBridge, ipcRenderer, shell } = require('electron');
 
 // macOS PATH workaround
-if (process.platform === 'darwin' && !process.env.PATH.includes('node_modules'))
-    process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', process.env.PATH].join(':');
+if (process.platform === 'darwin')
+    process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', '/opt/homebrew/bin', process.env.PATH].join(':');
 
 const SharedownAPI = (() => {
     const _LoginModule = require('./sharedown/loginModules/loginModule');
