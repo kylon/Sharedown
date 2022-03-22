@@ -494,6 +494,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     await loadGlobalSettings();
 
+    document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
