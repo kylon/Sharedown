@@ -479,6 +479,7 @@ const SharedownAPI = (() => {
             let ret;
 
             _initLogFile();
+            page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
