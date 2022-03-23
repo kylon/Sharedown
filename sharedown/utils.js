@@ -27,6 +27,8 @@ const SharedownMessage = (() => {
         EImportAppState: 'Could not import app state from disk',
         EDownloadFail: 'Download failed',
         EInvalidURLsInAddList: 'Some URLs were invalid and they were skipped',
+        EInvalidOrNoURLsInSPFolder: 'Some URLs were invalid or no URLs found in folder and they were skipped',
+        EImportFromFolderCanceled: 'Import from folder canceled!',
         EInvalidID: 'Invalid video ID',
         EGeneric: 'Sharedown error',
         EJsonParse: 'JSON parse error',
@@ -39,7 +41,7 @@ const Utils = (() => {
     const _sharedownApi = window.sharedown;
     const util = {};
 
-    function getLoginData(globalSettingsModal) {
+    function _getLoginData(globalSettingsModal) {
         const customFieldsLen = _sharedownApi.sharedownLoginModule.getFields()?.length;
         const loginData = {
             msid: globalSettingsModal.querySelector('#username').value
@@ -64,6 +66,19 @@ const Utils = (() => {
         return loginData;
     }
 
+    function _isValidCustomLogin(loginData) {
+        if (loginData.hasOwnProperty('custom') && !Object.keys(loginData.custom).length) {
+            const ret = _sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.EEmptyCustomLoginField, SharedownMessage.ELoginModule);
+
+            if (ret === 0) // ret: 0 - cancel button, 1 - ok
+                return false;
+
+            delete loginData.custom; // disable automatic login and proceed
+        }
+
+        return true;
+    }
+
     util.keytarSaveCredentials = async (globalSettingsModal, loginModule) => {
         const loginModuleVals = [];
 
@@ -86,18 +101,24 @@ const Utils = (() => {
         if (enableUserdataFold)
             return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, true, isDirect) );
 
-        const loginD = getLoginData(globalSettingsModal);
+        const loginD = _getLoginData(globalSettingsModal);
 
-        if (loginD.hasOwnProperty('custom') && !Object.keys(loginD.custom).length) {
-            const ret = _sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.EEmptyCustomLoginField, SharedownMessage.ELoginModule);
-
-            if (ret === 0) // ret: 0 - cancel button, 1 - ok
-                return null;
-
-            delete loginD.custom; // disable automatic login and proceed
-        }
+        if (!_isValidCustomLogin(loginD))
+            return null;
 
         return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, isDirect) );
+    }
+
+    util.getFolderURLsList = async (globalSettingsModal, folderURL, timeout, enableUserdataFold) => {
+        if (enableUserdataFold)
+            return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(folderURL, null, timeout, true) );
+
+        const loginD = _getLoginData(globalSettingsModal);
+
+        if (!_isValidCustomLogin(loginD))
+            return null;
+
+        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(folderURL, loginD, timeout, false) );
     }
 
     util.getOutputFolder = (globalFolder, videoFolder) => {

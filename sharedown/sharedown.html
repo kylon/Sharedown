@@ -79,9 +79,37 @@
                         <textarea class="form-control h-100 text-nowrap" id="vurlslist" placeholder="Paste URLs here, one URL per line"></textarea>
                     </div>
                 </div>
+                <div class="modal-footer d-inline-block">
+                    <div class="row">
+                        <div class="col-6">
+                            <button id="importfromfold" type="button" class="btn bg-sharepoint1" data-bs-toggle="modal" data-bs-target="#foldimportmodal">Import from folder</button>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button id="clearimporturlsbtn" type="button" class="btn bg-sharepoint1">Clear</button>
+                            <button id="importurlsbtn" type="button" class="btn bg-sharepoint1">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- import video urls from folder modal -->
+    <div id="foldimportmodal" class="modal fade" tabindex="-1" aria-labelledby="foldimportmodal" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import URLs from folder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="h-100">
+                        <textarea class="form-control h-100 text-nowrap" id="furlslist" placeholder="Paste folder URLs here, one URL per line"></textarea>
+                    </div>
+                </div>
                 <div class="modal-footer">
-                    <button id="clearimporturlsbtn" type="button" class="btn bg-sharepoint1">Clear</button>
-                    <button id="importurlsbtn" type="button" class="btn bg-sharepoint1">Add</button>
+                    <button id="clearimportfoldurlsbtn" type="button" class="btn bg-sharepoint1">Clear</button>
+                    <button id="importfoldurlsbtn" type="button" class="btn bg-sharepoint1">Import</button>
                 </div>
             </div>
         </div>

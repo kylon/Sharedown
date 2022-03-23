@@ -52,6 +52,7 @@ const SharedownAPI = (() => {
         keytarGetLogin: null,
         keytarRemoveLogin: null,
         runPuppeteerGetVideoData: null,
+        runPuppeteerGetURLListFromFolder: null,
         downloadWithFFmpeg: null,
         downloadWithYtdlp: null,
         stopDownload: null,
@@ -307,6 +308,14 @@ const SharedownAPI = (() => {
         return ret;
     }
 
+    function _makeFolderFilesApiURL(folderURL) {
+        const urlObj = new URL(folderURL);
+        const folderPath = urlObj.pathname;
+        const apiFiles = folderPath.replace(/\/sites\/([^\/]+)\/(.*)/, "/sites/$1/_api/web/GetFolderByServerRelativeUrl('$2')/Files");
+
+        return `${urlObj.origin}${apiFiles}`;
+    }
+
     async function _getFileName(donorURLObj) {
         const axios = require('axios');
         const resp = await axios.get(donorURLObj.searchParams.get('docid') + '&access_token=' + donorURLObj.searchParams.get('access_token'));
@@ -523,6 +532,79 @@ const SharedownAPI = (() => {
 
             await browser.close();
             return {m: videoUrl, t: title, c: cookies};
+
+        } catch (e) {
+            if (browser)
+                await browser.close();
+
+            api.showMessage('error', e.message, 'Puppeteer Error');
+            return null;
+        }
+    }
+
+    api.runPuppeteerGetURLListFromFolder = async (folder, loginData, tmout, enableUserdataFold) => {
+        const puppy = require('puppeteer');
+        const puppyTimeout = tmout * 1000;
+        let browser = null;
+
+        try {
+            browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
+
+            const page = (await browser.pages())[0];
+            const regex = new RegExp(/\/sites\/([^\/]+)/);
+            const match = folder.match(regex);
+            const ret = [];
+            let dom;
+            let xmlDoc;
+
+            if (match === null || match.length < 2)
+                throw new Error('Unknown folder URL format');
+
+            _initLogFile();
+            page.setDefaultTimeout(puppyTimeout);
+            page.setDefaultNavigationTimeout(puppyTimeout);
+
+            await page.goto(folder, {waitUntil: 'domcontentloaded'});
+            await _sharepointLogin(page, loginData);
+            await page.waitForFunction(`window.location.href.includes('${match[1]}')`);
+            await page.goto(_makeFolderFilesApiURL(folder), {waitUntil: 'domcontentloaded'});
+
+            dom = new DOMParser().parseFromString(await page.content(), 'text/html');
+
+            await browser.close();
+
+            if (dom.body.getElementsByTagName('pre').length === 0)
+                throw new Error('Unexpected API result');
+
+            xmlDoc = new DOMParser().parseFromString(dom.body.getElementsByTagName('pre')[0].textContent, 'text/xml');
+
+            for (const entry of xmlDoc.querySelectorAll('entry')) {
+                const category = entry.querySelector('category').getAttribute('term');
+                const relUrlElm = entry.querySelector('content').getElementsByTagName('d:ServerRelativeUrl');
+                let relUrl;
+                let fileExt;
+
+                if (category !== 'SP.File') {
+                    _writeLog(`runPuppeteerGetURLListFromFolder: Not a file (${category}), skip`);
+                    continue;
+
+                } else if (relUrlElm.length === 0) {
+                    _writeLog(`runPuppeteerGetURLListFromFolder: No URL for this entry`);
+                    continue;
+                }
+
+                relUrl = relUrlElm[0].textContent;
+                fileExt = _path.extname(relUrl);
+
+                if (fileExt !== '.mp4') {
+                    _writeLog(`runPuppeteerGetURLListFromFolder: unhandled file format: ${fileExt}`);
+                    continue;
+                }
+
+                ret.push(relUrl);
+            }
+
+            return ret;
 
         } catch (e) {
             if (browser)

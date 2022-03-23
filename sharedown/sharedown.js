@@ -40,6 +40,8 @@ const resources = {
     template: null,
     addVideoURLsList: null,
     addURLsModalInstance: null,
+    importURLsFoldList: null,
+    importURLsFoldModalInstance: null,
     videoSettModal: null,
     videoSettModalInstance: null,
     videoSettModalSaveMsg: null,
@@ -55,21 +57,23 @@ const resources = {
 };
 
 function initResources() {
-    resources.template                = document.getElementById('videoitem').content;
-    resources.addVideoURLsList        = document.getElementById('vurlslist');
-    resources.addURLsModalInstance    = new bootstrap.Modal(document.getElementById('urlsaddmodal'));
-    resources.videoSettModal          = document.getElementById('videosett');
-    resources.videoSettModalInstance  = new bootstrap.Modal(resources.videoSettModal);
-    resources.videoSettModalSaveMsg   = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
-    resources.globalSetModal          = document.getElementById('sharedownsett');
-    resources.globalSetDownldrOpts    = resources.globalSetModal.querySelectorAll('.downldr-opt');
-    resources.globalSetModalSaveMsg   = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
-    resources.downlStartBtn           = document.getElementById('start-dwnl');
-    resources.downlStopBtn            = document.getElementById('stop-dwnl');
-    resources.downQueElm              = document.getElementById('dque');
-    resources.queLenElm               = document.getElementById('quelen');
-    resources.completeCElm            = document.getElementById('completec');
-    resources.loadingScr              = document.getElementById('loadingscr');
+    resources.template                      = document.getElementById('videoitem').content;
+    resources.addVideoURLsList              = document.getElementById('vurlslist');
+    resources.addURLsModalInstance          = new bootstrap.Modal(document.getElementById('urlsaddmodal'));
+    resources.importURLsFoldList            = document.getElementById('furlslist');
+    resources.importURLsFoldModalInstance   = new bootstrap.Modal(document.getElementById('foldimportmodal'));
+    resources.videoSettModal                = document.getElementById('videosett');
+    resources.videoSettModalInstance        = new bootstrap.Modal(resources.videoSettModal);
+    resources.videoSettModalSaveMsg         = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
+    resources.globalSetModal                = document.getElementById('sharedownsett');
+    resources.globalSetDownldrOpts          = resources.globalSetModal.querySelectorAll('.downldr-opt');
+    resources.globalSetModalSaveMsg         = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
+    resources.downlStartBtn                 = document.getElementById('start-dwnl');
+    resources.downlStopBtn                  = document.getElementById('stop-dwnl');
+    resources.downQueElm                    = document.getElementById('dque');
+    resources.queLenElm                     = document.getElementById('quelen');
+    resources.completeCElm                  = document.getElementById('completec');
+    resources.loadingScr                    = document.getElementById('loadingscr');
 }
 
 function toggleLoadingScr() {
@@ -136,6 +140,68 @@ function addVideoURLs() {
     }
 
     exportAppState();
+    toggleLoadingScr();
+}
+
+async function importURLsFromFolder() {
+    const folderURLs = resources.importURLsFoldList.value.trim();
+
+    if (folderURLs === '')
+        return;
+
+    toggleLoadingScr();
+
+    const foldersList = folderURLs.split(/\r?\n/);
+    const noURLsFolds = [];
+    const invalid = [];
+    let urlsListStr = '';
+    let stop = false;
+
+    for (const folderURL of foldersList) {
+        if (!Utils.isValidURL(folderURL)) {
+            invalid.push(folderURL);
+            continue;
+        }
+
+        const urlList = await Utils.getFolderURLsList(resources.globalSetModal, folderURL, globalSettings.timeout, globalSettings.userdataFold);
+        const urlOrigin = new URL(folderURL).origin;
+
+        if (urlList === null) {
+            stop = true;
+            break;
+
+        } else if (urlList.length === 0) {
+            noURLsFolds.push(folderURL);
+            continue;
+        }
+
+        for (const url of urlList)
+            urlsListStr += `${urlOrigin}${url}\n`;
+    }
+
+    if (stop) {
+        toggleLoadingScr();
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EImportFromFolderCanceled, 'Sharedown');
+        return;
+    }
+
+    resources.addVideoURLsList.value += urlsListStr;
+    resources.importURLsFoldList.value = '';
+
+    if (invalid.length > 0 || noURLsFolds.length > 0) {
+        if (invalid.length > 0)
+            resources.importURLsFoldList.value = invalid.join('\n');
+
+        if (noURLsFolds.length > 0)
+            resources.importURLsFoldList.value += noURLsFolds.join('\n');
+
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidOrNoURLsInSPFolder, 'Sharedown');
+
+    } else {
+        resources.importURLsFoldModalInstance.hide();
+        resources.addURLsModalInstance.show();
+    }
+
     toggleLoadingScr();
 }
 
@@ -496,6 +562,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
+    document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { resources.importURLsFoldList.value = ''; });
+    document.getElementById('importfoldurlsbtn').addEventListener('click', () => importURLsFromFolder());
     resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
     resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.downlStartBtn.addEventListener('click', () => startDownload());
