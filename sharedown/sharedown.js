@@ -512,7 +512,7 @@ function stopDownload() {
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
     if (sharedownApi.isShowDlInfoSet())
-        videoElem.querySelector('span').click();
+        toggleDownloadStats(videoElem.querySelector('span'));
 
     resources.downloading = null;
     videoElem.querySelector('.progress-bar').style.width = '0%';
@@ -621,13 +621,13 @@ window.addEventListener('DownloadFail', (e) => {
     if (globalSettings.retryOnFail && resources.downloading instanceof video) {
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
+        if (sharedownApi.isShowDlInfoSet())
+            toggleDownloadStats(videoElem.querySelector('span'));
+
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         videoElem.querySelector('.progress-bar').style.width = '0%';
         unlockUIElemsForDownload();
         resources.downloading = null;
-
-        if (sharedownApi.isShowDlInfoSet())
-            videoElem.querySelector('span').click();
 
         startDownload();
 
@@ -641,6 +641,9 @@ window.addEventListener('DownloadSuccess', () => {
     const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
     const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
 
+    if (sharedownApi.isShowDlInfoSet())
+        toggleDownloadStats(videoElm.querySelector('span'));
+
     unlockUIElemsForDownload();
     videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
     videoElm.querySelector('.progress-bar').classList.add('w-100');
@@ -649,9 +652,6 @@ window.addEventListener('DownloadSuccess', () => {
     resources.completeCElm.textContent = parseInt(resources.completeCElm.textContent, 10) + 1;
     resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
     resources.downloading = null;
-
-    if (sharedownApi.isShowDlInfoSet())
-        videoElm.querySelector('span').click();
 
     exportAppState(true);
     startDownload(); // start next download, if any
