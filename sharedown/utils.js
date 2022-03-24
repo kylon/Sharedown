@@ -27,7 +27,6 @@ const SharedownMessage = (() => {
         EImportAppState: 'Could not import app state from disk',
         EDownloadFail: 'Download failed',
         EInvalidURLsInAddList: 'Some URLs were invalid and they were skipped',
-        EInvalidOrNoURLsInSPFolder: 'Some URLs were invalid or no URLs found in folder and they were skipped',
         EImportFromFolderCanceled: 'Import from folder canceled!',
         EInvalidID: 'Invalid video ID',
         EGeneric: 'Sharedown error',

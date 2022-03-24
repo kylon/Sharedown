@@ -153,51 +153,34 @@ async function importURLsFromFolder() {
 
     const foldersList = folderURLs.split(/\r?\n/);
     const includeSubFolds = document.getElementById('importfoldsubfolds').checked;
-    const noURLsFolds = [];
     const invalid = [];
-    let urlsListStr = '';
-    let stop = false;
+    let urlList;
 
     for (const folderURL of foldersList) {
-        if (!Utils.isValidURL(folderURL)) {
+        if (!Utils.isValidURL(folderURL))
             invalid.push(folderURL);
-            continue;
-        }
-
-        const urlList = await Utils.getFolderURLsList(resources.globalSetModal, folderURL, includeSubFolds,
-                                                        globalSettings.timeout, globalSettings.userdataFold);
-        const urlOrigin = new URL(folderURL).origin;
-
-        if (urlList === null) {
-            stop = true;
-            break;
-
-        } else if (urlList.length === 0) {
-            noURLsFolds.push(folderURL);
-            continue;
-        }
-
-        for (const url of urlList)
-            urlsListStr += `${urlOrigin}${url}\n`;
     }
 
-    if (stop) {
+    for (const inv of invalid)
+        foldersList.splice(foldersList.indexOf(inv), 1);
+
+    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds,
+                                                    globalSettings.timeout, globalSettings.userdataFold);
+
+    if (urlList === null || urlList.length === 0) {
         toggleLoadingScr();
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EImportFromFolderCanceled, 'Sharedown');
         return;
     }
 
-    resources.addVideoURLsList.value += urlsListStr;
+    for (const url of urlList)
+        resources.addVideoURLsList.value += `${url}\n`;
+
     resources.importURLsFoldList.value = '';
 
-    if (invalid.length > 0 || noURLsFolds.length > 0) {
-        if (invalid.length > 0)
-            resources.importURLsFoldList.value = invalid.join('\n');
+    if (invalid.length > 0) {
+        resources.importURLsFoldList.value = invalid.join('\n');
 
-        if (noURLsFolds.length > 0)
-            resources.importURLsFoldList.value += noURLsFolds.join('\n');
-
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidOrNoURLsInSPFolder, 'Sharedown');
+        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURLsInAddList, 'Sharedown');
 
     } else {
         resources.importURLsFoldModalInstance.hide();

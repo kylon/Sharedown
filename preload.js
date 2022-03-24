@@ -343,6 +343,7 @@ const SharedownAPI = (() => {
     }
 
     async function _getVideoURLsInFold(vURLsList, puppyPage, pageURL, includeSubFolds) {
+        const urlOrigin = new URL(pageURL).origin;
         let pageCont;
         let xmlDoc;
         let pre;
@@ -386,7 +387,7 @@ const SharedownAPI = (() => {
                 continue;
             }
 
-            vURLsList.list.push(relUrl);
+            vURLsList.list.push(`${urlOrigin}${relUrl}`);
         }
     }
 
@@ -616,7 +617,7 @@ const SharedownAPI = (() => {
         }
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folderURL, includeSubFolds, loginData, tmout, enableUserdataFold) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, loginData, tmout, enableUserdataFold) => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
@@ -624,26 +625,29 @@ const SharedownAPI = (() => {
         try {
             browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
 
-            const urlObj = new URL(folderURL);
             const page = (await browser.pages())[0];
             const regex = new RegExp(/\/sites\/([^\/]+)/);
-            const match = folderURL.match(regex);
+            const match = folderURLsList[0].match(regex);
             const ret = {list: []};
-
-            if (match === null || match.length < 2) {
-                _writeLog(`runPuppeteerGetURLListFromFolder: Unknown folder URL format:\n${folderURL}`);
-                throw new Error(`Unknown folder URL format`);
-            }
 
             _initLogFile();
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
-            await page.goto(folderURL, {waitUntil: 'domcontentloaded'});
+            if (match === null || match.length < 2) {
+                _writeLog(`runPuppeteerGetURLListFromFolder: Unknown URL format:\n${folderURLsList[0]}`);
+                throw new Error(`Unknown folder URL format`);
+            }
+
+            await page.goto(folderURLsList[0], {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData);
             await page.waitForFunction(`window.location.href.includes('${match[1]}')`);
 
-            await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
+            for (const folderURL of folderURLsList) {
+                const urlObj = new URL(folderURL);
+
+                await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
+            }
 
             await browser.close();
 
