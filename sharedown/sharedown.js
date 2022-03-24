@@ -203,7 +203,7 @@ function addVideoToUI(vid) {
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
     node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
-    node.querySelector('.copy-btn').addEventListener('click', e => sharedownApi.copyURLToClipboard(e.currentTarget.parentElement.querySelector('.progtext').textContent));
+    node.querySelector('.copy-btn').addEventListener('click', e => sharedownApi.copyURLToClipboard(getVideoURLFromUIItem(e.currentTarget.parentElement)));
 
     for (const n of children) {
         if (!n.querySelector('.progress-bar').classList.contains('w-100'))
@@ -239,6 +239,13 @@ function toggleDownloadStats(elem) {
         sharedownApi.setShowDlInfo(false);
         elem.textContent = origText === '' || origText === null ? 'Error: no text':origText;
     }
+}
+
+function getVideoURLFromUIItem(videoItem) {
+    if (sharedownApi.isShowDlInfoSet())
+        return videoItem.querySelector('.progtext').getAttribute('data-original-text');
+
+    return videoItem.querySelector('.progtext').textContent;
 }
 
 function removeVideoFromQue(removeBtn) {
