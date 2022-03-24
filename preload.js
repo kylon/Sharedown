@@ -73,7 +73,7 @@ const SharedownAPI = (() => {
         openLogsFolder: null,
         openFolder: null,
         deleteUserdataFold: null,
-        md5sum: null,
+        genID: null,
         openLink: null,
         quitApp: null,
     };
@@ -962,10 +962,10 @@ const SharedownAPI = (() => {
         _rmSync(_chromeUserdataPath);
     }
 
-    api.md5sum = s => {
-        const md5 = require('md5');
+    api.genID = () => {
+        const crypto = require('crypto');
 
-        return md5(s);
+        return crypto.randomBytes(5).toString("hex");
     }
 
     api.openLink = async l => {

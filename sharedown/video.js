@@ -38,6 +38,6 @@ class video {
     }
 
     #generateId() {
-        this.id = window.sharedown.md5sum(this.url + Date.now()).substring(0, 10);
+        this.id = window.sharedown.genID();
     }
 }

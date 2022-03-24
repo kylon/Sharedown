@@ -462,7 +462,7 @@ async function downloadVideo(videoElem) {
             return rej();
 
         if (vdata.t === '') // unnamed video ??, give it a name and try to download
-            vdata.t = 'sharedownVideo' + sharedownApi.md5sum(Date.now().toString().substring(5));
+            vdata.t = 'sharedownVideo' + sharedownApi.genID();
 
         // generate output file path (apply user settings, if any)
         resources.downloadingFPath = sharedownApi.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
