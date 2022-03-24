@@ -152,6 +152,7 @@ async function importURLsFromFolder() {
     toggleLoadingScr();
 
     const foldersList = folderURLs.split(/\r?\n/);
+    const includeSubFolds = document.getElementById('importfoldsubfolds').checked;
     const noURLsFolds = [];
     const invalid = [];
     let urlsListStr = '';
@@ -163,7 +164,8 @@ async function importURLsFromFolder() {
             continue;
         }
 
-        const urlList = await Utils.getFolderURLsList(resources.globalSetModal, folderURL, globalSettings.timeout, globalSettings.userdataFold);
+        const urlList = await Utils.getFolderURLsList(resources.globalSetModal, folderURL, includeSubFolds,
+                                                        globalSettings.timeout, globalSettings.userdataFold);
         const urlOrigin = new URL(folderURL).origin;
 
         if (urlList === null) {

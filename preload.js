@@ -308,12 +308,86 @@ const SharedownAPI = (() => {
         return ret;
     }
 
-    function _makeFolderFilesApiURL(folderURL) {
+    function _makeFolderApiURL(folderURL, itemType) {
         const urlObj = new URL(folderURL);
         const folderPath = urlObj.pathname;
-        const apiFiles = folderPath.replace(/\/sites\/([^\/]+)\/(.*)/, "/sites/$1/_api/web/GetFolderByServerRelativeUrl('$2')/Files");
+        const apiURL = folderPath.replace(/\/sites\/([^\/]+)\/(.*)/, `/sites/$1/_api/web/GetFolderByServerRelativeUrl('$2')/${itemType}`);
 
-        return `${urlObj.origin}${apiFiles}`;
+        return `${urlObj.origin}${apiURL}`;
+    }
+
+    function _getFoldersListInFolder(pageContent) {
+        const pre = new DOMParser().parseFromString(pageContent, 'text/html').body.getElementsByTagName('pre');
+        const ret = [];
+        let xmlDoc;
+
+        if (pre.length === 0) {
+            _writeLog(`_getFoldersListInFolder: Unexpected API result:\n${pageContent}`);
+            return [];
+        }
+
+        xmlDoc = new DOMParser().parseFromString(pre[0].textContent, 'text/xml');
+
+        for (const entry of xmlDoc.querySelectorAll('entry')) {
+            const foldNameElm = entry.querySelector('content').getElementsByTagName('d:Name');
+
+            if (foldNameElm.length === 0) {
+                _writeLog(`_getFoldersListInFolder: No name found for folder item:\n${entry.innerHTML}`);
+                continue;
+            }
+
+            ret.push(foldNameElm[0].textContent);
+        }
+
+        return ret;
+    }
+
+    async function _getVideoURLsInFold(vURLsList, puppyPage, pageURL, includeSubFolds) {
+        let pageCont;
+        let xmlDoc;
+        let pre;
+
+        if (includeSubFolds) {
+            await puppyPage.goto(_makeFolderApiURL(pageURL, 'Folders'), {waitUntil: 'domcontentloaded'});
+
+            const folders = _getFoldersListInFolder(await puppyPage.content());
+
+            for (const folder of folders)
+                await _getVideoURLsInFold(vURLsList, puppyPage, `${pageURL}/${folder}`, includeSubFolds);
+        }
+
+        await puppyPage.goto(_makeFolderApiURL(pageURL, 'Files'), {waitUntil: 'domcontentloaded'});
+
+        pageCont = await puppyPage.content();
+        pre = new DOMParser().parseFromString(pageCont, 'text/html').body.getElementsByTagName('pre');
+
+        if (pre.length === 0) {
+            _writeLog(`_getVideoURLsInFold: Unexpected API result:\n${pageCont}`);
+            throw new Error('Unexpected API result');
+        }
+
+        xmlDoc = new DOMParser().parseFromString(pre[0].textContent, 'text/xml');
+
+        for (const entry of xmlDoc.querySelectorAll('entry')) {
+            const relUrlElm = entry.querySelector('content').getElementsByTagName('d:ServerRelativeUrl');
+            let relUrl;
+            let fileExt;
+
+            if (relUrlElm.length === 0) {
+                _writeLog(`_getVideoURLsInFold: No URL for this entry:\n${entry.innerHTML}`);
+                continue;
+            }
+
+            relUrl = relUrlElm[0].textContent;
+            fileExt = _path.extname(relUrl);
+
+            if (fileExt !== '.mp4') {
+                _writeLog(`_getVideoURLsInFold: unhandled file format: ${fileExt}`);
+                continue;
+            }
+
+            vURLsList.list.push(relUrl);
+        }
     }
 
     async function _getFileName(donorURLObj) {
@@ -542,7 +616,7 @@ const SharedownAPI = (() => {
         }
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folder, loginData, tmout, enableUserdataFold) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURL, includeSubFolds, loginData, tmout, enableUserdataFold) => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
@@ -550,61 +624,30 @@ const SharedownAPI = (() => {
         try {
             browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
 
+            const urlObj = new URL(folderURL);
             const page = (await browser.pages())[0];
             const regex = new RegExp(/\/sites\/([^\/]+)/);
-            const match = folder.match(regex);
-            const ret = [];
-            let dom;
-            let xmlDoc;
+            const match = folderURL.match(regex);
+            const ret = {list: []};
 
-            if (match === null || match.length < 2)
-                throw new Error('Unknown folder URL format');
+            if (match === null || match.length < 2) {
+                _writeLog(`runPuppeteerGetURLListFromFolder: Unknown folder URL format:\n${folderURL}`);
+                throw new Error(`Unknown folder URL format`);
+            }
 
             _initLogFile();
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
-            await page.goto(folder, {waitUntil: 'domcontentloaded'});
+            await page.goto(folderURL, {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData);
             await page.waitForFunction(`window.location.href.includes('${match[1]}')`);
-            await page.goto(_makeFolderFilesApiURL(folder), {waitUntil: 'domcontentloaded'});
 
-            dom = new DOMParser().parseFromString(await page.content(), 'text/html');
+            await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
 
             await browser.close();
 
-            if (dom.body.getElementsByTagName('pre').length === 0)
-                throw new Error('Unexpected API result');
-
-            xmlDoc = new DOMParser().parseFromString(dom.body.getElementsByTagName('pre')[0].textContent, 'text/xml');
-
-            for (const entry of xmlDoc.querySelectorAll('entry')) {
-                const category = entry.querySelector('category').getAttribute('term');
-                const relUrlElm = entry.querySelector('content').getElementsByTagName('d:ServerRelativeUrl');
-                let relUrl;
-                let fileExt;
-
-                if (category !== 'SP.File') {
-                    _writeLog(`runPuppeteerGetURLListFromFolder: Not a file (${category}), skip`);
-                    continue;
-
-                } else if (relUrlElm.length === 0) {
-                    _writeLog(`runPuppeteerGetURLListFromFolder: No URL for this entry`);
-                    continue;
-                }
-
-                relUrl = relUrlElm[0].textContent;
-                fileExt = _path.extname(relUrl);
-
-                if (fileExt !== '.mp4') {
-                    _writeLog(`runPuppeteerGetURLListFromFolder: unhandled file format: ${fileExt}`);
-                    continue;
-                }
-
-                ret.push(relUrl);
-            }
-
-            return ret;
+            return ret.list;
 
         } catch (e) {
             if (browser)

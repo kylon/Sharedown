@@ -107,9 +107,19 @@
                         <textarea class="form-control h-100 text-nowrap" id="furlslist" placeholder="Paste folder URLs here, one URL per line"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="clearimportfoldurlsbtn" type="button" class="btn bg-sharepoint1">Clear</button>
-                    <button id="importfoldurlsbtn" type="button" class="btn bg-sharepoint1">Import</button>
+                <div class="modal-footer d-inline-block">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="importfoldsubfolds">
+                                <label class="form-check-label" for="importfoldsubfolds">Include subfolders</label>
+                              </div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button id="clearimportfoldurlsbtn" type="button" class="btn bg-sharepoint1">Clear</button>
+                            <button id="importfoldurlsbtn" type="button" class="btn bg-sharepoint1">Import</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
