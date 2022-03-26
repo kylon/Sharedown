@@ -664,7 +664,7 @@ const SharedownAPI = (() => {
 
     api.downloadWithFFmpeg = async (videoData, video, outFile) => {
         try {
-            const { FFmpegCommand, FFmpegInput, FFmpegOutput } = require('@tedconf/fessonia')();
+            const { FFmpegCommand, FFmpegInput, FFmpegOutput } = require('fessonia')();
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
             const videoProgBarTx = videoProgBar.parentNode.querySelector('.progtext');
             const ffmpegInput = new FFmpegInput(videoData.m);
