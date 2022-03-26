@@ -58,6 +58,7 @@
     "electron-builder": "^22.14.13"
   },
   "dependencies": {
+    "@tedconf/fessonia": "^2.2.1",
     "axios": "^0.26.1",
     "bootstrap": "5.1.3",
     "clipboardy": "2.3.0",
