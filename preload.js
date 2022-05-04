@@ -370,7 +370,10 @@ const SharedownAPI = (() => {
         xmlDoc = new DOMParser().parseFromString(pre[0].textContent, 'text/xml');
 
         for (const entry of xmlDoc.querySelectorAll('entry')) {
-            const relUrlElm = entry.querySelector('content').getElementsByTagName('d:ServerRelativeUrl');
+            const entryContent = entry.querySelector('content');
+            const relUrlElm = entryContent.getElementsByTagName('d:ServerRelativeUrl');
+            const timeCreatedElm = entryContent.getElementsByTagName('d:TimeCreated');
+            const timeLastModfElm = entryContent.getElementsByTagName('d:TimeLastModified');
             let relUrl;
             let fileExt;
 
@@ -387,7 +390,11 @@ const SharedownAPI = (() => {
                 continue;
             }
 
-            vURLsList.list.push(`${urlOrigin}${relUrl}`);
+            vURLsList.list.push({
+                url: `${urlOrigin}${relUrl}`,
+                created: timeCreatedElm.length === 0 ? 0 : new Date(timeCreatedElm[0].textContent).getTime(),
+                lastModf: timeLastModfElm.length === 0 ? 0 : new Date(timeLastModfElm[0].textContent).getTime()
+            });
         }
     }
 
@@ -478,6 +485,36 @@ const SharedownAPI = (() => {
     function _unlinkSync(path) {
         if (_fs.existsSync(path))
             _fs.unlinkSync(path);
+    }
+
+    function _sortURLsFromFolder(vURLsList, sortType) {
+        const sorted = [];
+        const ret = [];
+
+        if (sortType !== 0) {
+            for (const vObj of vURLsList) {
+                let idx = 0;
+
+                for (const sObj of sorted) {
+                    if ((sortType === 1 && vObj.created < sObj.created) ||
+                            (sortType === 2 && vObj.lastModf < sObj.lastModf) ||
+                            (sortType === 3 && vObj.url.normalize() < sObj.url.normalize()))
+                        break;
+
+                    ++idx;
+                }
+
+                sorted.splice(idx, 0, vObj);
+            }
+        } else {
+            sorted = vURLsList;
+        }
+
+
+        for (const svObj of sorted)
+            ret.push(svObj.url);
+
+        return ret;
     }
 
     api.hasFFmpeg = () => {
@@ -617,7 +654,7 @@ const SharedownAPI = (() => {
         }
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, loginData, tmout, enableUserdataFold) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, tmout, enableUserdataFold) => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
@@ -651,7 +688,7 @@ const SharedownAPI = (() => {
 
             await browser.close();
 
-            return ret.list;
+            return _sortURLsFromFolder(ret.list, sortType);
 
         } catch (e) {
             if (browser)

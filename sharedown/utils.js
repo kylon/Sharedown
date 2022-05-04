@@ -108,16 +108,16 @@ const Utils = (() => {
         return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, isDirect) );
     }
 
-    util.getFolderURLsList = async (globalSettingsModal, folderURL, includeSubFolds, timeout, enableUserdataFold) => {
+    util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, timeout, enableUserdataFold) => {
         if (enableUserdataFold)
-            return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(folderURL, includeSubFolds, null, timeout, true) );
+            return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, null, timeout, true) );
 
         const loginD = _getLoginData(globalSettingsModal);
 
         if (!_isValidCustomLogin(loginD))
             return null;
 
-        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(folderURL, includeSubFolds, loginD, timeout, false) );
+        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, loginD, timeout, false) );
     }
 
     util.getOutputFolder = (globalFolder, videoFolder) => {
