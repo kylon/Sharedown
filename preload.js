@@ -621,7 +621,7 @@ const SharedownAPI = (() => {
         await kt.deletePassword('sharedown', 'loginmodule');
     }
 
-    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, isDirect = false) => {
+    api.runPuppeteerGetVideoData = async (video, loginData, tmout, pLoopTmout, enableUserdataFold, isDirect = false) => {
         const knownResponses = [
             'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
             'SP.List.GetListDataAsStream?listFullUrl'
@@ -652,7 +652,7 @@ const SharedownAPI = (() => {
                 try {
                     donorResponse = await page.waitForResponse(response => {
                         return response.url().includes(type);
-                    }, {timeout: 9000});
+                    }, {timeout: pLoopTmout});
 
                     donorRespData = await donorResponse.json();
 

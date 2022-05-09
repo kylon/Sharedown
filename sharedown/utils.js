@@ -96,16 +96,16 @@ const Utils = (() => {
         await _sharedownApi.keytarRemoveLogin();
     }
 
-    util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, isDirect) => {
+    util.getVideoData = async (globalSettingsModal, video, timeout, pLoopTimeout, enableUserdataFold, isDirect) => {
         if (enableUserdataFold)
-            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, true, isDirect) );
+            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, pLoopTimeout, true, isDirect) );
 
         const loginD = _getLoginData(globalSettingsModal);
 
         if (!_isValidCustomLogin(loginD))
             return null;
 
-        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, isDirect) );
+        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, pLoopTimeout, false, isDirect) );
     }
 
     util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, timeout, enableUserdataFold) => {
