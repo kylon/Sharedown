@@ -182,6 +182,40 @@ const SharedownAPI = (() => {
             await _loginModule.doLogin(puppeteerPage, logData.custom);
     }
 
+    async function _getSpItmUrlFromApiRequest(page) {
+        const urlObj = new URL(page.url());
+        const pathNameAr = urlObj.pathname.split('/');
+        const rootFoldParam = urlObj.searchParams.get('id');
+        let resp = null;
+        let apiUrl = '';
+        let a1 = '';
+
+        if (pathNameAr.length === 0) {
+            _writeLog(`_getSpItmUrlFromApiRequest: empty pathNameAr: ${urlObj.pathname}`);
+            return '';
+
+        } else if (pathNameAr.length < 6) {
+            _writeLog(`_getSpItmUrlFromApiRequest: pathName too short: ${urlObj.pathname}`);
+            return '';
+        }
+
+        pathNameAr.pop();
+        pathNameAr.pop();
+
+        a1 = pathNameAr.join('/');
+        apiUrl = `${urlObj.origin}/sites/${pathNameAr[2]}/_api/web/GetList(@a1)/RenderListDataAsStream?@a1='${a1}'&RootFolder=${rootFoldParam}`;
+
+        _writeLog(`_getSpItmUrlFromApiRequest: apiUrl: ${apiUrl}`);
+
+        resp = await page.evaluate(async (url) => {
+            return await fetch(url, {method:'post'}).then(res => res.json());
+        }, apiUrl);
+
+        _writeLog("_getSpItmUrlFromApiRequest: fetch data:\n" + JSON.stringify(resp));
+
+        return resp['CurrentFolderSpItemUrl'] ?? '';
+    }
+
     function _getDataFromResponseListDataRow(rows, vID) {
         if (!rows || !rows.length) {
             _writeLog('_getDataFromResponseListDataRow: No rows: ' + (rows?.length ?? null));
@@ -199,7 +233,7 @@ const SharedownAPI = (() => {
         return null;
     }
 
-    function _getDataFromResponse(donorRespData, vID) {
+    async function _getDataFromResponse(donorRespData, puppyPage, vID) {
         const ret = {
             'mediaBaseUrl': donorRespData.ListSchema['.mediaBaseUrl'] ?? '',
             'fileType': 'mp4', // should be fine
@@ -207,19 +241,28 @@ const SharedownAPI = (() => {
             'spItmUrl': donorRespData.ListData['CurrentFolderSpItemUrl'] ?? '',
             'token': donorRespData.ListSchema['.driveAccessToken'] ?? '',
         };
+        let altRow;
 
         if (ret.spItmUrl !== '')
             return ret;
 
         _writeLog(`_getDataFromResponse: no spItmUrl\nvID: ${vID}`);
 
-        const rowData = _getDataFromResponseListDataRow(donorRespData.ListData['Row'], vID);
-        if (rowData === null)
-            return ret;
+        altRow = _getDataFromResponseListDataRow(donorRespData.ListData['Row'], vID);
+        if (altRow !== null) {
+            ret.spItmUrl = altRow['.spItemUrl'] ?? '';
 
-        ret.spItmUrl = rowData['.spItemUrl'] ?? '';
+            if (ret.spItmUrl !== '')
+                return ret;
+        }
 
-        _writeLog(`_getDataFromResponse: row spItemUrl: ${ret.spItmUrl}`);
+        _writeLog(`_getDataFromResponse: no spItmUrl in altRow:\n${altRow}`);
+
+        ret.spItmUrl = await _getSpItmUrlFromApiRequest(puppyPage);
+
+        if (ret.spItmUrl === '')
+            _writeLog("_getDataFromResponse: no spItmUrl from api request");
+
         return ret;
     }
 
@@ -243,16 +286,16 @@ const SharedownAPI = (() => {
         return ret;
     }
 
-    function _makeVideoManifestFetchURL(donorRespData, vID) {
+    async function _makeVideoManifestFetchURL(donorRespData, puppyPage, vID) {
         const placeholders = [
             '{.mediaBaseUrl}', '{.fileType}', '{.callerStack}', '{.spItemUrl}', '{.driveAccessToken}',
         ];
-        const placeholderData = Object.values(_getDataFromResponse(donorRespData, vID));
+        const placeholderData = Object.values(await _getDataFromResponse(donorRespData, puppyPage, vID));
         let manifestUrlSchema = donorRespData.ListSchema[".videoManifestUrl"];
         let hasErr = false;
         let urlObj;
 
-        _writeLog("_makeVideoManifestFetchURL: manifest template: "+manifestUrlSchema);
+        _writeLog(`_makeVideoManifestFetchURL: manifest template: ${manifestUrlSchema}`);
 
         for (let i=0,l=placeholders.length; i<l; ++i) {
             if (placeholderData[i] === '') {
@@ -606,20 +649,31 @@ const SharedownAPI = (() => {
             await _sharepointLogin(page, loginData);
 
             for (const type of knownResponses) {
-                donorResponse = await page.waitForResponse(response => {
-                    return response.url().includes(type);
-                }, {timeout: puppyTimeout});
-                donorRespData = await donorResponse.json();
+                try {
+                    donorResponse = await page.waitForResponse(response => {
+                        return response.url().includes(type);
+                    }, {timeout: 9000});
 
-                const vID = (new URL(page.url())).searchParams.get('id')?.trim();
+                    donorRespData = await donorResponse.json();
 
-                ret = isDirect ? _makeDirectUrl(donorRespData, vID) : _makeVideoManifestFetchURL(donorRespData, vID);
-                if (!ret.err)
-                    break;
+                    const vID = (new URL(page.url())).searchParams.get('id')?.trim();
 
-                _writeLog(`no video data found in ${type}`);
+                    ret = isDirect ? _makeDirectUrl(donorRespData, vID) : (await _makeVideoManifestFetchURL(donorRespData, page, vID));
+                    if (!ret.err)
+                        break;
+
+                    _writeLog(`no video data found in ${type}`);
+
+                } catch (e) {
+                    donorRespData = null;
+                    _writeLog(`No response of type '${type}' found`);
+                }
+
                 await page.reload({ waitUntil: 'domcontentloaded'});
             }
+
+            if (donorRespData === null)
+                throw new Error("Unable to find a valid donor response!");
 
             if (isDirect) {
                 const linkAr = ret.link.split('/');
