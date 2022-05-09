@@ -805,7 +805,7 @@ const SharedownAPI = (() => {
             videoProgBar.setAttribute('data-tmp-perc', '0');
             _stoppingProcess = false;
 
-            const ytdlp = spawn('yt-dlp', args);
+            const ytdlp = spawn('yt-dlp', args, {detached: true});
 
             ytdlp.stdout.on('data', (data) => {
                 if (_stoppingProcess)
