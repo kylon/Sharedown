@@ -24,8 +24,8 @@ if (process.platform === 'darwin')
 
 const SharedownAPI = (() => {
     const _LoginModule = require('./sharedown/loginModules/loginModule');
-    const _path = require('path');
-    const _fs = require('fs');
+    const _path = require('node:path');
+    const _fs = require('node:fs');
     const _loginModule = new _LoginModule();
     const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
@@ -510,7 +510,6 @@ const SharedownAPI = (() => {
             sorted = vURLsList;
         }
 
-
         for (const svObj of sorted)
             ret.push(svObj.url);
 
@@ -518,7 +517,7 @@ const SharedownAPI = (() => {
     }
 
     api.hasFFmpeg = () => {
-        const proc = require('child_process');
+        const proc = require('node:child_process');
 
         try {
             proc.execSync('ffmpeg -version').toString();
@@ -530,7 +529,7 @@ const SharedownAPI = (() => {
     }
 
     api.hasYTdlp = () => {
-        const proc = require('child_process');
+        const proc = require('node:child_process');
 
         try {
             proc.execSync('yt-dlp -help').toString();
@@ -773,7 +772,7 @@ const SharedownAPI = (() => {
     }
 
     api.downloadWithYtdlp = (videoData, video, outFile, settings) => {
-        const { spawn } = require('child_process');
+        const { spawn } = require('node:child_process');
 
         try {
             const videoProgBar = document.querySelector(`[data-video-id="${video.id}"]`).querySelector('.progress-bar');
@@ -1000,7 +999,7 @@ const SharedownAPI = (() => {
     }
 
     api.genID = () => {
-        const crypto = require('crypto');
+        const crypto = require('node:crypto');
 
         return crypto.randomBytes(5).toString("hex");
     }

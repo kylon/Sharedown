@@ -57,7 +57,7 @@ const menuTemplate = [
         role: 'about'
     }
 ];
-const path = require('path');
+const path = require('node:path');
 let mainW = null;
 
 if (isDarwin) // about must be first on macOS
