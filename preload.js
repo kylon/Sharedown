@@ -38,6 +38,8 @@ const SharedownAPI = (() => {
     let _runningProcess = null;
     let _stoppingProcess = false;
     let _enableLogs = false;
+    let _shLogFd = -1;
+    let _ytdlpLogFd = -1;
 
     const api = {
         sharedownLoginModule: {
@@ -84,6 +86,9 @@ const SharedownAPI = (() => {
         if (!_fs.existsSync(_logsFolderPath))
             _fs.mkdirSync(_logsFolderPath);
 
+        _shLogFd = -1;
+        _ytdlpLogFd = -1;
+
         for (const logf of logsP) {
             const old = `${logf}.old`;
 
@@ -98,18 +103,27 @@ const SharedownAPI = (() => {
         if (!_enableLogs)
             return;
 
-        let logf;
+        let logFd;
 
         switch (type) {
             case 'ytdlp':
-                logf = _ytdlpLogFilePath;
+                if (_ytdlpLogFd === -1)
+                    _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
+
+                logFd = _ytdlpLogFd;
                 break;
             default:
-                logf = _logFilePath;
+                if (_shLogFd === -1)
+                    _shLogFd = _fs.openSync(_logFilePath, 'a');
+
+                logFd = _shLogFd;
                 break;
         }
 
-        _fs.appendFileSync(logf, '\n'+msg+'\n\n');
+        _fs.writeFile(logFd, '\n'+msg+'\n', (err) => {
+            if (err)
+                console.log(`_writeLog: ${err.message}`);
+        });
     }
 
     function _hideToken(token, str) {
@@ -799,6 +813,8 @@ const SharedownAPI = (() => {
                 }
 
                 window.dispatchEvent(evt);
+                _fs.fsyncSync(_shLogFd);
+                _fs.closeSync(_shLogFd);
             });
 
             ffmpegCmd.on('error', (err) => {
@@ -815,12 +831,19 @@ const SharedownAPI = (() => {
                     _writeLog("ffmpegCmd.on(error):\n"+err.log);
                     window.dispatchEvent(failEvt);
                 }
+
+                _fs.fsyncSync(_shLogFd);
+                _fs.closeSync(_shLogFd);
             });
 
             _runningProcess = ffmpegCmd.spawn();
             return true;
 
-        } catch (e) { api.showMessage('error', e.message, 'FFmpeg'); }
+        } catch (e) {
+            api.showMessage('error', e.message, 'FFmpeg');
+            _fs.fsyncSync(_shLogFd);
+            _fs.closeSync(_shLogFd);
+        }
 
         return false;
     }
@@ -859,7 +882,7 @@ const SharedownAPI = (() => {
             videoProgBar.setAttribute('data-tmp-perc', '0');
             _stoppingProcess = false;
 
-            const ytdlp = spawn('yt-dlp', args, {detached: true});
+            const ytdlp = spawn('yt-dlp', args);
 
             ytdlp.stdout.on('data', (data) => {
                 if (_stoppingProcess)
@@ -895,7 +918,7 @@ const SharedownAPI = (() => {
                     let files;
 
                     if (code !== 0) {
-                        videoProgBar.style.width = '0%'; // windows workaround
+                        videoProgBar.style.width = '0%';
 
                         if (isDirect)
                             _unlinkSync(outFile);
@@ -937,6 +960,10 @@ const SharedownAPI = (() => {
 
                     _writeLog(`YT-dlp: download failed:\n${e.message}`);
                     window.dispatchEvent(failEvt);
+
+                } finally {
+                    _fs.fsyncSync(_ytdlpLogFd);
+                    _fs.closeSync(_ytdlpLogFd);
                 }
             });
 
@@ -945,6 +972,8 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'YT-dlp');
+            _fs.fsyncSync(_ytdlpLogFd);
+            _fs.closeSync(_ytdlpLogFd);
         }
 
         return false;
