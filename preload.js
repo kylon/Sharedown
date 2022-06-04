@@ -81,6 +81,9 @@ const SharedownAPI = (() => {
     };
 
     function _initLogFile() {
+        if (!_enableLogs)
+            return;
+
         const logsP = [_logFilePath, _ytdlpLogFilePath];
 
         if (!_fs.existsSync(_logsFolderPath))
@@ -124,6 +127,22 @@ const SharedownAPI = (() => {
             if (err)
                 console.log(`_writeLog: ${err.message}`);
         });
+    }
+
+    function _closeShLogFD() {
+        if (!_enableLogs)
+            return;
+
+        _fs.fsyncSync(_shLogFd);
+        _fs.closeSync(_shLogFd);
+    }
+
+    function _closeYtDlpLogFD() {
+        if (!_enableLogs)
+            return;
+
+        _fs.fsyncSync(_ytdlpLogFd);
+        _fs.closeSync(_ytdlpLogFd);
     }
 
     function _hideToken(token, str) {
@@ -813,8 +832,7 @@ const SharedownAPI = (() => {
                 }
 
                 window.dispatchEvent(evt);
-                _fs.fsyncSync(_shLogFd);
-                _fs.closeSync(_shLogFd);
+                _closeShLogFD();
             });
 
             ffmpegCmd.on('error', (err) => {
@@ -832,8 +850,7 @@ const SharedownAPI = (() => {
                     window.dispatchEvent(failEvt);
                 }
 
-                _fs.fsyncSync(_shLogFd);
-                _fs.closeSync(_shLogFd);
+                _closeShLogFD();
             });
 
             _runningProcess = ffmpegCmd.spawn();
@@ -841,8 +858,7 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'FFmpeg');
-            _fs.fsyncSync(_shLogFd);
-            _fs.closeSync(_shLogFd);
+            _closeShLogFD();
         }
 
         return false;
@@ -962,10 +978,8 @@ const SharedownAPI = (() => {
                     window.dispatchEvent(failEvt);
 
                 } finally {
-                    _fs.fsyncSync(_shLogFd);
-                    _fs.fsyncSync(_ytdlpLogFd);
-                    _fs.closeSync(_ytdlpLogFd);
-                    _fs.closeSync(_shLogFd);
+                    _closeShLogFD();
+                    _closeYtDlpLogFD();
                 }
             });
 
@@ -974,10 +988,8 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'YT-dlp');
-            _fs.fsyncSync(_shLogFd);
-            _fs.fsyncSync(_ytdlpLogFd);
-            _fs.closeSync(_ytdlpLogFd);
-            _fs.closeSync(_shLogFd);
+            _closeShLogFD();
+            _closeYtDlpLogFD();
         }
 
         return false;
