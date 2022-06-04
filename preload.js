@@ -962,8 +962,10 @@ const SharedownAPI = (() => {
                     window.dispatchEvent(failEvt);
 
                 } finally {
+                    _fs.fsyncSync(_shLogFd);
                     _fs.fsyncSync(_ytdlpLogFd);
                     _fs.closeSync(_ytdlpLogFd);
+                    _fs.closeSync(_shLogFd);
                 }
             });
 
@@ -972,8 +974,10 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'YT-dlp');
+            _fs.fsyncSync(_shLogFd);
             _fs.fsyncSync(_ytdlpLogFd);
             _fs.closeSync(_ytdlpLogFd);
+            _fs.closeSync(_shLogFd);
         }
 
         return false;
