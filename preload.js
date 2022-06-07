@@ -583,7 +583,7 @@ const SharedownAPI = (() => {
                 sorted.splice(idx, 0, vObj);
             }
         } else {
-            sorted = vURLsList;
+            sorted.splice(0, sorted.length, ...vURLsList);
         }
 
         for (const svObj of sorted)
