@@ -54,7 +54,7 @@
   },
   "keywords": [],
   "devDependencies": {
-    "electron": "^19.0.0",
+    "electron": "^19.0.3",
     "electron-builder": "^23.0.4"
   },
   "dependencies": {
