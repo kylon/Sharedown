@@ -201,18 +201,23 @@ const SharedownAPI = (() => {
         return pargs;
     }
 
-    async function _sharepointLogin(puppeteerPage, logData) {
+    async function _sharepointLogin(page, logData) {
         if (logData === null)
             return;
 
         if (logData.msid !== '') {
-            await puppeteerPage.waitForSelector('input[type="email"]', {timeout: 8000});
-            await puppeteerPage.keyboard.type(logData.msid);
-            await puppeteerPage.click('input[type="submit"]');
+            await page.waitForSelector('input[type="email"]', {timeout: 8000});
+            await page.keyboard.type(logData.msid);
+            await page.click('input[type="submit"]');
         }
 
-        if (logData.hasOwnProperty('custom'))
-            await _loginModule.doLogin(puppeteerPage, logData.custom);
+        if (logData.hasOwnProperty('custom')) {
+            await _loginModule.doLogin(page, logData.custom);
+
+        } else {
+            await page.waitForSelector('.OnePlayer-container', {timeout: 90000});
+            await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
+        }
     }
 
     async function _getSpItmUrlFromApiRequest(page) {
