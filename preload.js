@@ -601,7 +601,7 @@ const SharedownAPI = (() => {
         const proc = require('node:child_process');
 
         try {
-            proc.execSync('ffmpeg -version').toString();
+            proc.execSync('ffmpeg -version');
             return true;
 
         } catch (e) {}
@@ -612,8 +612,15 @@ const SharedownAPI = (() => {
     api.hasYTdlp = () => {
         const proc = require('node:child_process');
 
+        // old yt-dlp
         try {
-            proc.execSync('yt-dlp -help').toString();
+            proc.execSync('yt-dlp -help');
+            return true;
+
+        } catch (e) {}
+
+        try {
+            proc.execSync('yt-dlp --help');
             return true;
 
         } catch (e) {}
