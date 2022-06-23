@@ -46,11 +46,3 @@ yarn start
 ---
 
 ![](sharedown.jpg)
-
----
-
-### Users content
-
-**No support is provided for unofficial versions.**
-
-[Sharedown spanish tutorial](https://fgp555.com/support/sharepoint-download-videos/) - by [fgp555](https://github.com/fgp555)
