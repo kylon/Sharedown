@@ -69,6 +69,8 @@ function createWindow () {
     const win = new BrowserWindow({
         width: 800,
         height: 600,
+        minWidth: 350,
+        minHeight: 400,
         webPreferences: {
             devTools: false,
             preload: path.join(__dirname, 'preload.js')
@@ -76,7 +78,7 @@ function createWindow () {
     })
 
     win.loadFile('sharedown/sharedown.html');
-    win.setResizable(false);
+    win.setResizable(true);
 
     return win;
 }
