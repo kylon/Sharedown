@@ -611,13 +611,13 @@ const SharedownAPI = (() => {
 
         // old yt-dlp
         try {
-            proc.execSync('yt-dlp -help');
+            proc.execSync('yt-dlp -help', {stdio: 'ignore'});
             return true;
 
         } catch (e) {}
 
         try {
-            proc.execSync('yt-dlp --help');
+            proc.execSync('yt-dlp --help', {stdio: 'ignore'});
             return true;
 
         } catch (e) {}
