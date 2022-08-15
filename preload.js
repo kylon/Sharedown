@@ -213,7 +213,7 @@ const SharedownAPI = (() => {
                 await _loginModule.doLogin(page, logData.custom);
         }
 
-        await page.waitForSelector('.OnePlayer-container', {timeout: 600000});
+        await page.waitForSelector('video.vjs-tech', {timeout: 600000});
         await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
     }
 
