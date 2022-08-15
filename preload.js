@@ -130,7 +130,7 @@ const SharedownAPI = (() => {
     }
 
     function _closeShLogFD() {
-        if (!_enableLogs)
+        if (!_enableLogs || _shLogFd === -1)
             return;
 
         _fs.fsyncSync(_shLogFd);
@@ -138,7 +138,7 @@ const SharedownAPI = (() => {
     }
 
     function _closeYtDlpLogFD() {
-        if (!_enableLogs)
+        if (!_enableLogs || _ytdlpLogFd === -1)
             return;
 
         _fs.fsyncSync(_ytdlpLogFd);
