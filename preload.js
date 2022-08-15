@@ -37,6 +37,7 @@ const SharedownAPI = (() => {
     let _showDownlInfo = false;
     let _runningProcess = null;
     let _stoppingProcess = false;
+    let _startCatchResponse = false;
     let _enableLogs = false;
     let _shLogFd = -1;
     let _ytdlpLogFd = -1;
@@ -214,6 +215,9 @@ const SharedownAPI = (() => {
         }
 
         await page.waitForSelector('video.vjs-tech', {timeout: 600000});
+
+        _startCatchResponse = true;
+
         await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
     }
 
@@ -672,55 +676,71 @@ const SharedownAPI = (() => {
         const puppyTimeout = tmout * 1000;
         let browser = null;
 
+        _startCatchResponse = false;
+
         try {
             browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
 
+            const responseList = [];
+            const catchResponse = function(resp) {
+                if (!_startCatchResponse)
+                    return;
+
+                const resType = resp.request().resourceType();
+
+                if (resType === 'fetch' || resType === 'xhr')
+                    responseList.push(resp);
+            }
             const page = (await browser.pages())[0];
-            let donorResponse;
-            let donorRespData;
+            let matchedResponse = null;
+            let donorRespData = null;
             let videoUrl;
             let cookies;
             let title;
-            let ret;
+            let dlData;
+            let vID;
 
             _initLogFile();
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
+            page.on('response', catchResponse);
 
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData);
+            await page.waitForNavigation({waitUntil: 'networkidle0'});
+            page.off('response', catchResponse);
 
-            for (const type of knownResponses) {
-                try {
-                    donorResponse = await page.waitForResponse(response => {
-                        return response.url().includes(type);
-                    }, {timeout: pLoopTmout});
+            for (const catchedResp of responseList) {
+                const respUrl = catchedResp.url();
 
-                    donorRespData = await donorResponse.json();
+                for (const knownResp of knownResponses) {
+                    if (!respUrl.includes(knownResp))
+                        continue;
 
-                    const vID = (new URL(page.url())).searchParams.get('id')?.trim();
-
-                    ret = isDirect ? _makeDirectUrl(donorRespData, vID) : (await _makeVideoManifestFetchURL(donorRespData, page, vID));
-                    if (!ret.err)
+                    matchedResponse = knownResp;
                         break;
-
-                    _writeLog(`no video data found in ${type}`);
-
-                } catch (e) {
-                    donorRespData = null;
-                    _writeLog(`No response of type '${type}' found`);
                 }
 
-                await page.reload({ waitUntil: 'domcontentloaded'});
+                if (matchedResponse === null)
+                    continue;
+
+                donorRespData = await catchedResp.json();
+                break;
             }
 
             if (donorRespData === null)
                 throw new Error("Unable to find a valid donor response!");
 
-            if (isDirect) {
-                const linkAr = ret.link.split('/');
+            vID = (new URL(page.url())).searchParams.get('id')?.trim();
+            dlData = isDirect ? _makeDirectUrl(donorRespData, vID) : (await _makeVideoManifestFetchURL(donorRespData, page, vID));
 
-                videoUrl = ret.link;
+            if (dlData.err)
+                throw new Error(`no video data found in ${matchedResponse}`);
+
+            if (isDirect) {
+                const linkAr = dlData.link.split('/');
+
+                videoUrl = dlData.link;
                 title = '';
 
                 _writeLog('runPuppeteerGetVideoData: direct mode: linkAr:\n' + JSON.stringify(linkAr));
@@ -730,7 +750,7 @@ const SharedownAPI = (() => {
                     title = linkAr[linkAr.length - 1];
                 }
             } else {
-                const manifestURLObj = ret.uobj;
+                const manifestURLObj = dlData.uobj;
 
                 title = await _getFileName(manifestURLObj);
                 videoUrl = manifestURLObj.toString();
