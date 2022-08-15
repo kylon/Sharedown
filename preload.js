@@ -938,10 +938,6 @@ const SharedownAPI = (() => {
 
             ytdlp.on('close', (code) => {
                 try {
-                    const evt = new CustomEvent('DownloadSuccess');
-                    let found = false;
-                    let files;
-
                     if (code !== 0) {
                         videoProgBar.style.width = '0%';
 
@@ -953,12 +949,10 @@ const SharedownAPI = (() => {
                         throw new Error("Exit code: " + (code ?? "aborted"));
                     }
 
-                    if (isDirect) {
-                        window.dispatchEvent(evt);
-                        return;
-                    }
+                    if (!isDirect) {
+                        const files = _fs.readdirSync(tmpFold);
+                        let found = false;
 
-                    files = _fs.readdirSync(tmpFold);
                     for (const f of files) {
                         if (!f.includes(filename))
                             continue;
@@ -972,8 +966,9 @@ const SharedownAPI = (() => {
 
                     if (!found)
                         throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
+                    }
 
-                    window.dispatchEvent(evt);
+                    window.dispatchEvent(new CustomEvent('DownloadSuccess'));
 
                 } catch (e) {
                     const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
