@@ -19,13 +19,12 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 10, // internal
+    _version: 11, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpN: 5,
     directN: 5,
     timeout: 30, // 30 secs, puppeteer default
-    pLoopTmout: 9000, // runPuppeteerGetVideoData loop
     loginModule: 0,
     retryOnFail: false,
     useKeytar: false,
@@ -333,7 +332,6 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
     resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
-    resources.globalSetModal.querySelector('#plooptmout').value = globalSettings.pLoopTmout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
 
@@ -348,7 +346,6 @@ async function loadGlobalSettings() {
 async function saveGlobalSettings() {
     toggleLoadingScr();
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
-    const pLoopTimeout = parseInt(resources.globalSetModal.querySelector('#plooptmout').value, 10);
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.useKeytar = resources.globalSetModal.querySelector('#keytar').checked;
@@ -360,7 +357,6 @@ async function saveGlobalSettings() {
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
-    globalSettings.pLoopTmout = isNaN(pLoopTimeout) || pLoopTimeout < 9000 ? 9000 : pLoopTimeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
 
     if (globalSettings.useKeytar)
@@ -393,7 +389,6 @@ function importAppSettings() {
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 30;
-    globalSettings.pLoopTmout = data.pLoopTimeout ?? 9000;
     globalSettings.logging = data.logging ?? false;
 
     if (data['_version'] < globalSettings['_version']) {
@@ -457,7 +452,7 @@ async function downloadVideo(videoElem) {
         sharedownApi.setLogging(globalSettings.logging);
 
         vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
-                                         globalSettings.pLoopTmout, globalSettings.userdataFold, isDirectDownloader);
+                                         globalSettings.userdataFold, isDirectDownloader);
         toggleLoadingScr();
 
         if (!vdata)
