@@ -23,6 +23,7 @@ if (process.platform === 'darwin')
     process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', '/opt/homebrew/bin', process.env.PATH].join(':');
 
 const SharedownAPI = (() => {
+    const _isWindows = process.platform === 'win32';
     const _LoginModule = require('./sharedown/loginModules/loginModule');
     const _path = require('node:path');
     const _fs = require('node:fs');
@@ -1013,7 +1014,15 @@ const SharedownAPI = (() => {
     api.stopDownload = () => {
         try {
             _stoppingProcess = true;
-            _runningProcess?.kill();
+
+            if (_isWindows) {
+                const { spawn } = require('node:child_process');
+
+                spawn('taskkill', ['/pid', _runningProcess.pid, '/f', '/t']);
+
+            } else if (!_runningProcess.kill()) {
+                throw new Error('Failed to send kill signal to download process');
+            }
 
         } catch (e) {
             api.showMessage('error', e.message, 'Stop download error');
