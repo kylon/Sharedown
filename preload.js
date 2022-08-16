@@ -968,17 +968,17 @@ const SharedownAPI = (() => {
                         const files = _fs.readdirSync(tmpFold);
                         let found = false;
 
-                    for (const f of files) {
-                        if (!f.includes(filename))
-                            continue;
+                        for (const f of files) {
+                            if (!f.includes(filename))
+                                continue;
 
-                        _fs.copyFileSync(tmpOutFile, outFile);
-                        found = true;
-                        break;
-                    }
+                            _fs.copyFileSync(tmpOutFile, outFile);
+                            found = true;
+                            break;
+                        }
 
-                    if (!found)
-                        throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
+                        if (!found)
+                            throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
                     }
 
                     window.dispatchEvent(new CustomEvent('DownloadSuccess'));
