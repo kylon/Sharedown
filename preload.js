@@ -960,12 +960,6 @@ const SharedownAPI = (() => {
                 try {
                     if (code !== 0) {
                         videoProgBar.style.width = '0%';
-
-                        if (isDirect)
-                            _unlinkSync(outFile);
-                        else
-                            _rmSync(tmpFold);
-
                         throw new Error("Exit code: " + (code ?? "aborted"));
                     }
 
@@ -982,8 +976,6 @@ const SharedownAPI = (() => {
                         break;
                     }
 
-                    _rmSync(tmpFold);
-
                     if (!found)
                         throw new Error(`Cannot find video file in output folder!\n\nSrc:\n${tmpOutFile}\n\nDest:\n${outFile}`);
                     }
@@ -995,13 +987,12 @@ const SharedownAPI = (() => {
 
                     if (isDirect)
                         _unlinkSync(outFile);
-                    else
-                        _rmSync(tmpFold);
 
                     _writeLog(`YT-dlp: download failed:\n${e.message}`);
                     window.dispatchEvent(failEvt);
 
                 } finally {
+                    _rmSync(tmpFold);
                     _closeShLogFD();
                     _closeYtDlpLogFD();
                 }
