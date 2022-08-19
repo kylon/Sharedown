@@ -961,7 +961,7 @@ const SharedownAPI = (() => {
                 try {
                     if (code !== 0) {
                         videoProgBar.style.width = '0%';
-                        throw new Error("Exit code: " + (code ?? "aborted"));
+                        throw new Error("Exit code: " + (_stoppingProcess || code === null ? "aborted" : code));
                     }
 
                     if (!isDirect) {
