@@ -203,7 +203,7 @@ const SharedownAPI = (() => {
         return pargs;
     }
 
-    async function _sharepointLogin(page, logData) {
+    async function _sharepointLogin(page, logData, isFoldImport) {
         if (logData !== null) {
             if (logData.msid !== '') {
                 await page.waitForSelector('input[type="email"]', {timeout: 8000});
@@ -215,11 +215,13 @@ const SharedownAPI = (() => {
                 await _loginModule.doLogin(page, logData.custom);
         }
 
-        await page.waitForSelector('video.vjs-tech', {timeout: 600000});
+        if (!isFoldImport) {
+            await page.waitForSelector('video.vjs-tech', {timeout: 600000});
 
-        _startCatchResponse = true;
+            _startCatchResponse = true;
 
-        await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
+            await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
+        }
     }
 
     async function _getSpItmUrlFromApiRequest(page) {
@@ -707,7 +709,7 @@ const SharedownAPI = (() => {
             page.on('response', catchResponse);
 
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
-            await _sharepointLogin(page, loginData);
+            await _sharepointLogin(page, loginData, false);
             await page.waitForNavigation({waitUntil: 'networkidle0'});
             page.off('response', catchResponse);
 
@@ -793,7 +795,7 @@ const SharedownAPI = (() => {
             }
 
             await page.goto(folderURLsList[0], {waitUntil: 'domcontentloaded'});
-            await _sharepointLogin(page, loginData);
+            await _sharepointLogin(page, loginData, true);
             await page.waitForFunction(`window.location.href.includes('${match[1]}')`);
 
             for (const folderURL of folderURLsList) {
