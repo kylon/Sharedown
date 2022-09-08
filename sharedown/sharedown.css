@@ -133,13 +133,13 @@ body {
 }
 
 .bg-sharepoint1:hover, .bg-sharepoint1:active, .bg-sharepoint1:focus {
-    color: white;
-    background-color: #025456;
+    color: white !important;
+    background-color: #025456 !important;
 }
 
 .bg-sharepoint2 {
-    background-color: #375166;
-    color: white;
+    background-color: #375166 !important;
+    color: white !important;
 }
 
 .bg-sharepoint3 {
@@ -151,9 +151,9 @@ body {
 }
 
 .btn-light:hover {
-    background-color: #1d1c1c;
-    color: whitesmoke;
-    border-color: #2f2f2f;
+    background-color: #1d1c1c !important;
+    color: whitesmoke !important;
+    border-color: rgb(48, 46, 46) !important;
 }
 
 .btn-disabled, .btn-disabled:hover, .btn-disabled:focus, .btn-disabled:active, .btn-disabled:visited {
