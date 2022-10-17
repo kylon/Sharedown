@@ -23,7 +23,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sharedown</title>
 
-    <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="sharedown.css">
 </head>
@@ -45,15 +45,15 @@
 
             <div class="col-12 text-center">
                 <button type="button" class="btn btn-warning text-lightblack" title="Add Sharepoint link to download queue" data-bs-toggle="modal" data-bs-target="#urlsaddmodal">
-                    <i class="fa fa-plus"></i> Add Sharepoint video URLs
+                    <i class="fa-solid fa-plus"></i> Add Sharepoint video URLs
                 </button>
             </div>
 
             <div class="col-12 d-flex justify-content-end pt-4">
                 <div class="btn-group">
-                    <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa fa-cog"></i> Settings</a>
-                    <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa fa-stop"></i> Stop download</a>
-                    <a id="start-dwnl" href="#" class="btn btn-light"><i class="fa fa-arrow-down"></i> Start download</a>
+                    <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa-solid fa-gear"></i> Settings</a>
+                    <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa-solid fa-stop"></i> Stop download</a>
+                    <a id="start-dwnl" href="#" class="btn btn-light"><i class="fa-solid fa-download"></i> Start download</a>
                 </div>
             </div>
         </div>
@@ -162,7 +162,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span id="save-succ-str" class="text-success d-none"><i class="fa fa-check"></i> Saved</span>
+                    <span id="save-succ-str" class="text-success d-none"><i class="fa-solid fa-check"></i> Saved</span>
                     <button id="save-sett" type="button" class="btn bg-sharepoint1" data-video-id="">Save changes</button>
                 </div>
             </div>
@@ -331,7 +331,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span id="gsett-succ-str" class="text-success d-none"><i class="fa fa-check"></i> Saved</span>
+                    <span id="gsett-succ-str" class="text-success d-none"><i class="fa-solid fa-check"></i> Saved</span>
                     <button id="gsett-save" type="button" class="btn bg-sharepoint1">Save changes</button>
                 </div>
             </div>
@@ -351,9 +351,9 @@
                     <span class="progtext position-absolute text-truncate text-white fw-bold"></span>
                     <div class="progress-bar rounded-0 bg-sharepoint4" role="progressbar" data-tmp-perc="0"></div>
                 </div>
-                <button type="button" class="copy-btn btn btn-outline-primary" title="Copy video URL"><i class="fa fa-copy"></i></button>
-                <button type="button" class="vsett-btn btn btn-outline-secondary" title="Sharedown video options"><i class="fa fa-cog"></i></button>
-                <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa fa-times"></i></button>
+                <button type="button" class="copy-btn btn btn-outline-primary" title="Copy video URL"><i class="fa-solid fa-copy"></i></button>
+                <button type="button" class="vsett-btn btn btn-outline-secondary" title="Sharedown video options"><i class="fa-solid fa-gear"></i></button>
+                <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa-solid fa-times"></i></button>
             </div>
         </div>
     </template>
