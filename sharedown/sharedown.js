@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 11, // internal
+    _version: 12, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpN: 5,
@@ -30,7 +30,8 @@ const globalSettings = {
     useKeytar: false,
     userdataFold: false,
     autoSaveState: true,
-    logging: false
+    logging: false,
+    customChomePath: ''
 };
 
 const resources = {
@@ -334,6 +335,7 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
+    resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChomePath;
 
     if (globalSettings.userdataFold)
         UIUtils.chromeUsrDataChangeEvt(true, resources.globalSetModal);
@@ -358,6 +360,7 @@ async function saveGlobalSettings() {
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
+    globalSettings.customChomePath = resources.globalSetModal.querySelector('#cuschromep').value;
 
     if (globalSettings.useKeytar)
         await Utils.keytarSaveCredentials(resources.globalSetModal, globalSettings.loginModule);
@@ -390,6 +393,7 @@ function importAppSettings() {
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 30;
     globalSettings.logging = data.logging ?? false;
+    globalSettings.customChomePath = data.customChomePath ?? '';
 
     if (data['_version'] < globalSettings['_version']) {
         sharedownApi.upgradeSett(data['_version']);
@@ -452,7 +456,7 @@ async function downloadVideo(videoElem) {
         sharedownApi.setLogging(globalSettings.logging);
 
         vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
-                                         globalSettings.userdataFold, isDirectDownloader);
+                                         globalSettings.userdataFold, globalSettings.customChomePath, isDirectDownloader);
         toggleLoadingScr();
 
         if (!vdata)
@@ -559,6 +563,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.downlStopBtn.addEventListener('click', () => stopDownload());
     resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
     resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
+    resources.globalSetModal.querySelector('#cuschromepb').addEventListener('click', e => Utils.showSelectCustomChomeDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
     resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.chromeUsrDataChangeEvt(e.target.checked, resources.globalSetModal));
 

@@ -156,6 +156,14 @@ ipcMain.on('sharedown-sync', (e, args) => {
             });
         }
             break;
+        case "selectChromeBinDialog": {
+            e.returnValue = dialog.showOpenDialogSync(mainW, {
+                title: 'Select Chrome/Chromium executable path',
+                properties: ['openFile'],
+                message: 'Chrome/Chromium executable path',
+            });
+        }
+            break;
         case "getAppDataPath": {
             e.returnValue = app.getPath('appData');
         }

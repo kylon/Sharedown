@@ -64,6 +64,7 @@ const SharedownAPI = (() => {
         getNormalizedUniqueOutputFilePath: null,
         getDefaultOutputFolder: null,
         showSelectFolderDialog: null,
+        showSelectChromeBinDialog: null,
         copyURLToClipboard: null,
         saveAppSettings: null,
         loadAppSettings: null,
@@ -670,7 +671,7 @@ const SharedownAPI = (() => {
         await kt.deletePassword('sharedown', 'loginmodule');
     }
 
-    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, isDirect = false) => {
+    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, customChromePath, isDirect = false) => {
         const knownResponses = [
             'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
             'SP.List.GetListDataAsStream?listFullUrl'
@@ -680,9 +681,10 @@ const SharedownAPI = (() => {
         let browser = null;
 
         _startCatchResponse = false;
+        customChromePath = customChromePath === '' ? null : customChromePath;
 
         try {
-            browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
+            browser = await puppy.launch(_getPuppeteerArgs(customChromePath ?? puppy.executablePath(), enableUserdataFold));
 
             const responseList = [];
             const catchResponse = function(resp) {
@@ -704,6 +706,10 @@ const SharedownAPI = (() => {
             let vID;
 
             _initLogFile();
+
+            if (customChromePath)
+                _writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
+
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
             page.on('response', catchResponse);
@@ -1064,6 +1070,10 @@ const SharedownAPI = (() => {
 
     api.showSelectFolderDialog = () => {
         return ipcRenderer.sendSync('sharedown-sync', {cmd: 'selectFoldDialog'});
+    }
+
+    api.showSelectChromeBinDialog = () => {
+        return ipcRenderer.sendSync('sharedown-sync', {cmd: 'selectChromeBinDialog'});
     }
 
     api.copyURLToClipboard = (url) => {

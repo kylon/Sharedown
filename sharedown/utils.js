@@ -96,16 +96,16 @@ const Utils = (() => {
         await _sharedownApi.keytarRemoveLogin();
     }
 
-    util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, isDirect) => {
+    util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, customChromePath, isDirect) => {
         if (enableUserdataFold)
-            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, true, isDirect) );
+            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, true, customChromePath, isDirect) );
 
         const loginD = _getLoginData(globalSettingsModal);
 
         if (!_isValidCustomLogin(loginD))
             return null;
 
-        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, isDirect) );
+        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, false, customChromePath, isDirect) );
     }
 
     util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, timeout, enableUserdataFold) => {
@@ -138,6 +138,18 @@ const Utils = (() => {
             return false;
 
         const inpt = elm.parentElement.querySelector('.outpath');
+
+        inpt.value = path[0];
+        inpt.setAttribute('title', path[0]);
+    }
+
+    util.showSelectCustomChomeDialog = elm => {
+        const path = _sharedownApi.showSelectChromeBinDialog();
+
+        if (path === undefined)
+            return false;
+
+        const inpt = elm.parentElement.querySelector('.binpath');
 
         inpt.value = path[0];
         inpt.setAttribute('title', path[0]);
