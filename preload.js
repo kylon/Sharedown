@@ -1020,6 +1020,9 @@ const SharedownAPI = (() => {
     }
 
     api.stopDownload = () => {
+        if (_runningProcess === null)
+            return;
+
         try {
             _stoppingProcess = true;
 
@@ -1031,6 +1034,8 @@ const SharedownAPI = (() => {
             } else if (!_runningProcess.kill()) {
                 throw new Error('Failed to send kill signal to download process');
             }
+
+            _runningProcess = null;
 
         } catch (e) {
             api.showMessage('error', e.message, 'Stop download error');
