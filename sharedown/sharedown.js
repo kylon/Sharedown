@@ -342,6 +342,11 @@ async function loadGlobalSettings() {
     else if (globalSettings.useKeytar)
         await UIUtils.keytarCheckChangeEvt(true, resources.globalSetModal, globalSettings.loginModule);
 
+    if (globalSettings.logging)
+        sharedownApi.enableLogs();
+    else
+        sharedownApi.disableLogs();
+
     setDownloaderSettingsUI(globalSettings.downloader);
 }
 
@@ -364,6 +369,11 @@ async function saveGlobalSettings() {
 
     if (globalSettings.useKeytar)
         await Utils.keytarSaveCredentials(resources.globalSetModal, globalSettings.loginModule);
+
+    if (globalSettings.logging)
+        sharedownApi.enableLogs();
+    else
+        sharedownApi.disableLogs();
 
     exportAppSettings();
     toggleLoadingScr();
@@ -453,7 +463,6 @@ async function downloadVideo(videoElem) {
             return rej();
 
         toggleLoadingScr();
-        sharedownApi.setLogging(globalSettings.logging);
 
         vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
                                          globalSettings.userdataFold, globalSettings.customChomePath, isDirectDownloader);

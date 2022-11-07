@@ -74,7 +74,9 @@ const SharedownAPI = (() => {
         setShowDlInfo: null,
         isShowDlInfoSet: null,
         showMessage: null,
-        setLogging: null,
+        enableLogs: null,
+        disableLogs: null,
+        writeLog: null,
         openLogsFolder: null,
         openFolder: null,
         deleteUserdataFold: null,
@@ -82,71 +84,6 @@ const SharedownAPI = (() => {
         openLink: null,
         quitApp: null,
     };
-
-    function _initLogFile() {
-        if (!_enableLogs)
-            return;
-
-        const logsP = [_logFilePath, _ytdlpLogFilePath];
-
-        if (!_fs.existsSync(_logsFolderPath))
-            _fs.mkdirSync(_logsFolderPath);
-
-        _shLogFd = -1;
-        _ytdlpLogFd = -1;
-
-        for (const logf of logsP) {
-            const old = `${logf}.old`;
-
-            _unlinkSync(old);
-
-            if (_fs.existsSync(logf))
-                _fs.renameSync(logf, old);
-        }
-    }
-
-    function _writeLog(msg, type='shd') {
-        if (!_enableLogs)
-            return;
-
-        let logFd;
-
-        switch (type) {
-            case 'ytdlp':
-                if (_ytdlpLogFd === -1)
-                    _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
-
-                logFd = _ytdlpLogFd;
-                break;
-            default:
-                if (_shLogFd === -1)
-                    _shLogFd = _fs.openSync(_logFilePath, 'a');
-
-                logFd = _shLogFd;
-                break;
-        }
-
-        _fs.writeFile(logFd, '\n'+msg+'\n', (err) => {
-            if (err)
-                console.log(`_writeLog: ${err.message}`);
-        });
-    }
-
-    function _closeShLogFD() {
-        if (!_enableLogs || _shLogFd === -1)
-            return;
-
-        _fs.fsyncSync(_shLogFd);
-        _fs.closeSync(_shLogFd);
-    }
-
-    function _closeYtDlpLogFD() {
-        if (!_enableLogs || _ytdlpLogFd === -1)
-            return;
-
-        _fs.fsyncSync(_ytdlpLogFd);
-        _fs.closeSync(_ytdlpLogFd);
-    }
 
     function _hideToken(token, str) {
         return str.replaceAll(token, '<hidden>');
@@ -234,11 +171,11 @@ const SharedownAPI = (() => {
         let a1 = '';
 
         if (pathNameAr.length === 0) {
-            _writeLog(`_getSpItmUrlFromApiRequest: empty pathNameAr: ${urlObj.pathname}`);
+            api.writeLog(`_getSpItmUrlFromApiRequest: empty pathNameAr: ${urlObj.pathname}`);
             return '';
 
         } else if (pathNameAr.length < 6) {
-            _writeLog(`_getSpItmUrlFromApiRequest: pathName too short: ${urlObj.pathname}`);
+            api.writeLog(`_getSpItmUrlFromApiRequest: pathName too short: ${urlObj.pathname}`);
             return '';
         }
 
@@ -248,20 +185,20 @@ const SharedownAPI = (() => {
         a1 = pathNameAr.join('/');
         apiUrl = `${urlObj.origin}/sites/${pathNameAr[2]}/_api/web/GetList(@a1)/RenderListDataAsStream?@a1='${a1}'&RootFolder=${rootFoldParam}`;
 
-        _writeLog(`_getSpItmUrlFromApiRequest: apiUrl: ${apiUrl}`);
+        api.writeLog(`_getSpItmUrlFromApiRequest: apiUrl: ${apiUrl}`);
 
         resp = await page.evaluate(async (url) => {
             return await fetch(url, {method:'post'}).then(res => res.json());
         }, apiUrl);
 
-        _writeLog("_getSpItmUrlFromApiRequest: fetch data:\n" + JSON.stringify(resp));
+        api.writeLog("_getSpItmUrlFromApiRequest: fetch data:\n" + JSON.stringify(resp));
 
         return resp['CurrentFolderSpItemUrl'] ?? '';
     }
 
     function _getDataFromResponseListDataRow(rows, vID) {
         if (!rows || !rows.length) {
-            _writeLog('_getDataFromResponseListDataRow: No rows: ' + (rows?.length ?? null));
+            api.writeLog('_getDataFromResponseListDataRow: No rows: ' + (rows?.length ?? null));
             return null;
         }
 
@@ -272,7 +209,7 @@ const SharedownAPI = (() => {
             return f;
         }
 
-        _writeLog(`_getDataFromResponseListDataRow: No match for ${vID}`);
+        api.writeLog(`_getDataFromResponseListDataRow: No match for ${vID}`);
         return null;
     }
 
@@ -289,7 +226,7 @@ const SharedownAPI = (() => {
         if (ret.spItmUrl !== '')
             return ret;
 
-        _writeLog(`_getDataFromResponse: no spItmUrl\nvID: ${vID}`);
+        api.writeLog(`_getDataFromResponse: no spItmUrl\nvID: ${vID}`);
 
         altRow = _getDataFromResponseListDataRow(donorRespData.ListData['Row'], vID);
         if (altRow !== null) {
@@ -299,12 +236,12 @@ const SharedownAPI = (() => {
                 return ret;
         }
 
-        _writeLog(`_getDataFromResponse: no spItmUrl in altRow:\n${altRow}`);
+        api.writeLog(`_getDataFromResponse: no spItmUrl in altRow:\n${altRow}`);
 
         ret.spItmUrl = await _getSpItmUrlFromApiRequest(puppyPage);
 
         if (ret.spItmUrl === '')
-            _writeLog("_getDataFromResponse: no spItmUrl from api request");
+            api.writeLog("_getDataFromResponse: no spItmUrl from api request");
 
         return ret;
     }
@@ -325,7 +262,7 @@ const SharedownAPI = (() => {
             }
         }
 
-        _writeLog('cookies: ' + _removeUserDataFromCookiesForLog(cookiesAr));
+        api.writeLog('cookies: ' + _removeUserDataFromCookiesForLog(cookiesAr));
         return ret;
     }
 
@@ -338,16 +275,16 @@ const SharedownAPI = (() => {
         let hasErr = false;
         let urlObj;
 
-        _writeLog(`_makeVideoManifestFetchURL: manifest template: ${manifestUrlSchema}`);
+        api.writeLog(`_makeVideoManifestFetchURL: manifest template: ${manifestUrlSchema}`);
 
         for (let i=0,l=placeholders.length; i<l; ++i) {
             if (placeholderData[i] === '') {
-                _writeLog(`_makeVideoManifestFetchURL: make url error: empty value ${placeholders[i]}`);
+                api.writeLog(`_makeVideoManifestFetchURL: make url error: empty value ${placeholders[i]}`);
                 hasErr = true;
             }
 
             if (!manifestUrlSchema.includes(placeholders[i])) {
-                _writeLog(`_makeVideoManifestFetchURL: make url error: cannot find ${placeholders[i]}`);
+                api.writeLog(`_makeVideoManifestFetchURL: make url error: cannot find ${placeholders[i]}`);
                 hasErr = true;
             }
 
@@ -363,7 +300,7 @@ const SharedownAPI = (() => {
         urlObj.searchParams.set('pretranscode', '0');
         urlObj.searchParams.set('transcodeahead', '0');
 
-        _writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
+        api.writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
             '\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
 
         return {uobj: urlObj, err: hasErr};
@@ -378,7 +315,7 @@ const SharedownAPI = (() => {
         if (rootFolder === null) {
             const rowData = _getDataFromResponseListDataRow(listData['Row'], vID);
 
-            _writeLog(`_makeDirectUrl: no filterlink in vID:\n${vID}`);
+            api.writeLog(`_makeDirectUrl: no filterlink in vID:\n${vID}`);
 
             if (rowData === null) {
                 ret.err = true;
@@ -390,7 +327,7 @@ const SharedownAPI = (() => {
 
         ret.link = `${webUrlAr[0]}//${webUrlAr[2]}${rootFolder}`; // https://xxxx...
 
-        _writeLog(`makeDirectUrl:\nrootfolder: ${rootFolder}\nwebUrl: ${webUrlAr}\nfinal: ${ret.link}`);
+        api.writeLog(`makeDirectUrl:\nrootfolder: ${rootFolder}\nwebUrl: ${webUrlAr}\nfinal: ${ret.link}`);
         return ret;
     }
 
@@ -408,7 +345,7 @@ const SharedownAPI = (() => {
         let xmlDoc;
 
         if (pre.length === 0) {
-            _writeLog(`_getFoldersListInFolder: Unexpected API result:\n${pageContent}`);
+            api.writeLog(`_getFoldersListInFolder: Unexpected API result:\n${pageContent}`);
             return [];
         }
 
@@ -418,7 +355,7 @@ const SharedownAPI = (() => {
             const foldNameElm = entry.querySelector('content').getElementsByTagName('d:Name');
 
             if (foldNameElm.length === 0) {
-                _writeLog(`_getFoldersListInFolder: No name found for folder item:\n${entry.innerHTML}`);
+                api.writeLog(`_getFoldersListInFolder: No name found for folder item:\n${entry.innerHTML}`);
                 continue;
             }
 
@@ -449,7 +386,7 @@ const SharedownAPI = (() => {
         pre = new DOMParser().parseFromString(pageCont, 'text/html').body.getElementsByTagName('pre');
 
         if (pre.length === 0) {
-            _writeLog(`_getVideoURLsInFold: Unexpected API result:\n${pageCont}`);
+            api.writeLog(`_getVideoURLsInFold: Unexpected API result:\n${pageCont}`);
             throw new Error('Unexpected API result');
         }
 
@@ -464,7 +401,7 @@ const SharedownAPI = (() => {
             let fileExt;
 
             if (relUrlElm.length === 0) {
-                _writeLog(`_getVideoURLsInFold: No URL for this entry:\n${entry.innerHTML}`);
+                api.writeLog(`_getVideoURLsInFold: No URL for this entry:\n${entry.innerHTML}`);
                 continue;
             }
 
@@ -472,7 +409,7 @@ const SharedownAPI = (() => {
             fileExt = _path.extname(relUrl);
 
             if (fileExt !== '.mp4') {
-                _writeLog(`_getVideoURLsInFold: unhandled file format: ${fileExt}`);
+                api.writeLog(`_getVideoURLsInFold: unhandled file format: ${fileExt}`);
                 continue;
             }
 
@@ -488,7 +425,7 @@ const SharedownAPI = (() => {
         const axios = require('axios');
         const resp = await axios.get(donorURLObj.searchParams.get('docid') + '&access_token=' + donorURLObj.searchParams.get('access_token'));
 
-        _writeLog("_getFileName:\ndocid: "+donorURLObj.searchParams.get('docid')+'\n\n' +
+        api.writeLog("_getFileName:\ndocid: "+donorURLObj.searchParams.get('docid')+'\n\n' +
             "url: "+_hideToken(donorURLObj.searchParams.get('access_token'), donorURLObj.toString()));
 
         return resp.data.hasOwnProperty('name') ? resp.data['name'] : '';
@@ -705,10 +642,8 @@ const SharedownAPI = (() => {
             let dlData;
             let vID;
 
-            _initLogFile();
-
             if (customChromePath)
-                _writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
+                api.writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
 
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
@@ -727,7 +662,7 @@ const SharedownAPI = (() => {
                         continue;
 
                     matchedResponse = knownResp;
-                        break;
+                    break;
                 }
 
                 if (matchedResponse === null)
@@ -752,7 +687,7 @@ const SharedownAPI = (() => {
                 videoUrl = dlData.link;
                 title = '';
 
-                _writeLog('runPuppeteerGetVideoData: direct mode: linkAr:\n' + JSON.stringify(linkAr));
+                api.writeLog('runPuppeteerGetVideoData: direct mode: linkAr:\n' + JSON.stringify(linkAr));
 
                 if (linkAr.length > 0) {
                     cookies = _getDataFromCookies(await page.cookies());
@@ -791,12 +726,12 @@ const SharedownAPI = (() => {
             const match = folderURLsList[0].match(regex);
             const ret = {list: []};
 
-            _initLogFile();
+            api.writeLog("runPuppeteerGetURLListFromFolder start");
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
             if (match === null || match.length < 2) {
-                _writeLog(`runPuppeteerGetURLListFromFolder: Unknown URL format:\n${folderURLsList[0]}`);
+                api.writeLog(`runPuppeteerGetURLListFromFolder: Unknown URL format:\n${folderURLsList[0]}`);
                 throw new Error(`Unknown folder URL format`);
             }
 
@@ -866,11 +801,10 @@ const SharedownAPI = (() => {
                 } else {
                     evt = new CustomEvent('DownloadFail', {detail: `Exit code: ${data.exitCode}`});
 
-                    _writeLog(`FFMPEG: download filed: exit code ${data.exitCode}`);
+                    api.writeLog(`FFMPEG: download filed: exit code ${data.exitCode}`);
                 }
 
                 window.dispatchEvent(evt);
-                _closeShLogFD();
             });
 
             ffmpegCmd.on('error', (err) => {
@@ -884,11 +818,9 @@ const SharedownAPI = (() => {
                 if (!err.message.includes('Exiting normally, received signal 15')) {
                     const failEvt = new CustomEvent('DownloadFail', { detail: err });
 
-                    _writeLog("ffmpegCmd.on(error):\n"+err.log);
+                    api.writeLog("ffmpegCmd.on(error):\n"+err.log);
                     window.dispatchEvent(failEvt);
                 }
-
-                _closeShLogFD();
             });
 
             _runningProcess = ffmpegCmd.spawn();
@@ -896,7 +828,6 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'FFmpeg');
-            _closeShLogFD();
         }
 
         return false;
@@ -942,7 +873,7 @@ const SharedownAPI = (() => {
                 if (_stoppingProcess)
                     return;
 
-                _writeLog(data.toString(), 'ytdlp');
+                api.writeLog(data.toString(), 'ytdlp');
 
                 const regex = new RegExp(/\s(\d+.\d+)%\s.*/);
                 const out = data.toString();
@@ -962,7 +893,7 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.stderr.on('data', (data) => {
-                _writeLog(data.toString(), 'ytdlp');
+                api.writeLog(data.toString(), 'ytdlp');
             });
 
             ytdlp.on('close', (code) => {
@@ -997,13 +928,11 @@ const SharedownAPI = (() => {
                     if (isDirect)
                         _unlinkSync(outFile);
 
-                    _writeLog(`YT-dlp: download failed:\n${e.message}`);
+                    api.writeLog(`YT-dlp: download failed:\n${e.message}`);
                     window.dispatchEvent(failEvt);
 
                 } finally {
                     _rmSync(tmpFold);
-                    _closeShLogFD();
-                    _closeYtDlpLogFD();
                 }
             });
 
@@ -1012,8 +941,6 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.showMessage('error', e.message, 'YT-dlp');
-            _closeShLogFD();
-            _closeYtDlpLogFD();
         }
 
         return false;
@@ -1153,7 +1080,75 @@ const SharedownAPI = (() => {
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
-    api.setLogging = (enableLg) => _enableLogs = enableLg;
+
+    api.enableLogs = () => {
+        if (_enableLogs)
+            return;
+
+        if (!_fs.existsSync(_logsFolderPath))
+            _fs.mkdirSync(_logsFolderPath);
+
+        for (const logf of [_logFilePath, _ytdlpLogFilePath]) {
+            const old = `${logf}.old`;
+
+            _unlinkSync(old);
+
+            if (_fs.existsSync(logf))
+                _fs.renameSync(logf, old);
+        }
+
+        _shLogFd = _fs.openSync(_logFilePath, 'a');
+        _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
+
+        _enableLogs = true;
+    }
+
+    api.disableLogs = () => {
+        if (!_enableLogs)
+            return;
+
+        _fs.closeSync(_shLogFd);
+        _fs.closeSync(_ytdlpLogFd);
+
+        _enableLogs = false;
+    }
+
+    api.writeLog = (msg, type='shd') => {
+        if (!_enableLogs)
+            return;
+
+        let logFd;
+
+        switch (type) {
+            case 'ytdlp':
+                logFd = _ytdlpLogFd;
+                break;
+            default:
+                logFd = _shLogFd;
+                break;
+        }
+
+        _fs.writeFile(logFd, '\n'+msg+'\n', (err) => {
+            if (err)
+                console.log(`writeLog: ${err.message}`);
+        });
+    }
+
+    ipcRenderer.on('appevent', (e, args) => {
+        switch (args.cmd) {
+            case 'bfq': {
+                if (!_enableLogs)
+                    break;
+
+                _fs.fsyncSync(_shLogFd);
+                _fs.fsyncSync(_ytdlpLogFd);
+                api.disableLogs();
+            }
+                break;
+            default:
+                break;
+        }
+    });
 
     Object.freeze(api);
     return api;
