@@ -102,6 +102,10 @@ app.on('window-all-closed', () => {
         app.quit();
 });
 
+app.on('before-quit', () => {
+    mainW.webContents.send('appevent', {cmd: 'bfq'});
+});
+
 ipcMain.on('showMessage', (e, args) => {
     let btns = [];
 
