@@ -905,7 +905,7 @@ const SharedownAPI = (() => {
 
             if (!isDirect) {
                 const outFPath = _path.parse(outFile);
-                const outFolder = outFPath.dir;
+                const outFolder = settings.ytdlpTmpOut === '' ? outFPath.dir : settings.ytdlpTmpOut;
 
                 filename = outFPath.base;
                 tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));

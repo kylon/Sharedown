@@ -206,6 +206,16 @@
                     </div>
                     <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
                         <div class="col-12">
+                            <label for="soutdirp" class="form-label">Fragments temp directory</label>
+                            <div class="input-group mb-3">
+                                <button class="btn btn-outline-dark" type="button" id="ytdlptmpdir">Select folder</button>
+                                <input id="ytdlptmpdp" type="text" class="form-control outpath" aria-label="YT-dlp temp output directory" placeholder="Output directory">
+                                <div id="ytdlptmphelp" class="form-text">Set the temp directory for fragments download. (default: output directory)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
+                        <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
                                 <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="5">

@@ -19,9 +19,10 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 12, // internal
+    _version: 13, // internal
     outputPath: '',
     downloader: 'yt-dlp',
+    ytdlpTmpOut: '',
     ytdlpN: 5,
     directN: 5,
     timeout: 30, // 30 secs, puppeteer default
@@ -317,6 +318,7 @@ function saveVideoSettings(elem) {
 
 async function loadGlobalSettings() {
     const outdir = resources.globalSetModal.querySelector('#soutdirp');
+    const ytdlpTmpOutD = resources.globalSetModal.querySelector('#ytdlptmpdp');
     const loginModuleInpt = resources.globalSetModal.querySelector('#loginmodlist');
 
     sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
@@ -324,8 +326,10 @@ async function loadGlobalSettings() {
 
     UIUtils.addLoginModuleFields(resources.globalSetModal);
     outdir.setAttribute('title', globalSettings.outputPath);
+    ytdlpTmpOutD.setAttribute('title', globalSettings.ytdlpTmpOut);
 
     outdir.value = globalSettings.outputPath;
+    ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
     resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
@@ -355,6 +359,7 @@ async function saveGlobalSettings() {
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
+    globalSettings.ytdlpTmpOut = resources.globalSetModal.querySelector('#ytdlptmpdp').value;
     globalSettings.useKeytar = resources.globalSetModal.querySelector('#keytar').checked;
     globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
     globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
@@ -393,6 +398,7 @@ function importAppSettings() {
     const data = JSON.parse(sett);
 
     globalSettings.outputPath = data.outputPath ?? '';
+    globalSettings.ytdlpTmpOut = data.ytdlpTmpOut ?? '';
     globalSettings.useKeytar = data.useKeytar ?? false;
     globalSettings.userdataFold = !globalSettings.useKeytar && (data.userdataFold ?? false);
     globalSettings.autoSaveState = data.autoSaveState ?? true;
@@ -572,6 +578,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.downlStopBtn.addEventListener('click', () => stopDownload());
     resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
     resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
+    resources.globalSetModal.querySelector('#ytdlptmpdir').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#cuschromepb').addEventListener('click', e => Utils.showSelectCustomChomeDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
     resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.chromeUsrDataChangeEvt(e.target.checked, resources.globalSetModal));
