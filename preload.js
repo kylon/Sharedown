@@ -200,15 +200,22 @@ const SharedownAPI = (() => {
     }
 
     async function _sharepointLogin(page, logData, isFoldImport) {
+        api.writeLog('_sharepointLogin: start login procedure');
+
         if (logData !== null) {
+            api.writeLog('_sharepointLogin: has login data');
+
             if (logData.msid !== '') {
+                api.writeLog('_sharepointLogin: has msid');
                 await page.waitForSelector('input[type="email"]', {timeout: 8000});
                 await page.keyboard.type(logData.msid);
                 await page.click('input[type="submit"]');
             }
 
-            if (logData.hasOwnProperty('custom'))
+            if (logData.hasOwnProperty('custom')) {
+                api.writeLog('_sharepointLogin: has auto-login');
                 await _loginModule.doLogin(page, logData.custom);
+            }
         }
 
         if (!isFoldImport) {
@@ -707,6 +714,8 @@ const SharedownAPI = (() => {
             page.setDefaultNavigationTimeout(puppyTimeout);
             page.on('response', catchResponse);
 
+            api.writeLog(`runPuppeteerGetVideoData: goto ${video.url}`);
+
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData, false);
             await page.waitForNavigation({waitUntil: 'networkidle0'});
@@ -766,6 +775,7 @@ const SharedownAPI = (() => {
             if (browser)
                 await browser.close();
 
+            api.writeLog(`runPuppeteerGetVideoData: error\n${e.message}`);
             api.showMessage('error', e.message, 'Puppeteer Error');
             return null;
         }
@@ -784,7 +794,7 @@ const SharedownAPI = (() => {
             const match = folderURLsList[0].match(regex);
             const ret = {list: []};
 
-            api.writeLog("runPuppeteerGetURLListFromFolder start");
+            api.writeLog("runPuppeteerGetURLListFromFolder: start");
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
@@ -811,6 +821,7 @@ const SharedownAPI = (() => {
             if (browser)
                 await browser.close();
 
+            api.writeLog(`runPuppeteerGetURLListFromFolder: error\n${e.message}`);
             api.showMessage('error', e.message, 'Puppeteer Error');
             return null;
         }
@@ -870,13 +881,14 @@ const SharedownAPI = (() => {
                     _unlinkSync(outFile);
 
                 } catch (e) {
+                    api.writeLog(`ffmpegCmd.on(error):\n${e.message}`);
                     api.showMessage('error', e.message, 'FFmpeg');
                 }
 
                 if (!err.message.includes('Exiting normally, received signal 15')) {
                     const failEvt = new CustomEvent('DownloadFail', { detail: err });
 
-                    api.writeLog("ffmpegCmd.on(error):\n"+err.log);
+                    api.writeLog("ffmpegCmd.on(error):\n" + err.log);
                     window.dispatchEvent(failEvt);
                 }
             });
@@ -885,6 +897,7 @@ const SharedownAPI = (() => {
             return true;
 
         } catch (e) {
+            api.writeLog(`FFmpeg: error\n${e.message}`);
             api.showMessage('error', e.message, 'FFmpeg');
         }
 
@@ -1023,6 +1036,7 @@ const SharedownAPI = (() => {
             _runningProcess = null;
 
         } catch (e) {
+            api.writeLog(`stopDownload: error\n${e.message}`);
             api.showMessage('error', e.message, 'Stop download error');
         }
     }

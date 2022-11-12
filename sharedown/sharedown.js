@@ -493,29 +493,45 @@ async function downloadVideo(videoElem) {
 }
 
 async function startDownload() {
-    if (resources.downlStartBtn.classList.contains('btn-disabled') || !resources.downQueObj.hasNext())
+    sharedownApi.writeLog('startDownload: start');
+
+    if (resources.downlStartBtn.classList.contains('btn-disabled')) {
+        sharedownApi.writeLog('startDownload: button is disabled');
         return;
+
+    } else if (!resources.downQueObj.hasNext()) {
+        sharedownApi.writeLog('startDownload: queue is empty');
+        return;
+    }
 
     resources.downloading = resources.downQueObj.getNext();
 
     const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
+    sharedownApi.writeLog('startDownload: valid data: ' + (resources.downloading !== null));
+
     downloadVideo(videoElem).then(() => {
         lockUIElemsForDownload();
+        sharedownApi.writeLog(`startDownload: selected ${resources.downloading.id}`);
 
-    }).catch(() => {
+    }).catch((e) => {
         videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         sharedownApi.stopDownload();
+        sharedownApi.writeLog('startDownload: failed\n' + e.message);
 
         resources.downloading = null;
     });
 }
 
 function stopDownload() {
-    if (resources.downlStopBtn.classList.contains('btn-disabled'))
+    sharedownApi.writeLog('stopDownload: called');
+
+    if (resources.downlStopBtn.classList.contains('btn-disabled')) {
+        sharedownApi.writeLog('stopDownload: button is disabled');
         return;
+    }
 
     toggleLoadingScr();
     const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
@@ -636,6 +652,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('DownloadFail', (e) => {
+    sharedownApi.writeLog('DownloadFail event:\n' + e.detail);
+
     if (globalSettings.retryOnFail && resources.downloading instanceof video) {
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
@@ -658,6 +676,8 @@ window.addEventListener('DownloadFail', (e) => {
 window.addEventListener('DownloadSuccess', () => {
     const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
     const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
+
+    sharedownApi.writeLog(`DownloadSuccess event for ${resources.downloading.id}`);
 
     if (sharedownApi.isShowDlInfoSet())
         toggleDownloadStats(videoElm.querySelector('span'));
