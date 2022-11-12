@@ -65,6 +65,6 @@
     "fessonia": "^2.2.2",
     "iso8601-duration": "^2.1.1",
     "keytar": "^7.9.0",
-    "puppeteer": "19.0.0"
+    "puppeteer": "19.2.2"
   }
 }

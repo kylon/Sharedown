@@ -17,13 +17,15 @@
 "use strict";
 
 const { contextBridge, ipcRenderer, shell } = require('electron');
+const isWindows = process.platform === 'win32';
+const isLinux = process.platform === 'linux';
+const isMacOS = process.platform === 'darwin';
 
 // macOS PATH workaround
-if (process.platform === 'darwin')
+if (isMacOS)
     process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', '/opt/homebrew/bin', process.env.PATH].join(':');
 
 const SharedownAPI = (() => {
-    const _isWindows = process.platform === 'win32';
     const _LoginModule = require('./sharedown/loginModules/loginModule');
     const _path = require('node:path');
     const _fs = require('node:fs');
@@ -115,19 +117,75 @@ const SharedownAPI = (() => {
         return JSON.stringify(ret);
     }
 
-    function _getPuppeteerExecutablePath(curExecPath) {
-        if (curExecPath.toLowerCase().includes('resources'))
-            return curExecPath.replace('app.asar', 'app.asar.unpacked');
-
-        return curExecPath;
+    function _getChromeOSFolder(file) {
+        if (isLinux)
+            return file.startsWith('linux-');
+        else if (isMacOS)
+            return file.startsWith('mac-');
+        else if (isWindows)
+            return file.startsWith('win64-');
+        else
+            return false;
     }
 
-    function _getPuppeteerArgs(puppyExePath, userdataFold) {
+    function _getChromeOSExeFolder(file) {
+        if (isLinux)
+            return file === 'chrome-linux';
+        else if (isMacOS)
+            return file === 'chrome-mac';
+        else if (isWindows)
+            return file === 'chrome-win';
+        else
+            return false;
+    }
+
+    function _isAppPackage(cwd) {
+        return process.env.hasOwnProperty('PORTABLE_EXECUTABLE_DIR') ||
+                process.env.hasOwnProperty('APPDIR') ||
+                (isWindows && cwd.includes('AppData\\Local\\Programs')) ||
+                (isMacOS && __dirname.toLowerCase().endsWith('app.asar'));
+    }
+
+    function _getPuppeteerExecutablePath() {
+        const basePath = process.cwd();
+        let chromeDirPath = '/node_modules/puppeteer/chrome';
+        let ret = '';
+
+        if (_isAppPackage(basePath)) {
+            const pkgBasePath = isWindows ? basePath : (isMacOS ? __dirname : process.env.APPDIR);
+
+            if (isMacOS)
+                chromeDirPath = _path.join(`${pkgBasePath}.unpacked`, chromeDirPath);
+            else
+                chromeDirPath = _path.join(pkgBasePath, 'resources', 'app.asar.unpacked', chromeDirPath);
+
+        } else {
+            chromeDirPath = _path.join(basePath, chromeDirPath);
+        }
+
+        try {
+            const chromeExe = isWindows ? 'chrome.exe' : (isMacOS ? 'Chromium.app/Contents/MacOS/Chromium' : 'chrome');
+            const osFold = (_fs.readdirSync(chromeDirPath).filter(file => _getChromeOSFolder(file)))[0];
+            const osExeFold = (_fs.readdirSync(_path.join(chromeDirPath, osFold)).filter(file => _getChromeOSExeFolder(file)))[0];
+
+            ret = _path.join(chromeDirPath, osFold, osExeFold, chromeExe);
+
+        } catch (e) {
+            api.writeLog(`_getPuppeteerExecutablePath:\n${e.message}`);
+        }
+
+        return ret;
+    }
+
+    function _getPuppeteerArgs(customChromeExePath, userdataFold) {
         const pargs = {
-            executablePath: _getPuppeteerExecutablePath(puppyExePath),
+            executablePath: (customChromeExePath === '' ? _getPuppeteerExecutablePath() : customChromeExePath),
             headless: false,
             args: ['--disable-dev-shm-usage']
         };
+
+        if (pargs.executablePath === '')
+            throw new Error('failed to find chromium executable');
 
         if (userdataFold) {
             const dataPath = _path.normalize(_sharedownAppDataPath + '/data');
@@ -618,10 +676,10 @@ const SharedownAPI = (() => {
         let browser = null;
 
         _startCatchResponse = false;
-        customChromePath = customChromePath === '' ? null : customChromePath;
+
 
         try {
-            browser = await puppy.launch(_getPuppeteerArgs(customChromePath ?? puppy.executablePath(), enableUserdataFold));
+            browser = await puppy.launch(_getPuppeteerArgs(customChromePath, enableUserdataFold));
 
             const responseList = [];
             const catchResponse = function(resp) {
@@ -719,7 +777,7 @@ const SharedownAPI = (() => {
         let browser = null;
 
         try {
-            browser = await puppy.launch(_getPuppeteerArgs(puppy.executablePath(), enableUserdataFold));
+            browser = await puppy.launch(_getPuppeteerArgs('', enableUserdataFold));
 
             const page = (await browser.pages())[0];
             const regex = new RegExp(/\/sites\/([^\/]+)/);
@@ -953,7 +1011,7 @@ const SharedownAPI = (() => {
         try {
             _stoppingProcess = true;
 
-            if (_isWindows) {
+            if (isWindows) {
                 const { spawn } = require('node:child_process');
 
                 spawn('taskkill', ['/pid', _runningProcess.pid, '/f', '/t']);
