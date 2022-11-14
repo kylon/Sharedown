@@ -396,8 +396,8 @@ const SharedownAPI = (() => {
         urlObj.searchParams.set('pretranscode', '0');
         urlObj.searchParams.set('transcodeahead', '0');
 
-        api.writeLog("_makeVideoManifestFetchURL:\nurl:"+_hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
-            '\n\nresp dump:\n'+_tryRemoveUserDataFromRespDumpForLog(donorRespData));
+        api.writeLog("_makeVideoManifestFetchURL:\nurl:" + _hideToken(donorRespData.ListSchema['.driveAccessToken'], urlObj.toString()) +
+                    '\nresp dump:\n' + _tryRemoveUserDataFromRespDumpForLog(donorRespData));
 
         return {uobj: urlObj, err: hasErr};
     }
@@ -518,11 +518,14 @@ const SharedownAPI = (() => {
     }
 
     async function _getFileName(donorURLObj) {
+        const docid = donorURLObj.searchParams.get('docid');
+        const tok = donorURLObj.searchParams.get('access_token');
         const axios = require('axios');
-        const resp = await axios.get(donorURLObj.searchParams.get('docid') + '&access_token=' + donorURLObj.searchParams.get('access_token'));
+        let resp;
 
-        api.writeLog("_getFileName:\ndocid: "+donorURLObj.searchParams.get('docid')+'\n\n' +
-            "url: "+_hideToken(donorURLObj.searchParams.get('access_token'), donorURLObj.toString()));
+        api.writeLog(`_getFileName:\ndocid: ${docid}\nurl: ` + _hideToken(tok, donorURLObj.toString()));
+
+        resp = await axios.get(`${docid}&access_token=${tok}`);
 
         return resp.data.hasOwnProperty('name') ? resp.data['name'] : '';
     }

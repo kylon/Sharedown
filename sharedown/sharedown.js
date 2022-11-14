@@ -474,6 +474,8 @@ async function downloadVideo(videoElem) {
                                          globalSettings.userdataFold, globalSettings.customChomePath, isDirectDownloader);
         toggleLoadingScr();
 
+        sharedownApi.writeLog('downloadVideo: has vdata: ' + (vdata !== null));
+
         if (!vdata)
             return rej();
 
