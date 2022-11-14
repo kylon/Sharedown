@@ -477,8 +477,11 @@ async function downloadVideo(videoElem) {
         if (!vdata)
             return rej();
 
-        if (vdata.t === '') // unnamed video ??, give it a name and try to download
+        if (vdata.t === '') { // unnamed video ??, give it a name and try to download
             vdata.t = 'sharedownVideo' + sharedownApi.genID();
+
+            sharedownApi.writeLog(`downloadVideo: video has empty title!? new title: ${vdata.t}`);
+        }
 
         // generate output file path (apply user settings, if any)
         resources.downloadingFPath = sharedownApi.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
@@ -519,7 +522,7 @@ async function startDownload() {
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         sharedownApi.stopDownload();
-        sharedownApi.writeLog('startDownload: failed\n' + e.message);
+        sharedownApi.writeLog(`startDownload: failed\n${e.message}`);
 
         resources.downloading = null;
     });
