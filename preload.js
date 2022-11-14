@@ -117,6 +117,10 @@ const SharedownAPI = (() => {
         return JSON.stringify(ret);
     }
 
+    function _waitForTimeout(ms) {
+        return new Promise(r => setTimeout(r, ms));
+    }
+
     function _getChromeOSFolder(file) {
         if (isLinux)
             return file.startsWith('linux-');
@@ -199,6 +203,33 @@ const SharedownAPI = (() => {
         return pargs;
     }
 
+    function _waitForVideoPlayer(page) {
+        return new Promise(async (resolve, reject) => {
+            const start = Date.now();
+            const maxTime = 600000;
+            let playerHandle = null;
+
+            while (!playerHandle) {
+                try {
+                    if ((Date.now() - start) >= maxTime) {
+                        reject();
+                        return;
+                    }
+
+                    await _waitForTimeout(650);
+
+                    playerHandle = await page.$('.StreamWebApp-container');
+
+                } catch(e) {
+                    api.writeLog(`_waitForVideoPlayer: ignore:\n${e.message}`);
+                }
+            }
+
+            await playerHandle.dispose();
+            resolve();
+        });
+    }
+
     async function _sharepointLogin(page, logData, isFoldImport) {
         api.writeLog('_sharepointLogin: start login procedure');
 
@@ -219,7 +250,7 @@ const SharedownAPI = (() => {
         }
 
         if (!isFoldImport) {
-            await page.waitForSelector('video.vjs-tech', {timeout: 600000});
+            await _waitForVideoPlayer(page);
 
             _startCatchResponse = true;
 
