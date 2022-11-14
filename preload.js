@@ -724,9 +724,11 @@ const SharedownAPI = (() => {
                 if (!_startCatchResponse)
                     return;
 
-                const resType = resp.request().resourceType();
+                const reqst = resp.request();
+                const resType = reqst.resourceType();
+                const method = reqst.method().toLowerCase();
 
-                if (resType === 'fetch' || resType === 'xhr')
+                if ((resType === 'fetch' || resType === 'xhr') && (method === 'post' || method === 'get'))
                     responseList.push(resp);
             }
             const page = (await browser.pages())[0];
