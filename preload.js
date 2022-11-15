@@ -1013,10 +1013,12 @@ const SharedownAPI = (() => {
             });
 
             ytdlp.on('close', (code) => {
+                const isAborted = _stoppingProcess || code === null;
+
                 try {
                     if (code !== 0) {
                         videoProgBar.style.width = '0%';
-                        throw new Error("Exit code: " + (_stoppingProcess || code === null ? "aborted" : code));
+                        throw new Error("Exit code: " + (isAborted ? "aborted" : code));
                     }
 
                     if (!isDirect) {
@@ -1039,14 +1041,16 @@ const SharedownAPI = (() => {
                     window.dispatchEvent(new CustomEvent('DownloadSuccess'));
 
                 } catch (e) {
-                    const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
-
                     if (isDirect)
                         _unlinkSync(outFile);
 
                     api.writeLog(`YT-dlp: download failed:\n${e.message}`);
-                    window.dispatchEvent(failEvt);
 
+                    if (!isAborted) {
+                        const failEvt = new CustomEvent('DownloadFail', {detail: `YT-dlp error:\n\n${e.message}`});
+
+                        window.dispatchEvent(failEvt);
+                    }
                 } finally {
                     _rmSync(tmpFold);
                 }
