@@ -774,12 +774,14 @@ const SharedownAPI = (() => {
 
                 try {
                     donorRespData = await catchedResp.json();
+                    break;
 
                 } catch(e) {
                     api.writeLog(`runPuppeteerGetVideoData: no json body on catched response: ${respUrl}\n${e.message}`);
-                }
 
-                break;
+                    matchedResponse = null;
+                    continue;
+                }
             }
 
             if (donorRespData === null)
