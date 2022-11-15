@@ -195,7 +195,7 @@ const SharedownAPI = (() => {
             const dataPath = _path.normalize(_sharedownAppDataPath + '/data');
 
             if (!_fs.existsSync(dataPath))
-                _fs.mkdirSync(dataPath);
+                _fs.mkdirSync(dataPath, {recursive: true});
 
             pargs['userDataDir'] = dataPath;
         }
@@ -1200,7 +1200,7 @@ const SharedownAPI = (() => {
             return;
 
         if (!_fs.existsSync(_logsFolderPath))
-            _fs.mkdirSync(_logsFolderPath);
+            _fs.mkdirSync(_logsFolderPath, {recursive: true});
 
         for (const logf of [_logFilePath, _ytdlpLogFilePath]) {
             const old = `${logf}.old`;
