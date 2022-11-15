@@ -328,6 +328,8 @@ async function loadGlobalSettings() {
     outdir.setAttribute('title', globalSettings.outputPath);
     ytdlpTmpOutD.setAttribute('title', globalSettings.ytdlpTmpOut);
 
+    globalSettings.logging = globalSettings.logging ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
+
     outdir.value = globalSettings.outputPath;
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
@@ -346,17 +348,14 @@ async function loadGlobalSettings() {
     else if (globalSettings.useKeytar)
         await UIUtils.keytarCheckChangeEvt(true, resources.globalSetModal, globalSettings.loginModule);
 
-    if (globalSettings.logging)
-        sharedownApi.enableLogs();
-    else
-        sharedownApi.disableLogs();
-
     setDownloaderSettingsUI(globalSettings.downloader);
 }
 
 async function saveGlobalSettings() {
     toggleLoadingScr();
+
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
+    const shlogsInpt = resources.globalSetModal.querySelector('#shlogs');
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.ytdlpTmpOut = resources.globalSetModal.querySelector('#ytdlptmpdp').value;
@@ -369,16 +368,13 @@ async function saveGlobalSettings() {
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
-    globalSettings.logging = resources.globalSetModal.querySelector('#shlogs').value === '1';
+    globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
     globalSettings.customChomePath = resources.globalSetModal.querySelector('#cuschromep').value;
+
+    shlogsInpt.value = globalSettings.logging ? '1' : '0';
 
     if (globalSettings.useKeytar)
         await Utils.keytarSaveCredentials(resources.globalSetModal, globalSettings.loginModule);
-
-    if (globalSettings.logging)
-        sharedownApi.enableLogs();
-    else
-        sharedownApi.disableLogs();
 
     exportAppSettings();
     toggleLoadingScr();

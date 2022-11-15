@@ -1197,34 +1197,48 @@ const SharedownAPI = (() => {
 
     api.enableLogs = () => {
         if (_enableLogs)
-            return;
+            return true;
 
-        if (!_fs.existsSync(_logsFolderPath))
-            _fs.mkdirSync(_logsFolderPath, {recursive: true});
+        try {
+            if (!_fs.existsSync(_logsFolderPath))
+                _fs.mkdirSync(_logsFolderPath, {recursive: true});
 
-        for (const logf of [_logFilePath, _ytdlpLogFilePath]) {
-            const old = `${logf}.old`;
+            for (const logf of [_logFilePath, _ytdlpLogFilePath]) {
+                const old = `${logf}.old`;
 
-            _unlinkSync(old);
+                _unlinkSync(old);
 
-            if (_fs.existsSync(logf))
-                _fs.renameSync(logf, old);
+                if (_fs.existsSync(logf))
+                    _fs.renameSync(logf, old);
+            }
+
+            _shLogFd = _fs.openSync(_logFilePath, 'a');
+            _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
+
+            _enableLogs = true;
+
+        } catch (e) {
+            api.showMessage('error', `Failed to enable logging\n${e.message}`, 'Sharedown Error');
         }
 
-        _shLogFd = _fs.openSync(_logFilePath, 'a');
-        _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
-
-        _enableLogs = true;
+        return _enableLogs;
     }
 
     api.disableLogs = () => {
         if (!_enableLogs)
-            return;
+            return false;
 
-        _fs.closeSync(_shLogFd);
-        _fs.closeSync(_ytdlpLogFd);
+        try {
+            _fs.closeSync(_shLogFd);
+            _fs.closeSync(_ytdlpLogFd);
 
-        _enableLogs = false;
+            _enableLogs = false;
+
+        } catch (e) {
+            api.showMessage('error', `Failed to disable logging\n${e.message}`, 'Sharedown Error');
+        }
+
+        return _enableLogs;
     }
 
     api.writeLog = (msg, type='shd') => {
