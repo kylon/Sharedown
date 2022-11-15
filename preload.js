@@ -715,6 +715,7 @@ const SharedownAPI = (() => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
         let browser = null;
+        let ret = null;
 
         _startCatchResponse = false;
 
@@ -811,7 +812,8 @@ const SharedownAPI = (() => {
             }
 
             await browser.close();
-            return {m: videoUrl, t: title, c: cookies};
+
+            ret = {m: videoUrl, t: title, c: cookies};
 
         } catch (e) {
             if (browser)
@@ -819,8 +821,9 @@ const SharedownAPI = (() => {
 
             api.writeLog(`runPuppeteerGetVideoData: error\n${e.message}`);
             api.showMessage('error', e.message, 'Puppeteer Error');
-            return null;
         }
+
+        return ret;
     }
 
     api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, tmout, enableUserdataFold) => {
