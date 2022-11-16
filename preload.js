@@ -37,6 +37,7 @@ const SharedownAPI = (() => {
     const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
     const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
     const _ytdlpLogFilePath = _path.normalize(_logsFolderPath+'/ytdlp.log');
+    let _puppyBrowser = null;
     let _showDownlInfo = false;
     let _runningProcess = null;
     let _stoppingProcess = false;
@@ -609,6 +610,11 @@ const SharedownAPI = (() => {
             _fs.unlinkSync(path);
     }
 
+    function _browserDisconnectedEvt() {
+        _puppyBrowser?.close();
+        _puppyBrowser = null;
+    }
+
     function _sortURLsFromFolder(vURLsList, sortType) {
         const sorted = [];
         const ret = [];
@@ -707,21 +713,20 @@ const SharedownAPI = (() => {
         await kt.deletePassword('sharedown', 'loginmodule');
     }
 
-    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, customChromePath, isDirect = false) => {
+    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, customChromePath, keepBrowserOpen, isDirect = false) => {
         const knownResponses = [
             'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
             'SP.List.GetListDataAsStream?listFullUrl'
         ];
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
-        let browser = null;
         let ret = null;
 
         _startCatchResponse = false;
 
-
         try {
-            browser = await puppy.launch(_getPuppeteerArgs(customChromePath, enableUserdataFold));
+            if (_puppyBrowser === null)
+                _puppyBrowser = await puppy.launch(_getPuppeteerArgs(customChromePath, enableUserdataFold));
 
             const responseList = [];
             const catchResponse = function(resp) {
@@ -735,7 +740,7 @@ const SharedownAPI = (() => {
                 if ((resType === 'fetch' || resType === 'xhr') && (method === 'post' || method === 'get'))
                     responseList.push(resp);
             }
-            const page = (await browser.pages())[0];
+            const page = (await _puppyBrowser.pages())[0];
             let matchedResponse = null;
             let donorRespData = null;
             let videoUrl;
@@ -743,6 +748,11 @@ const SharedownAPI = (() => {
             let title;
             let dlData;
             let vID;
+
+            if (keepBrowserOpen) {
+                _puppyBrowser.off('disconnected', _browserDisconnectedEvt)
+                _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
+            }
 
             if (customChromePath)
                 api.writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
@@ -813,13 +823,18 @@ const SharedownAPI = (() => {
                 cookies = null;
             }
 
-            await browser.close();
+            if (!keepBrowserOpen) {
+                await _puppyBrowser.close();
+                _puppyBrowser = null;
+            }
 
             ret = {m: videoUrl, t: title, c: cookies};
 
         } catch (e) {
-            if (browser)
-                await browser.close();
+            if (!keepBrowserOpen && _puppyBrowser) {
+                await _puppyBrowser.close();
+                _puppyBrowser = null;
+            }
 
             api.writeLog(`runPuppeteerGetVideoData: error\n${e.message}`);
             api.showMessage('error', e.message, 'Puppeteer Error');
@@ -828,18 +843,23 @@ const SharedownAPI = (() => {
         return ret;
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, tmout, enableUserdataFold) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, tmout, keepBrowserOpen, enableUserdataFold) => {
         const puppy = require('puppeteer');
         const puppyTimeout = tmout * 1000;
-        let browser = null;
 
         try {
-            browser = await puppy.launch(_getPuppeteerArgs('', enableUserdataFold));
+            if (_puppyBrowser === null)
+                _puppyBrowser = await puppy.launch(_getPuppeteerArgs('', enableUserdataFold));
 
-            const page = (await browser.pages())[0];
+            const page = (await _puppyBrowser.pages())[0];
             const regex = new RegExp(/\/sites\/([^\/]+)/);
             const match = folderURLsList[0].match(regex);
             const ret = {list: []};
+
+            if (keepBrowserOpen) {
+                _puppyBrowser.off('disconnected', _browserDisconnectedEvt)
+                _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
+            }
 
             api.writeLog("runPuppeteerGetURLListFromFolder: start");
             page.setDefaultTimeout(puppyTimeout);
@@ -860,13 +880,18 @@ const SharedownAPI = (() => {
                 await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
             }
 
-            await browser.close();
+            if (!keepBrowserOpen) {
+                await _puppyBrowser.close();
+                _puppyBrowser = null;
+            }
 
             return _sortURLsFromFolder(ret.list, sortType);
 
         } catch (e) {
-            if (browser)
-                await browser.close();
+            if (!keepBrowserOpen && _puppyBrowser) {
+                await _puppyBrowser.close();
+                _puppyBrowser = null;
+            }
 
             api.writeLog(`runPuppeteerGetURLListFromFolder: error\n${e.message}`);
             api.showMessage('error', e.message, 'Puppeteer Error');

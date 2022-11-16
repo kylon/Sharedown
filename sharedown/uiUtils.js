@@ -107,7 +107,7 @@ const UIUtils = (() => {
             globalSetModal.querySelector(`#loginModuleField${i}`).value = lmCreds[i];
     }
 
-    UIutil.chromeUsrDataChangeEvt = (isChecked, globalSetModal) => {
+    UIutil.disableAutoLoginOptions = (isChecked, globalSetModal) => {
         const loginModuleInpt = globalSetModal.querySelector('#loginmodlist');
         const keytarInpt = globalSetModal.querySelector('#keytar');
         const msIDInpt = globalSetModal.querySelector('#username');

@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 13, // internal
+    _version: 14, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -32,7 +32,8 @@ const globalSettings = {
     userdataFold: false,
     autoSaveState: true,
     logging: false,
-    customChomePath: ''
+    customChomePath: '',
+    keepBrowserOpen: false
 };
 
 const resources = {
@@ -167,8 +168,8 @@ async function importURLsFromFolder() {
     for (const inv of invalid)
         foldersList.splice(foldersList.indexOf(inv), 1);
 
-    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds,
-                                                urlsSortType, globalSettings.timeout,
+    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds, urlsSortType,
+                                                globalSettings.timeout, globalSettings.keepBrowserOpen,
                                                 globalSettings.userdataFold);
 
     if (urlList === null || urlList.length === 0) {
@@ -342,9 +343,10 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
     resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChomePath;
+    resources.globalSetModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
 
-    if (globalSettings.userdataFold)
-        UIUtils.chromeUsrDataChangeEvt(true, resources.globalSetModal);
+    if (globalSettings.userdataFold || globalSettings.keepBrowserOpen)
+        UIUtils.disableAutoLoginOptions(true, resources.globalSetModal);
     else if (globalSettings.useKeytar)
         await UIUtils.keytarCheckChangeEvt(true, resources.globalSetModal, globalSettings.loginModule);
 
@@ -370,6 +372,7 @@ async function saveGlobalSettings() {
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
     globalSettings.customChomePath = resources.globalSetModal.querySelector('#cuschromep').value;
+    globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
 
     shlogsInpt.value = globalSettings.logging ? '1' : '0';
 
@@ -406,6 +409,7 @@ function importAppSettings() {
     globalSettings.timeout = data.timeout ?? 30;
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChomePath = data.customChomePath ?? '';
+    globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
 
     if (data['_version'] < globalSettings['_version']) {
         sharedownApi.upgradeSett(data['_version']);
@@ -467,7 +471,8 @@ async function downloadVideo(videoElem) {
         toggleLoadingScr();
 
         vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
-                                         globalSettings.userdataFold, globalSettings.customChomePath, isDirectDownloader);
+                                         globalSettings.userdataFold, globalSettings.customChomePath,
+                                         globalSettings.keepBrowserOpen, isDirectDownloader);
         toggleLoadingScr();
 
         sharedownApi.writeLog('downloadVideo: has vdata: ' + (vdata !== null));
@@ -598,7 +603,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.globalSetModal.querySelector('#ytdlptmpdir').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#cuschromepb').addEventListener('click', e => Utils.showSelectCustomChomeDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
-    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.chromeUsrDataChangeEvt(e.target.checked, resources.globalSetModal));
+    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.disableAutoLoginOptions(e.target.checked, resources.globalSetModal));
+    resources.globalSetModal.querySelector('#keepbrowopen').addEventListener('change', e => UIUtils.disableAutoLoginOptions(e.target.checked, resources.globalSetModal));
 
     document.getElementById('loginmodlist').addEventListener('change', async (e) => {
         const keytarInpt = resources.globalSetModal.querySelector('#keytar');
