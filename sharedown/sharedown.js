@@ -525,7 +525,7 @@ async function startDownload() {
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         sharedownApi.stopDownload();
-        sharedownApi.writeLog(`startDownload: failed\n${e.message}`);
+        sharedownApi.writeLog(`startDownload: failed\n${e?.message}`);
 
         resources.downloading = null;
     });
