@@ -1195,7 +1195,7 @@ const SharedownAPI = (() => {
         return _loadSettingsFromDisk(_sharedownSettFile, "Unable to load Sharedown settings");
     }
 
-    api.upgradeSett = (version) => {
+    api.upgradeForSettingsUpgrade = (version) => {
         if (version < 4) {
             const _ologFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
             const oldF = _ologFilePath+'.old';

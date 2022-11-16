@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 15, // internal
+    _version: 16, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -33,7 +33,7 @@ const globalSettings = {
     userdataFold: false,
     autoSaveState: true,
     logging: false,
-    customChomePath: '',
+    customChromePath: '',
     keepBrowserOpen: false
 };
 
@@ -346,7 +346,7 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
     resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
-    resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChomePath;
+    resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChromePath;
     resources.globalSetModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
 
     if (globalSettings.userdataFold || globalSettings.keepBrowserOpen)
@@ -376,7 +376,7 @@ async function saveGlobalSettings() {
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
-    globalSettings.customChomePath = resources.globalSetModal.querySelector('#cuschromep').value;
+    globalSettings.customChromePath = resources.globalSetModal.querySelector('#cuschromep').value;
     globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
 
     shlogsInpt.value = globalSettings.logging ? '1' : '0';
@@ -391,6 +391,11 @@ async function saveGlobalSettings() {
 
 function exportAppSettings() {
     sharedownApi.saveAppSettings(JSON.stringify(globalSettings));
+}
+
+function upgradeSettings(settingsFile) {
+    if (settingsFile['_version'] < 16)
+        globalSettings.customChromePath = settingsFile.customChomePath ?? '';
 }
 
 function importAppSettings() {
@@ -414,11 +419,12 @@ function importAppSettings() {
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 30;
     globalSettings.logging = data.logging ?? false;
-    globalSettings.customChomePath = data.customChomePath ?? '';
+    globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = !globalSettings.useKeytar && (data.keepBrowserOpen ?? false);
 
     if (data['_version'] < globalSettings['_version']) {
-        sharedownApi.upgradeSett(data['_version']);
+        sharedownApi.upgradeForSettingsUpgrade(data['_version']);
+        upgradeSettings(data);
         exportAppSettings(); // update settings version
     }
 }
