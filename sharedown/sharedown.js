@@ -560,9 +560,7 @@ function stopDownload() {
 
 window.addEventListener('DOMContentLoaded', async () => {
     initResources();
-
     toggleLoadingScr();
-
     sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now
 
     if (!sharedownApi.hasFFmpeg()) {
@@ -590,6 +588,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppState();
     await loadGlobalSettings();
 
+    document.getElementById('soutdirp').setAttribute('placeholder', sharedownApi.getDefaultOutputFolder());
     document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
     document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { resources.importURLsFoldList.value = ''; });
