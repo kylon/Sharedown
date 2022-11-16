@@ -216,6 +216,14 @@
                     </div>
                     <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
                         <div class="col-12">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="keeptmponfail">
+                                <label class="form-check-label" for="keeptmponfail">Do not delete temp directory on fail</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
+                        <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
                                 <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="5">

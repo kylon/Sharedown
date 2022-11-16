@@ -19,10 +19,11 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 14, // internal
+    _version: 15, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
+    keepYtdlpTmpOnFail: false,
     ytdlpN: 5,
     directN: 5,
     timeout: 30, // 30 secs, puppeteer default
@@ -338,6 +339,7 @@ async function loadGlobalSettings() {
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
+    resources.globalSetModal.querySelector('#keeptmponfail').checked = globalSettings.keepYtdlpTmpOnFail;
     resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
     resources.globalSetModal.querySelector('#keytar').checked = globalSettings.useKeytar;
     resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
@@ -371,6 +373,7 @@ async function saveGlobalSettings() {
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
+    globalSettings.keepYtdlpTmpOnFail = resources.globalSetModal.querySelector('#keeptmponfail').checked;
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
     globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
@@ -408,6 +411,7 @@ function importAppSettings() {
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
+    globalSettings.keepYtdlpTmpOnFail = data.keepYtdlpTmpOnFail ?? false;
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 30;
     globalSettings.logging = data.logging ?? false;

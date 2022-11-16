@@ -572,6 +572,28 @@ const SharedownAPI = (() => {
         videoProgBar.style.width = perc > 100 ? '100%' : `${perc}%`;
     }
 
+    function _saveYtdlpTempFragsFolder(tmpPath, filename) {
+        try {
+            if (!_fs.existsSync(tmpPath)) {
+                api.writeLog('_saveYtdlpTempFragsFolder: no temp folder, skip..');
+                return;
+            }
+
+            const fnameNoExt = _path.parse(filename).name;
+            const savedTmpName = `${tmpPath}_${fnameNoExt}`;
+            let savedTmpFName = savedTmpName;
+            let i = 1;
+
+            while (_fs.existsSync(savedTmpFName))
+                savedTmpFName = `${savedTmpName}_${i++}`;
+
+            _fs.renameSync(tmpPath, savedTmpFName);
+
+        } catch (e) {
+            api.writeLog(`_saveYtdlpTempFragsFolder: failed to rename yt-dlp temp folder:\n${e.message}`);
+        }
+    }
+
     function _writeSettingsToDisk(data, path, erMsg) {
         try {
             if (!_fs.existsSync(_sharedownAppDataPath))
@@ -1070,6 +1092,8 @@ const SharedownAPI = (() => {
                 } catch (e) {
                     if (isDirect)
                         _unlinkSync(outFile);
+                    else if (!isAborted && settings.keepYtdlpTmpOnFail)
+                        _saveYtdlpTempFragsFolder(tmpFold, filename);
 
                     api.writeLog(`YT-dlp: download failed:\n${e.message}`);
 
