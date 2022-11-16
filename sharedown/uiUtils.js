@@ -18,7 +18,22 @@
 
 const UIUtils = (() => {
     const _sharedownApi = window.sharedown;
+    let _keepChromeOpenChkb;
+    let _chromeUsrDataChkb;
+    let _loginModuleInpt;
+    let _keytarInpt;
+    let _msIDInpt;
+    let _globalSetModal;
     const UIutil = {};
+
+    UIutil.init = (globalSetModal) => {
+        _chromeUsrDataChkb = globalSetModal.querySelector('#chuserdata');
+        _keepChromeOpenChkb = globalSetModal.querySelector('#keepbrowopen');
+        _loginModuleInpt = globalSetModal.querySelector('#loginmodlist');
+        _keytarInpt = globalSetModal.querySelector('#keytar');
+        _msIDInpt = globalSetModal.querySelector('#username');
+        _globalSetModal = globalSetModal;
+    }
 
     UIutil.initLoginModuleSelect = () => {
         const mselect = document.getElementById('loginmodlist');
@@ -38,8 +53,8 @@ const UIUtils = (() => {
         mselect.appendChild(frag);
     }
 
-    UIutil.addLoginModuleFields = (globalSettingsModal) => {
-        const container = globalSettingsModal.querySelector('.logfieldscont');
+    UIutil.addLoginModuleFields = () => {
+        const container = _globalSetModal.querySelector('.logfieldscont');
         const fields = _sharedownApi.sharedownLoginModule.getFields();
 
         container.innerHTML = '';
@@ -83,11 +98,16 @@ const UIUtils = (() => {
         container.appendChild(frag);
     }
 
-    UIutil.fillLoginFieldsFromPwdManager = async (globalSetModal, curLoginModule) => {
+    UIutil.fillLoginFieldsFromPwdManager = async (curLoginModule) => {
+        if (curLoginModule === '0') {
+            _sharedownApi.writeLog('fillLoginFieldsFromPwdManager: basic login is selected, skip..');
+            return;
+        }
+
         const creds = await _sharedownApi.keytarGetLogin();
         const lmCreds = creds.lm;
 
-        globalSetModal.querySelector('#username').value = creds.msid ?? '';
+        _msIDInpt.value = creds.msid ?? '';
 
         if (lmCreds === null)
             return;
@@ -104,46 +124,57 @@ const UIUtils = (() => {
         }
 
         for (let i=0; i<loginModuleFieldsC; ++i)
-            globalSetModal.querySelector(`#loginModuleField${i}`).value = lmCreds[i];
+            _globalSetModal.querySelector(`#loginModuleField${i}`).value = lmCreds[i];
     }
 
-    UIutil.disableAutoLoginOptions = (isChecked, globalSetModal) => {
-        const loginModuleInpt = globalSetModal.querySelector('#loginmodlist');
-        const keytarInpt = globalSetModal.querySelector('#keytar');
-        const msIDInpt = globalSetModal.querySelector('#username');
-
+    UIutil.disableAutoLoginOptionsForAny = (isChecked) => {
         if (isChecked) {
-            if (loginModuleInpt.value !== 0) {
-                loginModuleInpt.value = 0;
-                loginModuleInpt.dispatchEvent(new Event('change'));
+            if (_loginModuleInpt.value !== 0) {
+                _loginModuleInpt.value = 0;
+                _loginModuleInpt.dispatchEvent(new Event('change'));
             }
 
-            keytarInpt.checked = false;
-            msIDInpt.setAttribute('disabled', '');
-            loginModuleInpt.setAttribute('disabled', '');
-            keytarInpt.setAttribute('disabled', '');
+            _keytarInpt.checked = false;
+            _msIDInpt.setAttribute('disabled', '');
+            _loginModuleInpt.setAttribute('disabled', '');
+            _keytarInpt.setAttribute('disabled', '');
 
         } else {
-            msIDInpt.removeAttribute('disabled');
-            loginModuleInpt.removeAttribute('disabled');
-            keytarInpt.removeAttribute('disabled');
+            _msIDInpt.removeAttribute('disabled');
+            _loginModuleInpt.removeAttribute('disabled');
+            _keytarInpt.removeAttribute('disabled');
         }
     }
 
-    UIutil.keytarCheckChangeEvt = async (isChecked, globalSetModal, curLoginModule) => {
-        const chromeUsrDataChkb = globalSetModal.querySelector('#chuserdata');
+    UIutil.disableAutoLoginOptionsForChromeUsrData = (isChecked) => {
+        if (!_keepChromeOpenChkb.checked)
+            UIutil.disableAutoLoginOptionsForAny(isChecked);
+    }
 
+    UIutil.disableAutoLoginOptionsForKeepChromeOpen = (isChecked) => {
+        if (!_chromeUsrDataChkb.checked)
+            UIutil.disableAutoLoginOptionsForAny(isChecked);
+    }
+
+    UIutil.keytarCheckChangeEvt = async (isChecked, curLoginModule) => {
         if (isChecked) {
-            if (chromeUsrDataChkb.checked) {
-                chromeUsrDataChkb.checked = false;
-                chromeUsrDataChkb.dispatchEvent(new Event('change'));
+            if (_chromeUsrDataChkb.checked) {
+                _chromeUsrDataChkb.checked = false;
+                _chromeUsrDataChkb.dispatchEvent(new Event('change'));
             }
 
-            chromeUsrDataChkb.setAttribute('disabled', '');
-            await UIutil.fillLoginFieldsFromPwdManager(globalSetModal, curLoginModule);
+            if (_keepChromeOpenChkb.checked) {
+                _keepChromeOpenChkb.checked = false;
+                _keepChromeOpenChkb.dispatchEvent(new Event('change'));
+            }
+
+            _chromeUsrDataChkb.setAttribute('disabled', '');
+            _keepChromeOpenChkb.setAttribute('disabled', '');
+            await UIutil.fillLoginFieldsFromPwdManager(curLoginModule);
 
         } else {
-            chromeUsrDataChkb.removeAttribute('disabled');
+            _chromeUsrDataChkb.removeAttribute('disabled');
+            _keepChromeOpenChkb.removeAttribute('disabled');
         }
     }
 

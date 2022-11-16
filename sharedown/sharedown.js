@@ -329,7 +329,7 @@ async function loadGlobalSettings() {
     sharedownApi.sharedownLoginModule.setModule(globalSettings.loginModule);
     loginModuleInpt.value = globalSettings.loginModule;
 
-    UIUtils.addLoginModuleFields(resources.globalSetModal);
+    UIUtils.addLoginModuleFields();
     outdir.setAttribute('title', globalSettings.outputPath);
     ytdlpTmpOutD.setAttribute('title', globalSettings.ytdlpTmpOut);
 
@@ -351,9 +351,9 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
 
     if (globalSettings.userdataFold || globalSettings.keepBrowserOpen)
-        UIUtils.disableAutoLoginOptions(true, resources.globalSetModal);
+        UIUtils.disableAutoLoginOptionsForAny(true);
     else if (globalSettings.useKeytar)
-        await UIUtils.keytarCheckChangeEvt(true, resources.globalSetModal, globalSettings.loginModule);
+        await UIUtils.keytarCheckChangeEvt(true, globalSettings.loginModule);
 
     setDownloaderSettingsUI(globalSettings.downloader);
 }
@@ -407,7 +407,7 @@ function importAppSettings() {
     globalSettings.useKeytar = data.useKeytar ?? false;
     globalSettings.userdataFold = !globalSettings.useKeytar && (data.userdataFold ?? false);
     globalSettings.autoSaveState = data.autoSaveState ?? true;
-    globalSettings.loginModule = !globalSettings.userdataFold ? (data.loginModule ?? 0) : 0;
+    globalSettings.loginModule = !globalSettings.userdataFold && !globalSettings.keepBrowserOpen ? (data.loginModule ?? 0) : 0;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
@@ -416,7 +416,7 @@ function importAppSettings() {
     globalSettings.timeout = data.timeout ?? 30;
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChomePath = data.customChomePath ?? '';
-    globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
+    globalSettings.keepBrowserOpen = !globalSettings.useKeytar && (data.keepBrowserOpen ?? false);
 
     if (data['_version'] < globalSettings['_version']) {
         sharedownApi.upgradeSett(data['_version']);
@@ -567,6 +567,7 @@ function stopDownload() {
 
 window.addEventListener('DOMContentLoaded', async () => {
     initResources();
+    UIUtils.init(resources.globalSetModal);
     toggleLoadingScr();
     sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now
 
@@ -609,20 +610,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     resources.globalSetModal.querySelector('#ytdlptmpdir').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#cuschromepb').addEventListener('click', e => Utils.showSelectCustomChomeDialog(e.currentTarget));
     resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
-    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.disableAutoLoginOptions(e.target.checked, resources.globalSetModal));
-    resources.globalSetModal.querySelector('#keepbrowopen').addEventListener('change', e => UIUtils.disableAutoLoginOptions(e.target.checked, resources.globalSetModal));
+    resources.globalSetModal.querySelector('#chuserdata').addEventListener('change', e => UIUtils.disableAutoLoginOptionsForChromeUsrData(e.target.checked));
+    resources.globalSetModal.querySelector('#keepbrowopen').addEventListener('change', e => UIUtils.disableAutoLoginOptionsForKeepChromeOpen(e.target.checked));
 
     document.getElementById('loginmodlist').addEventListener('change', async (e) => {
         const keytarInpt = resources.globalSetModal.querySelector('#keytar');
-        const v = e.currentTarget.value;
+        const curModule = e.currentTarget.value;
 
-        globalSettings.loginModule = v;
-        sharedownApi.sharedownLoginModule.setModule(v);
-        UIUtils.addLoginModuleFields(resources.globalSetModal);
+        globalSettings.loginModule = curModule;
+        sharedownApi.sharedownLoginModule.setModule(curModule);
+        UIUtils.addLoginModuleFields();
 
         if (keytarInpt.checked) {
             toggleLoadingScr();
-            await UIUtils.fillLoginFieldsFromPwdManager(resources.globalSetModal, v);
+            await UIUtils.fillLoginFieldsFromPwdManager(curModule);
             toggleLoadingScr();
         }
     });
@@ -650,7 +651,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     resources.globalSetModal.querySelector('#keytar').addEventListener('change', async (e) => {
         toggleLoadingScr();
-        await UIUtils.keytarCheckChangeEvt(e.target.checked, resources.globalSetModal, globalSettings.loginModule);
+        await UIUtils.keytarCheckChangeEvt(e.target.checked, globalSettings.loginModule);
         toggleLoadingScr();
     });
 
