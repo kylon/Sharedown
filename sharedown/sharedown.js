@@ -581,6 +581,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-FFmpeg');
 
         sharedownApi.quitApp();
+        return;
     }
 
     if (!sharedownApi.hasYTdlp()) {
@@ -591,6 +592,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-YTdlp');
 
         sharedownApi.quitApp();
+        return;
     }
 
     UIUtils.initLoginModuleSelect();
