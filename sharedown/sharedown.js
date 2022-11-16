@@ -56,7 +56,8 @@ const resources = {
     downQueElm: null,
     queLenElm: null,
     completeCElm: null,
-    loadingScr: null
+    loadingScr: null,
+    bodyElm: null
 };
 
 function initResources() {
@@ -77,10 +78,12 @@ function initResources() {
     resources.queLenElm                     = document.getElementById('quelen');
     resources.completeCElm                  = document.getElementById('completec');
     resources.loadingScr                    = document.getElementById('loadingscr');
+    resources.bodyElm                       = document.querySelector('body');
 }
 
 function toggleLoadingScr() {
     resources.loadingScr.classList.toggle('d-none');
+    resources.bodyElm.classList.toggle('overflow-hidden');
 }
 
 function unlockUIElemsForDownload() {
