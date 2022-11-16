@@ -96,28 +96,28 @@ const Utils = (() => {
         await _sharedownApi.keytarRemoveLogin();
     }
 
-    util.getVideoData = async (globalSettingsModal, video, timeout, enableUserdataFold, customChromePath, keepBrowserOpen, isDirect) => {
-        if (enableUserdataFold || keepBrowserOpen)
-            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, timeout, enableUserdataFold, customChromePath, keepBrowserOpen, isDirect) );
+    util.getVideoData = async (globalSettingsModal, video, settings) => {
+        if (settings.userdataFold || settings.keepBrowserOpen)
+            return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, settings) );
 
         const loginD = _getLoginData(globalSettingsModal);
 
         if (!_isValidCustomLogin(loginD))
             return null;
 
-        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, timeout, enableUserdataFold, customChromePath, keepBrowserOpen, isDirect) );
+        return ( await _sharedownApi.runPuppeteerGetVideoData(video, loginD, settings) );
     }
 
-    util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, timeout, keepBrowserOpen, enableUserdataFold) => {
-        if (enableUserdataFold || keepBrowserOpen)
-            return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, null, timeout, keepBrowserOpen, enableUserdataFold) );
+    util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, settings) => {
+        if (settings.userdataFold || settings.keepBrowserOpen)
+            return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, null, settings) );
 
         const loginD = _getLoginData(globalSettingsModal);
 
         if (!_isValidCustomLogin(loginD))
             return null;
 
-        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, loginD, timeout, keepBrowserOpen, enableUserdataFold) );
+        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, loginD, settings) );
     }
 
     util.getOutputFolder = (globalFolder, videoFolder) => {

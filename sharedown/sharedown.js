@@ -158,6 +158,7 @@ async function importURLsFromFolder() {
 
     toggleLoadingScr();
 
+    const curSettings = Object.assign({}, globalSettings);
     const foldersList = folderURLs.split(/\r?\n/);
     const includeSubFolds = document.getElementById('importfoldsubfolds').checked;
     const urlsSortType = parseInt(document.getElementById('importfoldurlssort').value, 10);
@@ -172,9 +173,7 @@ async function importURLsFromFolder() {
     for (const inv of invalid)
         foldersList.splice(foldersList.indexOf(inv), 1);
 
-    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds, urlsSortType,
-                                                globalSettings.timeout, globalSettings.keepBrowserOpen,
-                                                globalSettings.userdataFold);
+    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds, urlsSortType, curSettings);
 
     if (urlList === null || urlList.length === 0) {
         toggleLoadingScr();
@@ -464,7 +463,6 @@ async function downloadVideo(videoElem) {
     return new Promise(async (res, rej) => {
         const curSettings = Object.assign({}, globalSettings);
         const outputFolder = Utils.getOutputFolder(curSettings.outputPath, resources.downloading.settings.outputPath);
-        const isDirectDownloader = curSettings.downloader === 'direct';
         let vdata;
         let ret;
 
@@ -477,9 +475,7 @@ async function downloadVideo(videoElem) {
 
         toggleLoadingScr();
 
-        vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, globalSettings.timeout,
-                                         globalSettings.userdataFold, globalSettings.customChomePath,
-                                         globalSettings.keepBrowserOpen, isDirectDownloader);
+        vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, curSettings);
         toggleLoadingScr();
 
         sharedownApi.writeLog('downloadVideo: has vdata: ' + (vdata !== null));

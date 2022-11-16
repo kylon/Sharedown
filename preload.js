@@ -735,20 +735,21 @@ const SharedownAPI = (() => {
         await kt.deletePassword('sharedown', 'loginmodule');
     }
 
-    api.runPuppeteerGetVideoData = async (video, loginData, tmout, enableUserdataFold, customChromePath, keepBrowserOpen, isDirect = false) => {
+    api.runPuppeteerGetVideoData = async (video, loginData, settings) => {
         const knownResponses = [
             'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
             'SP.List.GetListDataAsStream?listFullUrl'
         ];
         const puppy = require('puppeteer');
-        const puppyTimeout = tmout * 1000;
+        const puppyTimeout = settings.timeout * 1000;
+        const isDirect = settings.downloader === 'direct';
         let ret = null;
 
         _startCatchResponse = false;
 
         try {
             if (_puppyBrowser === null)
-                _puppyBrowser = await puppy.launch(_getPuppeteerArgs(customChromePath, enableUserdataFold));
+                _puppyBrowser = await puppy.launch(_getPuppeteerArgs(settings.customChomePath, settings.userdataFold));
 
             const responseList = [];
             const catchResponse = function(resp) {
@@ -771,12 +772,12 @@ const SharedownAPI = (() => {
             let dlData;
             let vID;
 
-            if (keepBrowserOpen) {
+            if (settings.keepBrowserOpen) {
                 _puppyBrowser.off('disconnected', _browserDisconnectedEvt)
                 _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
             }
 
-            if (customChromePath)
+            if (settings.customChomePath)
                 api.writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
 
             page.setDefaultTimeout(puppyTimeout);
@@ -845,7 +846,7 @@ const SharedownAPI = (() => {
                 cookies = null;
             }
 
-            if (!keepBrowserOpen) {
+            if (!settings.keepBrowserOpen) {
                 await _puppyBrowser.close();
                 _puppyBrowser = null;
             }
@@ -853,7 +854,7 @@ const SharedownAPI = (() => {
             ret = {m: videoUrl, t: title, c: cookies};
 
         } catch (e) {
-            if (!keepBrowserOpen && _puppyBrowser) {
+            if (!settings.keepBrowserOpen && _puppyBrowser) {
                 await _puppyBrowser.close();
                 _puppyBrowser = null;
             }
@@ -865,20 +866,20 @@ const SharedownAPI = (() => {
         return ret;
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, tmout, keepBrowserOpen, enableUserdataFold) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, settings) => {
         const puppy = require('puppeteer');
-        const puppyTimeout = tmout * 1000;
+        const puppyTimeout = settings.timeout * 1000;
 
         try {
             if (_puppyBrowser === null)
-                _puppyBrowser = await puppy.launch(_getPuppeteerArgs('', enableUserdataFold));
+                _puppyBrowser = await puppy.launch(_getPuppeteerArgs('', settings.userdataFold));
 
             const page = (await _puppyBrowser.pages())[0];
             const regex = new RegExp(/\/sites\/([^\/]+)/);
             const match = folderURLsList[0].match(regex);
             const ret = {list: []};
 
-            if (keepBrowserOpen) {
+            if (settings.keepBrowserOpen) {
                 _puppyBrowser.off('disconnected', _browserDisconnectedEvt)
                 _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
             }
@@ -902,7 +903,7 @@ const SharedownAPI = (() => {
                 await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
             }
 
-            if (!keepBrowserOpen) {
+            if (!settings.keepBrowserOpen) {
                 await _puppyBrowser.close();
                 _puppyBrowser = null;
             }
@@ -910,7 +911,7 @@ const SharedownAPI = (() => {
             return _sortURLsFromFolder(ret.list, sortType);
 
         } catch (e) {
-            if (!keepBrowserOpen && _puppyBrowser) {
+            if (!settings.keepBrowserOpen && _puppyBrowser) {
                 await _puppyBrowser.close();
                 _puppyBrowser = null;
             }
