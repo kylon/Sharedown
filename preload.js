@@ -749,7 +749,7 @@ const SharedownAPI = (() => {
 
         try {
             if (_puppyBrowser === null)
-                _puppyBrowser = await puppy.launch(_getPuppeteerArgs(settings.customChomePath, settings.userdataFold));
+                _puppyBrowser = await puppy.launch(_getPuppeteerArgs(settings.customChromePath, settings.userdataFold));
 
             const responseList = [];
             const catchResponse = function(resp) {
@@ -777,7 +777,7 @@ const SharedownAPI = (() => {
                 _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
             }
 
-            if (settings.customChomePath)
+            if (settings.customChromePath)
                 api.writeLog('WARNING: custom chrome executable, Sharedown may not work as expected!');
 
             page.setDefaultTimeout(puppyTimeout);

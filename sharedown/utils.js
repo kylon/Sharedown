@@ -143,7 +143,7 @@ const Utils = (() => {
         inpt.setAttribute('title', path[0]);
     }
 
-    util.showSelectCustomChomeDialog = elm => {
+    util.showSelectCustomChromeDialog = elm => {
         const path = _sharedownApi.showSelectChromeBinDialog();
 
         if (path === undefined)
