@@ -99,18 +99,15 @@ const UIUtils = (() => {
     }
 
     UIutil.fillLoginFieldsFromPwdManager = async (curLoginModule) => {
-        if (curLoginModule === '0') {
-            _sharedownApi.writeLog('fillLoginFieldsFromPwdManager: basic login is selected, skip..');
-            return;
-        }
-
         const creds = await _sharedownApi.keytarGetLogin();
         const lmCreds = creds.lm;
 
         _msIDInpt.value = creds.msid ?? '';
 
-        if (lmCreds === null)
+        if (curLoginModule === '0' || lmCreds === null) {
+            _sharedownApi.writeLog(`fillLoginFieldsFromPwdManager: no credentials found for module ${curLoginModule}, skip..`);
             return;
+        }
 
         const loginModuleFieldsC = _sharedownApi.sharedownLoginModule.getFieldsCount();
         const pwdManLoginModule = lmCreds.pop();
