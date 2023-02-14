@@ -148,6 +148,7 @@ const SharedownAPI = (() => {
         return process.env.hasOwnProperty('PORTABLE_EXECUTABLE_DIR') ||
                 process.env.hasOwnProperty('APPDIR') ||
                 (isWindows && cwd.includes('AppData\\Local\\Programs')) ||
+                (isWindows && cwd.includes('C:\\Program Files\\sharedown')) ||
                 (isMacOS && __dirname.toLowerCase().endsWith('app.asar'));
     }
 
