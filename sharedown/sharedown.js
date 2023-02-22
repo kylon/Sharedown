@@ -26,7 +26,7 @@ const globalSettings = {
     keepYtdlpTmpOnFail: false,
     ytdlpN: 5,
     directN: 5,
-    timeout: 30, // 30 secs, puppeteer default
+    timeout: 60, // secs
     loginModule: 0,
     retryOnFail: false,
     useKeytar: false,
@@ -374,7 +374,7 @@ async function saveGlobalSettings() {
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
     globalSettings.keepYtdlpTmpOnFail = resources.globalSetModal.querySelector('#keeptmponfail').checked;
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
-    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 30 : timeout;
+    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 60 : timeout;
     globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
     globalSettings.customChromePath = resources.globalSetModal.querySelector('#cuschromep').value;
     globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
@@ -417,7 +417,7 @@ function importAppSettings() {
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
     globalSettings.keepYtdlpTmpOnFail = data.keepYtdlpTmpOnFail ?? false;
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
-    globalSettings.timeout = data.timeout ?? 30;
+    globalSettings.timeout = data.timeout ?? 60;
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = !globalSettings.useKeytar && (data.keepBrowserOpen ?? false);
