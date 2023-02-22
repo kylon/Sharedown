@@ -214,6 +214,7 @@ const SharedownAPI = (() => {
             while (!playerHandle) {
                 try {
                     if (_puppyBrowser === null || !_puppyBrowser.isConnected() || (Date.now() - start) >= maxTime) {
+                        api.writeLog('_waitForVideoPlayer: stopped');
                         reject();
                         return;
                     }
