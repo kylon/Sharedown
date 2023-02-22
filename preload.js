@@ -213,7 +213,7 @@ const SharedownAPI = (() => {
 
             while (!playerHandle) {
                 try {
-                    if ((Date.now() - start) >= maxTime) {
+                    if (_puppyBrowser === null || !_puppyBrowser.isConnected() || (Date.now() - start) >= maxTime) {
                         reject();
                         return;
                     }
