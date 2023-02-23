@@ -205,32 +205,31 @@ const SharedownAPI = (() => {
         return pargs;
     }
 
-    function _waitForVideoPlayer(page) {
-        return new Promise(async (resolve, reject) => {
-            const start = Date.now();
-            const maxTime = 600000;
-            let playerHandle = null;
+    async function _waitForVideoPlayer(page) {
+        const start = Date.now();
+        const maxTime = 600000;
+        let playerHandle = null;
 
-            while (!playerHandle) {
-                try {
-                    if (_puppyBrowser === null || !_puppyBrowser.isConnected() || (Date.now() - start) >= maxTime) {
-                        api.writeLog('_waitForVideoPlayer: stopped');
-                        reject();
-                        return;
-                    }
+        while (!playerHandle) {
+            try {
+                const isPuppyDead = _puppyBrowser === null || !_puppyBrowser.isConnected();
 
-                    await _waitForTimeout(650);
-
-                    playerHandle = await page.$('.StreamWebApp-container');
-
-                } catch(e) {
-                    api.writeLog(`_waitForVideoPlayer: ignore:\n${e.message}`);
+                if (isPuppyDead || (Date.now() - start) >= maxTime) {
+                    api.writeLog(`_waitForVideoPlayer: stopped, dead: ${isPuppyDead}`);
+                    return false;
                 }
-            }
 
-            await playerHandle.dispose();
-            resolve();
-        });
+                await _waitForTimeout(650);
+
+                playerHandle = await page.$('.StreamWebApp-container');
+
+            } catch(e) {
+                api.writeLog(`_waitForVideoPlayer: ignore:\n${e.message}`);
+            }
+        }
+
+        await playerHandle.dispose();
+        return true;
     }
 
     async function _sharepointLogin(page, logData, isFoldImport) {
@@ -253,7 +252,10 @@ const SharedownAPI = (() => {
         }
 
         if (!isFoldImport) {
-            await _waitForVideoPlayer(page);
+            const ret = await _waitForVideoPlayer(page);
+
+            if (ret !== true)
+                throw new Error('Unable to find video player element: browser disconnected or timed out');
 
             _startCatchResponse = true;
 
