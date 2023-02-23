@@ -26,6 +26,7 @@ if (isMacOS)
     process.env.PATH = ['./node_modules/.bin', '/usr/local/bin', '/opt/homebrew/bin', process.env.PATH].join(':');
 
 const SharedownAPI = (() => {
+    const _isAppPackage = __dirname.toLowerCase().includes('app.asar');
     const _LoginModule = require('./sharedown/loginModules/loginModule');
     const _path = require('node:path');
     const _fs = require('node:fs');
@@ -144,20 +145,12 @@ const SharedownAPI = (() => {
             return false;
     }
 
-    function _isAppPackage(cwd) {
-        return process.env.hasOwnProperty('PORTABLE_EXECUTABLE_DIR') ||
-                process.env.hasOwnProperty('APPDIR') ||
-                (isWindows && cwd.includes('AppData\\Local\\Programs')) ||
-                (isWindows && cwd.includes('C:\\Program Files\\sharedown')) ||
-                (isMacOS && __dirname.toLowerCase().endsWith('app.asar'));
-    }
-
     function _getPuppeteerExecutablePath() {
         const basePath = process.cwd();
         let chromeDirPath = '/node_modules/puppeteer/chrome';
         let ret = '';
 
-        if (_isAppPackage(basePath)) {
+        if (_isAppPackage) {
             const pkgBasePath = isWindows ? basePath : (isMacOS ? __dirname : process.env.APPDIR);
 
             if (isMacOS)
