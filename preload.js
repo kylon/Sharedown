@@ -569,6 +569,19 @@ const SharedownAPI = (() => {
         videoProgBar.style.width = perc > 100 ? '100%' : `${perc}%`;
     }
 
+    function _setYtdlpRateLimit(unit, value, args) {
+        let v = parseInt(value, 10);
+
+        if (v === 0 || isNaN(v))
+            return;
+        else if (unit === 'm')
+            v *= 1024 * 1024;
+        else if (unit === 'k')
+            v *= 1024;
+
+        args.push('-r', v);
+    }
+
     function _saveYtdlpTempFragsFolder(tmpPath, filename) {
         try {
             if (!_fs.existsSync(tmpPath)) {
@@ -1027,6 +1040,7 @@ const SharedownAPI = (() => {
                 args.push('-N', settings.directN.toString(), '--add-header', cookieH, '-o', outFile, vurl);
             }
 
+            _setYtdlpRateLimit(settings.ytdlpRateLimitU, settings.ytdlpRateLimit, args);
             videoProgBar.setAttribute('data-tmp-perc', '0');
             _stoppingProcess = false;
 

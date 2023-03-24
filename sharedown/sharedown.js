@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 16, // internal
+    _version: 17, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -34,7 +34,9 @@ const globalSettings = {
     autoSaveState: true,
     logging: false,
     customChromePath: '',
-    keepBrowserOpen: false
+    keepBrowserOpen: false,
+    ytdlpRateLimit: 0,
+    ytdlpRateLimitU: 'm'
 };
 
 const resources = {
@@ -338,6 +340,8 @@ async function loadGlobalSettings() {
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
     resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
     resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
+    resources.globalSetModal.querySelector('#ytdlprl').value = globalSettings.ytdlpRateLimit;
+    resources.globalSetModal.querySelector(`#${globalSettings.ytdlpRateLimitU}bunitlim`).checked = true;
     resources.globalSetModal.querySelector('#keeptmponfail').checked = globalSettings.keepYtdlpTmpOnFail;
     resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
     resources.globalSetModal.querySelector('#keytar').checked = globalSettings.useKeytar;
@@ -372,6 +376,8 @@ async function saveGlobalSettings() {
     globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
+    globalSettings.ytdlpRateLimit = resources.globalSetModal.querySelector('#ytdlprl').value;
+    globalSettings.ytdlpRateLimitU = resources.globalSetModal.querySelector('input[name="ratelimunitradio"]:checked').value;
     globalSettings.keepYtdlpTmpOnFail = resources.globalSetModal.querySelector('#keeptmponfail').checked;
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 60 : timeout;
@@ -415,6 +421,8 @@ function importAppSettings() {
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
     globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
+    globalSettings.ytdlpRateLimit = data.ytdlpRateLimit ?? 0;
+    globalSettings.ytdlpRateLimitU = data.ytdlpRateLimitU ?? 'm';
     globalSettings.keepYtdlpTmpOnFail = data.keepYtdlpTmpOnFail ?? false;
     globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 60;

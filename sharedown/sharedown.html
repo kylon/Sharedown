@@ -232,6 +232,27 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Download rate limit</label>
+                                <div class="input-group">
+                                    <div class="input-group-text">
+                                        <div class="form-check form-check-inline">
+                                            <input name="ratelimunitradio" id="mbunitlim" checked class="form-check-input" type="radio" value="m" aria-label="Radio button to set rate limit in megabyte for following rate limit input">
+                                            <label class="form-check-label" for="mbunitlim">Mb</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input name="ratelimunitradio" id="kbunitlim" class="form-check-input" type="radio" value="k" aria-label="Radio button to set rate limit in kilobyte for following rate limit input">
+                                            <label class="form-check-label" for="kbunitlim">Kb</label>
+                                        </div>
+                                    </div>
+                                    <input id="ytdlprl" type="number" class="form-control" aria-label="Download rate limit input with radio button" placeholder="0 (default, unlimited)" min="0">
+                                </div>
+                                <div id="ytdlprlhelp" class="form-text">Exact value may not be respected, try lower if it is the case</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row mb-3 downldr-opt direct-opt d-none">
                         <div class="col-12">
                             <div class="mb-3">
