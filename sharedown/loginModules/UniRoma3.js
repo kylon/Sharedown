@@ -27,23 +27,17 @@ class UniRoma3 extends basic.BasicLogin {
 
     async doLogin(puppeteerPage, loginData) {
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
-        
         await puppeteerPage.waitForSelector('input[type="email"]');
         await puppeteerPage.focus('input[type="email"]');
         await puppeteerPage.keyboard.type(loginData.field0);
         await puppeteerPage.keyboard.press('Enter');
-
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
         await puppeteerPage.waitForTimeout(3000) // necessario per far aggiornare la pagina con la maschera per la pwd
-        
         await puppeteerPage.waitForSelector('input[type="password"]');
         await puppeteerPage.focus('input[type="password"]');
         await puppeteerPage.keyboard.type(loginData.field1);
         await puppeteerPage.click('[type="submit"]');
-        
-        await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
-
-      
+        await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});      
     }
 }
 
