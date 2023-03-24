@@ -20,7 +20,8 @@ const basic = require('./Basic');
 const simpleUniversity = require('./SimpleUniversity');
 const simpleUniversity365 = require('./SimpleUniversity365');
 const unina = require('./Unina');
-const uniparma = require('./UniParma')
+const uniparma = require('./UniParma');
+const uniroma3 = require('./UniRoma3');
 
 class LoginModule {
     // Sharedown UI module label
@@ -29,7 +30,8 @@ class LoginModule {
         'University [Simple]',
         'University [MS 365]',
         'Unina',
-        'UniParma'
+        'UniParma',
+        'UniRoma3'
     ];
     #active;
 
@@ -53,6 +55,9 @@ class LoginModule {
             case 4:
             	this.#active = new uniparma();
             	break;
+            case 5:
+                this.#active = new uniroma3();
+                break;
             default:
                 this.#active = new basic.BasicLogin();
                 break;
