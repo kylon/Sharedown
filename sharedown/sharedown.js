@@ -578,7 +578,6 @@ function stopDownload() {
 window.addEventListener('DOMContentLoaded', async () => {
     initResources();
     UIUtils.init(resources.globalSetModal);
-    toggleLoadingScr();
     sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now
 
     if (!sharedownApi.hasFFmpeg()) {
