@@ -1265,7 +1265,14 @@ const SharedownAPI = (() => {
     }
 
     api.getWindowTitle = () => {
-        return `${process.env.npm_package_name} ${process.env.npm_package_version}`;
+        try {
+            const titleStr = require('./version.js');
+
+            return titleStr;
+
+        } catch (e) {
+            return `${process.env.npm_package_name} ${process.env.npm_package_version}`;
+        }        
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
