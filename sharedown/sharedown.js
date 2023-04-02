@@ -576,6 +576,8 @@ function stopDownload() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+    document.title = sharedownApi.getWindowTitle();
+
     initResources();
     UIUtils.init(resources.globalSetModal);
     sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now

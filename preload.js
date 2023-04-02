@@ -87,6 +87,7 @@ const SharedownAPI = (() => {
         genID: null,
         openLink: null,
         quitApp: null,
+        getWindowTitle: null
     };
 
     function _hideToken(token, str) {
@@ -1261,6 +1262,10 @@ const SharedownAPI = (() => {
 
     api.quitApp = () => {
         ipcRenderer.sendSync('sharedown-sync', {cmd: 'quit'});
+    }
+
+    api.getWindowTitle = () => {
+        return `${process.env.npm_package_name} ${process.env.npm_package_version}`;
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
