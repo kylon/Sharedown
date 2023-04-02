@@ -7,6 +7,11 @@ Sharedown is an Electron application to download Sharepoint videos, especially m
 ### Sharedown Wiki
 See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or help!
 
+### FAQs
+> Q: I get a "Something went wrong..", or similar, error when Chrome/Chromium loads video previews.
+>
+> A: This is not an error, this is expected and has no impact in Sharedown.
+
 ### Requirements
 * A recent version of FFmpeg
 * YT-dlp - [releases](https://github.com/yt-dlp/yt-dlp/releases)
