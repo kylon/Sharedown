@@ -137,7 +137,7 @@ const SharedownAPI = (() => {
 
     function _getChromeOSExeFolder(file) {
         if (isLinux)
-            return file === 'chrome-linux';
+            return file === 'chrome-linux64';
         else if (isMacOS)
             return file === 'chrome-mac';
         else if (isWindows)
