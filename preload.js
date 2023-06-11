@@ -139,9 +139,9 @@ const SharedownAPI = (() => {
         if (isLinux)
             return file === 'chrome-linux64';
         else if (isMacOS)
-            return file === 'chrome-mac';
+            return file === 'chrome-mac-x64';
         else if (isWindows)
-            return file === 'chrome-win';
+            return file === 'chrome-win64';
         else
             return false;
     }
@@ -164,7 +164,7 @@ const SharedownAPI = (() => {
         }
 
         try {
-            const chromeExe = isWindows ? 'chrome.exe' : (isMacOS ? 'Chromium.app/Contents/MacOS/Chromium' : 'chrome');
+            const chromeExe = isWindows ? 'chrome.exe' : (isMacOS ? 'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' : 'chrome');
             const osFold = (_fs.readdirSync(chromeDirPath).filter(file => _getChromeOSFolder(file)))[0];
             const osExeFold = (_fs.readdirSync(_path.join(chromeDirPath, osFold)).filter(file => _getChromeOSExeFolder(file)))[0];
 
