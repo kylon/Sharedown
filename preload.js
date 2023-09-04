@@ -805,6 +805,8 @@ const SharedownAPI = (() => {
             for (const catchedResp of responseList) {
                 const respUrl = catchedResp.url();
 
+                donorRespData = null;
+
                 for (const knownResp of knownResponses) {
                     if (!respUrl.includes(knownResp))
                         continue;
@@ -1272,7 +1274,7 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             return `${process.env.npm_package_name} ${process.env.npm_package_version}`;
-        }        
+        }
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});

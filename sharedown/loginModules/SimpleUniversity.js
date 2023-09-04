@@ -33,6 +33,7 @@ class SimpleUniversity extends basic.BasicLogin {
         await puppeteerPage.waitForSelector('input[type="password"]');
         await puppeteerPage.focus('input[type="password"]');
         await puppeteerPage.keyboard.type(loginData.field1);
+        await puppeteerPage.waitForSelector('[type="submit"]');
         await puppeteerPage.click('[type="submit"]');
         await puppeteerPage.waitForNavigation({waitUntil: 'networkidle2'});
 
