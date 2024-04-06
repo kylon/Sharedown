@@ -723,6 +723,7 @@ window.addEventListener('DownloadSuccess', () => {
 });
 
 window.addEventListener('beforeunload', () => {
+    sharedownApi.flushAndCloseLogs();
     sharedownApi.deleteUserdataFold();
 });
 

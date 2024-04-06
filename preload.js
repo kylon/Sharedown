@@ -87,6 +87,7 @@ const SharedownAPI = (() => {
         genID: null,
         openLink: null,
         quitApp: null,
+        flushAndCloseLogs: null,
         getWindowTitle: null
     };
 
@@ -1346,21 +1347,19 @@ const SharedownAPI = (() => {
         });
     }
 
-    ipcRenderer.on('appevent', (e, args) => {
-        switch (args.cmd) {
-            case 'bfq': {
-                if (!_enableLogs)
-                    break;
+    api.flushAndCloseLogs = () => {
+        if (!_enableLogs)
+            return;
 
-                _fs.fsyncSync(_shLogFd);
-                _fs.fsyncSync(_ytdlpLogFd);
-                api.disableLogs();
-            }
-                break;
-            default:
-                break;
+        try {
+            _fs.fsyncSync(_shLogFd);
+            _fs.fsyncSync(_ytdlpLogFd);
+            api.disableLogs();
+
+        } catch (e) {
+            console.log(`failed to flushAndCloseLogs, ${e?.message}`);
         }
-    });
+    }
 
     Object.freeze(api);
     return api;
