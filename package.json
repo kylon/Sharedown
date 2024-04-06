@@ -4,7 +4,7 @@
   "repository": "https://github.com/kylon/Sharedown",
   "homepage": "https://github.com/kylon/Sharedown",
   "license": "GPL-3.0-or-later",
-  "version": "5.3.2",
+  "version": "5.3.3",
   "description": "Electron application to save your Sharepoint videos for offline usage (especially meant for students)",
   "main": "app.js",
   "scripts": {
