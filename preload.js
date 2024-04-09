@@ -20,6 +20,7 @@ const { contextBridge, ipcRenderer, shell } = require('electron');
 const isWindows = process.platform === 'win32';
 const isLinux = process.platform === 'linux';
 const isMacOS = process.platform === 'darwin';
+const isMacOSArm = isMacOS && (process.arch === 'arm64');
 
 // macOS PATH workaround
 if (isMacOS)
@@ -129,7 +130,7 @@ const SharedownAPI = (() => {
         if (isLinux)
             return file.startsWith('linux-');
         else if (isMacOS)
-            return file.startsWith('mac-');
+            return file.startsWith('mac-') || file.startsWith('mac_');
         else if (isWindows)
             return file.startsWith('win64-');
         else
@@ -139,6 +140,8 @@ const SharedownAPI = (() => {
     function _getChromeOSExeFolder(file) {
         if (isLinux)
             return file === 'chrome-linux64';
+        else if (isMacOSArm)
+            return file === 'chrome-mac-arm64';
         else if (isMacOS)
             return file === 'chrome-mac-x64';
         else if (isWindows)
