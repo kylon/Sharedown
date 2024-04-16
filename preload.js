@@ -430,10 +430,32 @@ const SharedownAPI = (() => {
         return ret;
     }
 
+    async function _getFullFolderUrl(page, url, match) {
+        if (!url.split(`/${match}/`).at(1).includes('/')) { // short url?
+            await page.goto(url);
+            await page.waitForFunction(`window.location.href.includes('/${match}/')`);
+
+            const pageUrl = page.url();
+
+            if (pageUrl.includes('id=')) {
+                const pUrl = new URL(pageUrl);
+                const idData = pUrl.searchParams.get('id').split(`/${match}/`);
+
+                return new URL(`${pUrl.origin}/:f:/r${idData[0]}/${match}/${idData[1]}?csf=1&web=1`);
+
+            } else {
+                api.writeLog(`_getFullFolderUrl: unable to get folder for ${pageUrl}`);
+                return null;
+            }
+        }
+
+        return new URL(url);
+    }
+
     function _makeFolderApiURL(folderURL, itemType) {
         const urlObj = new URL(folderURL);
         const folderPath = urlObj.pathname;
-        const apiURL = folderPath.replace(/\/sites\/([^\/]+)\/(.*)/, `/sites/$1/_api/web/GetFolderByServerRelativeUrl('$2')/${itemType}`);
+        const apiURL = folderPath.replace(/\/:f:\/[a-z]\/([a-zA-Z0-9]+)\/([^\/]+)\/(.*)/, `/$1/$2/_api/web/GetFolderByServerRelativeUrl('$3')/${itemType}`);
 
         return `${urlObj.origin}${apiURL}`;
     }
@@ -892,12 +914,17 @@ const SharedownAPI = (() => {
                 _puppyBrowser = await puppy.launch(_getPuppeteerArgs('', settings.userdataFold));
 
             const page = (await _puppyBrowser.pages())[0];
-            const regex = new RegExp(/\/sites\/([^\/]+)/);
-            const match = folderURLsList[0].match(regex);
+            const regex = new RegExp(/\/:f:\/[a-z]\/([a-zA-Z0-9]+)\/([^\/]+)/);
+            const match = folderURLsList.at(0)?.match(regex) ?? null;
             const ret = {list: []};
 
+            if (match === null || match.length < 2) {
+                api.writeLog(`runPuppeteerGetURLListFromFolder: no wait match for:\n${folderURLsList[0]}`);
+                throw new Error(`Unknown folder URL`);
+            }
+
             if (settings.keepBrowserOpen) {
-                _puppyBrowser.off('disconnected', _browserDisconnectedEvt)
+                _puppyBrowser.off('disconnected', _browserDisconnectedEvt);
                 _puppyBrowser.on('disconnected', _browserDisconnectedEvt);
             }
 
@@ -905,17 +932,25 @@ const SharedownAPI = (() => {
             page.setDefaultTimeout(puppyTimeout);
             page.setDefaultNavigationTimeout(puppyTimeout);
 
-            if (match === null || match.length < 2) {
-                api.writeLog(`runPuppeteerGetURLListFromFolder: Unknown URL format:\n${folderURLsList[0]}`);
-                throw new Error(`Unknown folder URL format`);
-            }
-
             await page.goto(folderURLsList[0], {waitUntil: 'domcontentloaded'});
             await _sharepointLogin(page, loginData, true);
-            await page.waitForFunction(`window.location.href.includes('${match[1]}')`);
+            await page.waitForFunction(`window.location.href.includes('/${match[1]}/')`);
 
             for (const folderURL of folderURLsList) {
-                const urlObj = new URL(folderURL);
+                const umatch = folderURL.match(regex);
+                let urlObj;
+
+                if (umatch === null || umatch.length < 2) {
+                    api.writeLog(`runPuppeteerGetURLListFromFolder: no match for folder url, skip:\n${folderURL}`);
+                    continue;
+                }
+
+                urlObj = await _getFullFolderUrl(page, folderURL, umatch[1]);
+
+                if (urlObj === null) {
+                    api.writeLog(`runPuppeteerGetURLListFromFolder: unknown folder url format, skip:\n${folderURL}`);
+                    continue;
+                }
 
                 await _getVideoURLsInFold(ret, page, `${urlObj.origin}${urlObj.pathname}`, includeSubFolds);
             }
