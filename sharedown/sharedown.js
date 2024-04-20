@@ -128,12 +128,14 @@ function addVideoURLs() {
     toggleLoadingScr();
 
     for (const url of urlsList) {
-        if (!Utils.isValidURL(url)) {
+        const _url = url.replaceAll('#', '%23');
+
+        if (!Utils.isValidURL(_url)) {
             invalid.push(url);
             continue;
         }
 
-        const vid = new video(Utils.setAsWebPlayerURL(url));
+        const vid = new video(Utils.setAsWebPlayerURL(_url));
 
         addVideoToUI(vid);
         resources.downQueObj.addVideo(vid);
