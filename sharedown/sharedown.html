@@ -29,27 +29,12 @@
 <body class="h-100 overflow-hidden">
     <div class="container-fluid h-100">
         <div id="sharedownhead" class="row bg-sharepoint2 p-4 pt-2 position-fixed w-100">
-            <div class="bg-head-gradient-layer-anim"></div>
-            <div class="bg-head-anim"></div>
-            <div class="bg-head-anim bg-head-anim1"></div>
-            <div class="bg-head-anim bg-head-anim2"></div>
-
-            <div class="col-12 mb-4 text-center">
-                <div class="position-relative d-inline-block">
-                    <img class="img-fluid" src="img/headlogo.png">
-                    <img class="img-fluid position-absolute logo-top-arrow flip-v-left a-delay-05s a-duration-15s" src="img/darrow.png">
-                    <img class="img-fluid position-absolute logo-center-arrow flip-v-right a-delay-1s a-duration-15s" src="img/darrow.png">
-                    <img class="img-fluid position-absolute logo-bottom-arrow flip-v-left a-delay-15s a-duration-15s" src="img/darrow.png">
+            <div class="col-12 d-flex pt-4">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-warning text-lightblack" title="Add Sharepoint link to download queue" data-bs-toggle="modal" data-bs-target="#urlsaddmodal">
+                        <i class="fa-solid fa-plus"></i> Add Sharepoint video URLs
+                    </button>
                 </div>
-            </div>
-
-            <div class="col-12 text-center">
-                <button type="button" class="btn btn-warning text-lightblack" title="Add Sharepoint link to download queue" data-bs-toggle="modal" data-bs-target="#urlsaddmodal">
-                    <i class="fa-solid fa-plus"></i> Add Sharepoint video URLs
-                </button>
-            </div>
-
-            <div class="col-12 d-flex justify-content-end pt-4">
                 <div class="btn-group">
                     <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa-solid fa-gear"></i> Settings</a>
                     <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa-solid fa-stop"></i> Stop download</a>
