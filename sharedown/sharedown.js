@@ -19,7 +19,7 @@
 const sharedownApi = window.sharedown;
 
 const globalSettings = {
-    _version: 17, // internal
+    _version: 18, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -36,7 +36,8 @@ const globalSettings = {
     customChromePath: '',
     keepBrowserOpen: false,
     ytdlpRateLimit: 0,
-    ytdlpRateLimitU: 'm'
+    ytdlpRateLimitU: 'm',
+    staticLogo: false
 };
 
 const resources = {
@@ -354,12 +355,14 @@ async function loadGlobalSettings() {
     resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
     resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChromePath;
     resources.globalSetModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
+    resources.globalSetModal.querySelector('#staticlogo').checked = globalSettings.staticLogo;
 
     if (globalSettings.userdataFold || globalSettings.keepBrowserOpen)
         UIUtils.disableAutoLoginOptionsForAny(true);
     else if (globalSettings.useKeytar)
         await UIUtils.keytarCheckChangeEvt(true, globalSettings.loginModule);
 
+    UIUtils.setLogoAnimation(!globalSettings.staticLogo);
     setDownloaderSettingsUI(globalSettings.downloader);
 }
 
@@ -368,6 +371,7 @@ async function saveGlobalSettings() {
 
     const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
     const shlogsInpt = resources.globalSetModal.querySelector('#shlogs');
+    const oldStaticLogo = globalSettings.staticLogo;
 
     globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
     globalSettings.ytdlpTmpOut = resources.globalSetModal.querySelector('#ytdlptmpdp').value;
@@ -386,11 +390,15 @@ async function saveGlobalSettings() {
     globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
     globalSettings.customChromePath = resources.globalSetModal.querySelector('#cuschromep').value;
     globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
+    globalSettings.staticLogo = resources.globalSetModal.querySelector('#staticlogo').checked;
 
     shlogsInpt.value = globalSettings.logging ? '1' : '0';
 
     if (globalSettings.useKeytar)
         await Utils.keytarSaveCredentials(resources.globalSetModal, globalSettings.loginModule);
+
+    if (globalSettings.staticLogo !== oldStaticLogo)
+        UIUtils.setLogoAnimation(!globalSettings.staticLogo);
 
     exportAppSettings();
     toggleLoadingScr();
@@ -431,6 +439,7 @@ function importAppSettings() {
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = !globalSettings.useKeytar && (data.keepBrowserOpen ?? false);
+    globalSettings.staticLogo = data.staticLogo ?? false;
 
     if (data['_version'] < globalSettings['_version']) {
         sharedownApi.upgradeForSettingsUpgrade(data['_version']);

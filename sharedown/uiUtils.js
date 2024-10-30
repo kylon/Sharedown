@@ -175,6 +175,30 @@ const UIUtils = (() => {
         }
     }
 
+    UIutil.setLogoAnimation = (animate) => {
+        const topArrow = document.querySelector('.tlogoanim').classList;
+        const centerArrow = document.querySelector('.clogoanim').classList;
+        const leftArrow = document.querySelector('.llogoanim').classList;
+
+        document.querySelectorAll('.blogoanim').forEach((elm) => {
+            if (animate)
+                elm.classList.remove('d-none');
+            else
+                elm.classList.add('d-none');
+        });
+
+        if (animate) {
+            topArrow.add('flip-v-left', 'a-delay-05s', 'a-duration-15s');
+            centerArrow.add('flip-v-right', 'a-delay-1s', 'a-duration-15s');
+            leftArrow.add('flip-v-left', 'a-delay-15s', 'a-duration-15s');
+
+        } else {
+            topArrow.remove('flip-v-left', 'a-delay-05s', 'a-duration-15s');
+            centerArrow.remove('flip-v-right', 'a-delay-1s', 'a-duration-15s');
+            leftArrow.remove('flip-v-left', 'a-delay-15s', 'a-duration-15s');
+        }
+    }
+
     Object.freeze(UIutil);
     return UIutil;
 })();
