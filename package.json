@@ -56,17 +56,17 @@
   },
   "keywords": [],
   "devDependencies": {
-    "electron": "^30.0.1",
-    "electron-builder": "^25.0.0-alpha.6"
+    "electron": "^33.0.2",
+    "electron-builder": "^25.1.8"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "6.5.2",
-    "axios": "^1.6.8",
+    "@fortawesome/fontawesome-free": "6.6.0",
+    "axios": "^1.7.7",
     "bootstrap": "5.3.3",
     "clipboardy": "2.3.0",
     "fessonia": "^2.2.2",
     "iso8601-duration": "^2.1.2",
     "keytar": "^7.9.0",
-    "puppeteer": "22.7.0"
+    "puppeteer": "23.6.1"
   }
 }
