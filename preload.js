@@ -850,7 +850,6 @@ const SharedownAPI = (() => {
 
                 } catch(e) {
                     api.writeLog(`runPuppeteerGetVideoData: no json body on catched response: ${respUrl}\n${e.message}`);
-
                     matchedResponse = null;
                     continue;
                 }
@@ -921,6 +920,9 @@ const SharedownAPI = (() => {
             if (match === null || match.length < 2) {
                 api.writeLog(`runPuppeteerGetURLListFromFolder: no wait match for:\n${folderURLsList[0]}`);
                 throw new Error(`Unknown folder URL`);
+
+            } else {
+                api.writeLog(`runPuppeteerGetURLListFromFolder: matched: ${match}\nwill wait for match: ${match[1]}`);
             }
 
             if (settings.keepBrowserOpen) {
