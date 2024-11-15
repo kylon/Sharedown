@@ -1,5 +1,5 @@
 exports.default = function () {
-    const fs = require('fs');
+    const fs = require('node:fs');
 
     try {
         fs.unlinkSync('version.js');
@@ -8,4 +8,3 @@ exports.default = function () {
         console.error('Build: failed to delete version.js, ' + err);
     }
 }
-  

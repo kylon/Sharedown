@@ -21,34 +21,19 @@
     "mac": {
       "category": "public.app-category.video",
       "target": {
-        "target": "dmg",
+        "target": "7z",
         "arch": ["arm64", "x64"]
       }
     },
     "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
-        {
-          "target": "zip",
+      "target": {
+          "target": "7z",
           "arch": ["x64"]
         }
-      ]
     },
     "linux": {
       "category": "AudioVideo",
       "target": "AppImage"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "build/wicon.ico",
-      "uninstallerIcon": "build/wicon.ico"
-    },
-    "portable": {
-      "artifactName": "${productName} ${version} portable.exe"
     },
     "appImage": {
       "license": "LICENSE"
