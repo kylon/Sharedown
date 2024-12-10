@@ -1,4 +1,4 @@
-![](sharedownlogo.png)
+!![](sharedownlogo.png)
 
 Sharedown is an Electron application to download Sharepoint videos, especially meant for students.
 
