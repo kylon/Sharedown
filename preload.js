@@ -913,7 +913,7 @@ const SharedownAPI = (() => {
                 _puppyBrowser = await puppy.launch(_getPuppeteerArgs('', settings.userdataFold));
 
             const page = (await _puppyBrowser.pages())[0];
-            const regex = new RegExp(/\/:f:\/[a-z]\/([a-zA-Z0-9_-]+)\/([^\/]+)/);
+            const regex = new RegExp(/\/:f:\/[a-z]\/([a-zA-Z0-9\_\-\.]+)\/([^\/]+)/);
             const match = folderURLsList.at(0)?.match(regex) ?? null;
             const ret = {list: []};
 
