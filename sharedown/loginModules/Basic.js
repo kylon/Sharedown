@@ -35,6 +35,10 @@ class Basic {
 
     constructor() {}
 
+    waitForTimeout(ms) {
+        return new Promise(r => setTimeout(r, ms));
+    }
+
     getFields() {
         return this.#fields;
     }
