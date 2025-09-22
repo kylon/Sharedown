@@ -90,8 +90,16 @@ function toggleLoadingScr() {
     resources.bodyElm.classList.toggle('overflow-hidden');
 }
 
+function updateStartButtonState() {
+    if (resources.downQueObj.hasNext()) {
+        resources.downlStartBtn.classList.remove('btn-disabled');
+    } else {
+        resources.downlStartBtn.classList.add('btn-disabled');
+    }
+}
+
 function unlockUIElemsForDownload() {
-    resources.downlStartBtn.classList.remove('btn-disabled');
+    updateStartButtonState();
     resources.downlStopBtn.classList.add('btn-disabled');
     resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
     resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
@@ -152,6 +160,7 @@ function addVideoURLs() {
     }
 
     exportAppState();
+    updateStartButtonState();
     toggleLoadingScr();
 }
 
@@ -277,6 +286,7 @@ function removeVideoFromQue(removeBtn) {
     resources.downQueObj.remove(parent.getAttribute('data-video-id'));
     parent.parentElement.remove();
     exportAppState();
+    updateStartButtonState();
     toggleLoadingScr();
 }
 
@@ -619,6 +629,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     importAppSettings();
     importAppState();
     await loadGlobalSettings();
+    updateStartButtonState();
 
     document.getElementById('soutdirp').setAttribute('placeholder', sharedownApi.getDefaultOutputFolder());
     document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
@@ -730,6 +741,7 @@ window.addEventListener('DownloadSuccess', () => {
     resources.downloading = null;
 
     exportAppState(true);
+    updateStartButtonState();
     startDownload(); // start next download, if any
 });
 
