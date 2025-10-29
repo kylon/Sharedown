@@ -41,17 +41,17 @@
   },
   "keywords": [],
   "devDependencies": {
-    "electron": "^38.1.2",
-    "electron-builder": "^26.0.20"
+    "electron": "^39.0.0",
+    "electron-builder": "^26.1.0"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "7.0.1",
-    "axios": "^1.12.2",
+    "@fortawesome/fontawesome-free": "7.1.0",
+    "axios": "^1.13.1",
     "bootstrap": "5.3.8",
     "clipboardy": "2.3.0",
     "fessonia": "^2.2.2",
     "iso8601-duration": "^2.1.3",
     "keytar": "^7.9.0",
-    "puppeteer": "24.22.0"
+    "puppeteer": "24.27.0"
   }
 }
