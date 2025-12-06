@@ -16,6 +16,7 @@ See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or h
 * A recent version of FFmpeg
 * YT-dlp - [releases](https://github.com/yt-dlp/yt-dlp/releases)
 * Python 3
+* [Yarn](https://yarnpkg.com/)
 * A recent OS (Windows, Linux, or MacOS)
 
 ### Features
@@ -36,16 +37,24 @@ Default output folder is your OS _**Downloads**_ folder, or, in Linux, if not fo
 
 ### Build
 
+Run the following commands in a terminal to build Sharedown.
+
 ```
-yarn install
-yarn dist
+$ git clone https://github.com/kylon/Sharedown.git
+$ cd Sharedown
+$ yarn install
+$ yarn dist
 ```
 
 ### Run from source
 
+Run the following commands in a terminal to run Sharedown from source.
+
 ```
-yarn install
-yarn start
+$ git clone https://github.com/kylon/Sharedown.git
+$ cd Sharedown
+$ npm i
+$ npm start
 ```
 
 ---
