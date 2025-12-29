@@ -23,6 +23,8 @@ jobs:
         node-version: 'latest'
 
     - name: build
+      env:
+          GH_TOKEN: ${{ secrets.GTOK }}
       run: |
         npm i
         npm run dist
