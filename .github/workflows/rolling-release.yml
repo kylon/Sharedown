@@ -20,6 +20,7 @@ jobs:
     - name: setup node
       uses: actions/setup-node@main
       with:
+        cache-dependency-path: Sharedown/package-lock.json
         node-version: 'latest'
         cache: 'npm'
 
