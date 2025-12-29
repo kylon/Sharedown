@@ -1,0 +1,37 @@
+name: rolling-release
+
+on:
+  push:
+    branches: ["main"]
+    paths: ['**.js', '**.json']
+
+  workflow_dispatch:
+  
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      linux_rel_id: ${{steps.linux_rel_id.outputs.artifact-id}}
+      
+    steps:
+    - uses: actions/checkout@main
+    
+    - name: setup node
+      uses: actions/setup-node@main
+      with:
+        node-version: 'latest'
+        cache: 'npm'
+
+    - name: build
+      run: |
+        npm i
+        npm run dist
+
+    - name: upload linux release
+      id: linux_rel_id
+      uses: actions/upload-artifact@main
+      with:
+        name: sharedown-linux
+        path: dist/sharedown-5.3.6.AppImage
+        retention-days: 1
