@@ -22,17 +22,75 @@ jobs:
       with:
         node-version: 'latest'
 
-    - name: build
+    - name: build linux
       env:
           GH_TOKEN: ${{ secrets.GTOK }}
       run: |
         npm i
         npm run dist
 
-    - name: upload linux release
+    - name: upload release
       id: linux_rel_id
       uses: actions/upload-artifact@main
       with:
         name: sharedown-linux
         path: dist/sharedown-5.3.6.AppImage
+        retention-days: 1
+
+  win-build:
+    runs-on: windows-latest
+
+    outputs:
+      win_rel_id: ${{steps.win_rel_id.outputs.artifact-id}}
+      
+    steps:
+    - uses: actions/checkout@main
+    
+    - name: setup node
+      uses: actions/setup-node@main
+      with:
+        node-version: 'latest'
+
+    - name: build win
+      env:
+          GH_TOKEN: ${{ secrets.GTOK }}
+      run: |
+        npm i
+        npm run dist
+
+    - name: upload release
+      id: win_rel_id
+      uses: actions/upload-artifact@main
+      with:
+        name: sharedown-win
+        path: dist/sharedown-5.3.6.exe
+        retention-days: 1
+
+  mac-build:
+    runs-on: macos-latest
+
+    outputs:
+      mac_rel_id: ${{steps.mac_rel_id.outputs.artifact-id}}
+      
+    steps:
+    - uses: actions/checkout@main
+    
+    - name: setup node
+      uses: actions/setup-node@main
+      with:
+        node-version: 'latest'
+
+    - name: build macos
+      env:
+          GH_TOKEN: ${{ secrets.GTOK }}
+      run: |
+        npm i
+        npm run dist
+
+    - name: upload release
+      id: mac_rel_id
+      uses: actions/upload-artifact@main
+      with:
+        name: sharedown-mac
+        path: dist/sharedown-5.3.6.app
         retention-days: 1
