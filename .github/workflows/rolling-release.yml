@@ -6,6 +6,9 @@ on:
     paths: ['**.js', '**.json']
 
   workflow_dispatch:
+
+env:
+  SHD_VER: '5.3.6'
   
 jobs:
   linux-build:
@@ -34,7 +37,7 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: sharedown-linux
-        path: dist/sharedown-5.3.6.AppImage
+        path: dist/sharedown-$SHD_VER.AppImage
         retention-days: 1
 
   win-build:
@@ -63,7 +66,7 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: sharedown-win
-        path: dist/sharedown-5.3.6.exe
+        path: dist/sharedown-$SHD_VER-win.7z
         retention-days: 1
 
   mac-build:
@@ -92,5 +95,7 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: sharedown-mac
-        path: dist/sharedown-5.3.6.app
+        path: |
+          dist/sharedown-$SHD_VER-mac.7z
+          dist/sharedown-$SHD_VER-arm64-mac.7z
         retention-days: 1
