@@ -37,7 +37,7 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: sharedown-linux
-        path: dist/sharedown-$SHD_VER.AppImage
+        path: dist/sharedown-${{env.SHD_VER}}.AppImage
         retention-days: 1
 
   win-build:
@@ -66,7 +66,7 @@ jobs:
       uses: actions/upload-artifact@main
       with:
         name: sharedown-win
-        path: dist/sharedown-$SHD_VER-win.7z
+        path: dist/sharedown-${{env.SHD_VER}}-win.7z
         retention-days: 1
 
   mac-build:
@@ -96,6 +96,6 @@ jobs:
       with:
         name: sharedown-mac
         path: |
-          dist/sharedown-$SHD_VER-mac.7z
-          dist/sharedown-$SHD_VER-arm64-mac.7z
+          dist/sharedown-${{env.SHD_VER}}-mac.7z
+          dist/sharedown-${{env.SHD_VER}}-arm64-mac.7z
         retention-days: 1
