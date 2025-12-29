@@ -99,3 +99,36 @@ jobs:
           dist/sharedown-${{env.SHD_VER}}-mac.7z
           dist/sharedown-${{env.SHD_VER}}-arm64-mac.7z
         retention-days: 1
+
+  publish_release:
+    runs-on: ubuntu-latest
+    needs: [win-build, linux-build, mac-build]
+
+    steps:
+      - uses: actions/checkout@main
+
+      - name: get release artifacts
+        uses: actions/download-artifact@main
+        with:
+          artifact-ids: ${{needs.win-build.outputs.win_rel_id}},${{needs.linux-build.outputs.linux_rel_id}},${{needs.mac-build.outputs.mac_rel_id}}
+
+      - name: remove old release
+        env:
+          GH_TOKEN: ${{ secrets.GTOK }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release delete rolling -y
+        continue-on-error: true
+
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ secrets.GTOK }}
+          GH_REPO: ${{ github.repository }}
+        run: >
+          gh release create rolling
+          "sharedown-linux/sharedown-${{env.SHD_VER}}.AppImage"
+          "sharedown-win/sharedown-${{env.SHD_VER}}-win.7z"
+          "sharedown-mac/sharedown-${{env.SHD_VER}}-mac.7z"
+          "sharedown-mac/sharedown-${{env.SHD_VER}}-arm64-mac.7z"
+          --draft=false
+          --latest
+          -t "Sharedown rolling builds"
