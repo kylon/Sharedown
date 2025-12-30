@@ -132,4 +132,4 @@ jobs:
           --draft=false
           --latest
           -t "Sharedown rolling builds"
-          -n continuous builds
+          -n "continuous builds"
