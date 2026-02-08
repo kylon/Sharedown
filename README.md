@@ -16,7 +16,6 @@ See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or h
 * A recent version of FFmpeg
 * YT-dlp - [releases](https://github.com/yt-dlp/yt-dlp/releases)
 * Python 3
-* [Yarn](https://yarnpkg.com/)
 * A recent OS (Windows, Linux, or MacOS)
 
 ### Features
@@ -32,7 +31,6 @@ See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or h
 
 The official AUR package [sharedown](https://aur.archlinux.org/packages/sharedown/) is available.
 
-
 Default output folder is your OS _**Downloads**_ folder, or, in Linux, if not found, your _**Home**_ folder.
 
 ### Build
@@ -42,8 +40,8 @@ Run the following commands in a terminal to build Sharedown.
 ```
 $ git clone https://github.com/kylon/Sharedown.git
 $ cd Sharedown
-$ yarn install
-$ yarn dist
+$ npm i
+$ npm run dist
 ```
 
 ### Run from source
