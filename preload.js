@@ -87,7 +87,6 @@ const SharedownAPI = (() => {
         deleteUserdataFold: null,
         genID: null,
         openLink: null,
-        quitApp: null,
         flushAndCloseLogs: null,
         getWindowTitle: null
     };
@@ -1303,10 +1302,6 @@ const SharedownAPI = (() => {
         await shell.openExternal(l);
     }
 
-    api.quitApp = () => {
-        ipcRenderer.sendSync('sharedown-sync', {cmd: 'quit'});
-    }
-
     api.getWindowTitle = () => {
         try {
             const titleStr = require('./version.js');
@@ -1404,19 +1399,5 @@ const SharedownAPI = (() => {
     Object.freeze(api);
     return api;
 })();
-
-ipcRenderer.on('appmenu', async (e, args) => {
-    switch (args.cmd) {
-        case 'about':
-            ipcRenderer.send('sharedown-async', {cmd: 'showabout'});
-            break;
-        case 'aexit':
-            SharedownAPI.quitApp();
-            break;
-        default:
-            window.dispatchEvent(new CustomEvent('appmenu', {detail: args}));
-            break;
-    }
-});
 
 contextBridge.exposeInMainWorld('sharedown', SharedownAPI);

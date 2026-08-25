@@ -17,53 +17,8 @@
 "use strict";
 
 const { app, ipcMain, dialog, Menu, BrowserWindow } = require('electron');
-const isDarwin = process.platform === 'darwin';
-const menuTemplate = [
-    {
-        label: 'File',
-        submenu: [
-            { mact: 'odlfold', label: 'Open output folder', click: menuOnClick },
-            { mact: 'ologsfold', label: 'Open logs folder', click: menuOnClick },
-            { mact: 'aexit', label: 'Quit', click: menuOnClick, visible: !isDarwin }
-        ],
-        role: 'fileMenu'
-    },
-    {
-        label: 'Edit',
-        submenu: [
-            { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
-            { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
-            { type: 'separator' },
-            { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
-            { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
-            { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
-            { label: 'Select All', accelerator: 'CmdOrCtrl+A', role: 'selectAll' }
-        ],
-        role: 'editMenu'
-    },
-    {
-        label: 'Help',
-        submenu: [
-            { mact: 'owiki', label: 'Open Wiki (external)', click: menuOnClick },
-            { mact: 'osrc', label: 'Open repository (external)', click: menuOnClick }
-        ],
-        role: 'help'
-    },
-    {
-        label: 'About',
-        submenu: [
-            { mact: 'about', label: 'About Sharedown', click: menuOnClick }
-        ],
-        role: 'about'
-    }
-];
 const path = require('node:path');
 let mainW = null;
-
-if (isDarwin) // about must be first on macOS
-    menuTemplate.unshift(menuTemplate.pop());
-
-Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
 function createWindow () {
     const win = new BrowserWindow({
@@ -85,12 +40,10 @@ function createWindow () {
     return win;
 }
 
-function menuOnClick(item, window, e) {
-    mainW.webContents.send('appmenu', {cmd: item.mact});
-}
-
 app.whenReady().then(() => {
     mainW = createWindow();
+
+    Menu.setApplicationMenu(null);
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0)
@@ -119,29 +72,6 @@ ipcMain.on('showMessage', (e, args) => {
     });
 });
 
-ipcMain.on('sharedown-async', (e, args) => {
-    switch (args.cmd) {
-        case "showabout": {
-            const win = new BrowserWindow({
-                width: 350,
-                height: 250,
-                webPreferences: {
-                    devTools: false,
-                }
-            })
-
-            win.loadFile('sharedown/about.html');
-            win.setMenuBarVisibility(false);
-            win.setResizable(false);
-            win.setSkipTaskbar(true);
-            win.setParentWindow(mainW);
-        }
-            break;
-        default:
-            break;
-    }
-});
-
 ipcMain.on('sharedown-sync', (e, args) => {
     switch (args.cmd) {
         case "selectFoldDialog": {
@@ -166,11 +96,6 @@ ipcMain.on('sharedown-sync', (e, args) => {
             break;
         case "getDownloadsPath": {
             e.returnValue = app.getPath('downloads');
-        }
-            break;
-        case "quit": {
-            app.quit();
-            e.returnValue = true;
         }
             break;
         default:
