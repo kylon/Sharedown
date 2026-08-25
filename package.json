@@ -17,7 +17,6 @@
     "appId": "com.electron.sharedown",
     "copyright": "Copyright © kylon",
     "beforePack": "buildHooks/beforePack.js",
-    "afterAllArtifactBuild": "buildHooks/afterAllArtifactBuild.js",
     "mac": {
       "category": "public.app-category.video",
       "target": {
