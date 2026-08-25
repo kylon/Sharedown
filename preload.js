@@ -1170,9 +1170,7 @@ const SharedownAPI = (() => {
     }
 
     api.copyURLToClipboard = (url) => {
-        const clipboardy = require('clipboardy');
-
-        clipboardy.writeSync(url);
+        ipcRenderer.sendSync('sharedown-sync', {cmd: 'clipboard', str: url});
     }
 
     api.saveAppSettings = data => {

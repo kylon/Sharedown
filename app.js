@@ -16,7 +16,7 @@
  */
 "use strict";
 
-const { app, ipcMain, dialog, Menu, BrowserWindow } = require('electron');
+const { app, ipcMain, dialog, Menu, BrowserWindow, clipboard } = require('electron');
 const path = require('node:path');
 let mainW = null;
 
@@ -96,6 +96,11 @@ ipcMain.on('sharedown-sync', (e, args) => {
             break;
         case "getDownloadsPath": {
             e.returnValue = app.getPath('downloads');
+        }
+            break;
+        case "clipboard": {
+            clipboard.writeText(args.str);
+            e.returnValue = true;
         }
             break;
         default:
