@@ -28,10 +28,8 @@ if (isMacOS)
 
 const SharedownAPI = (() => {
     const _isAppPackage = __dirname.toLowerCase().includes('app.asar');
-    const _LoginModule = require('./sharedown/loginModules/loginModule');
     const _path = require('node:path');
     const _fs = require('node:fs');
-    const _loginModule = new _LoginModule();
     const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
@@ -49,17 +47,8 @@ const SharedownAPI = (() => {
     let _ytdlpLogFd = -1;
 
     const api = {
-        sharedownLoginModule: {
-            getModuleList: _loginModule.getModuleList(),
-            setModule: idx => _loginModule.setLoginModule(idx),
-            getFields: () => _loginModule.getLoginModuleFields(),
-            getFieldsCount: () => _loginModule.getLoginModuleFieldsCount()
-        },
         hasFFmpeg: null,
         hasYTdlp: null,
-        keytarSaveLogin: null,
-        keytarGetLogin: null,
-        keytarRemoveLogin: null,
         runPuppeteerGetVideoData: null,
         runPuppeteerGetURLListFromFolder: null,
         downloadWithFFmpeg: null,
@@ -228,24 +217,8 @@ const SharedownAPI = (() => {
         return true;
     }
 
-    async function _sharepointLogin(page, logData, isFoldImport) {
+    async function _sharepointLogin(page, isFoldImport) {//todo
         api.writeLog('_sharepointLogin: start login procedure');
-
-        if (logData !== null) {
-            api.writeLog('_sharepointLogin: has login data');
-
-            if (logData.msid !== '') {
-                api.writeLog('_sharepointLogin: has msid');
-                await page.waitForSelector('input[type="email"]', {timeout: 8000});
-                await page.keyboard.type(logData.msid);
-                await page.click('input[type="submit"]');
-            }
-
-            if (logData.hasOwnProperty('custom')) {
-                api.writeLog('_sharepointLogin: has auto-login');
-                await _loginModule.doLogin(page, logData.custom);
-            }
-        }
 
         if (!isFoldImport) {
             const ret = await _waitForVideoPlayer(page);
@@ -255,7 +228,7 @@ const SharedownAPI = (() => {
 
             _startCatchResponse = true;
 
-            await page.evaluate(() => { location.reload(true); }); // reload() is too slow because it waits for an event, lets do this way
+            await page.evaluate(() => { location.reload(); }); // reload() is too slow because it waits for an event, lets do this way
         }
     }
 
@@ -732,45 +705,7 @@ const SharedownAPI = (() => {
         return false;
     }
 
-    api.keytarSaveLogin = async (credentials) => {
-        const kt = require('keytar');
-
-        if (credentials.msid !== '') {
-            await kt.setPassword('sharedown', 'msid', credentials.msid).catch(e => {
-                api.showMessage('error', e.message, 'keytar error');
-            });
-        }
-
-        if (credentials.lm !== '') {
-            await kt.setPassword('sharedown', 'loginmodule', credentials.lm).catch(e => {
-                api.showMessage('error', e.message, 'keytar error');
-            });
-        }
-    }
-
-    api.keytarGetLogin = async () => {
-        const kt = require('keytar');
-        const id = await kt.getPassword('sharedown', 'msid').catch(e => {
-            api.showMessage('error', e.message, 'keytar error');
-        });
-        const loginMod = await kt.getPassword('sharedown', 'loginmodule').catch(e => {
-            api.showMessage('error', e.message, 'keytar error');
-        });
-
-        return {
-            msid: id,
-            lm: loginMod?.split(':') ?? null
-        }
-    }
-
-    api.keytarRemoveLogin = async () => {
-        const kt = require('keytar');
-
-        await kt.deletePassword('sharedown', 'msid');
-        await kt.deletePassword('sharedown', 'loginmodule');
-    }
-
-    api.runPuppeteerGetVideoData = async (video, loginData, settings) => {
+    api.runPuppeteerGetVideoData = async (video, settings) => {
         const knownResponses = [
             'RenderListDataAsStream?@a1=', 'RenderListDataAsStream?@listUrl',
             'SP.List.GetListDataAsStream?listFullUrl'
@@ -822,7 +757,7 @@ const SharedownAPI = (() => {
             api.writeLog(`runPuppeteerGetVideoData: goto ${video.url}`);
 
             await page.goto(video.url, {waitUntil: 'domcontentloaded'});
-            await _sharepointLogin(page, loginData, false);
+            await _sharepointLogin(page, false);
             await page.waitForNavigation({waitUntil: 'networkidle0'});
             page.off('response', catchResponse);
 
@@ -902,7 +837,7 @@ const SharedownAPI = (() => {
         return ret;
     }
 
-    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, loginData, settings) => {
+    api.runPuppeteerGetURLListFromFolder = async (folderURLsList, includeSubFolds, sortType, settings) => {
         const puppy = require('puppeteer');
         const puppyTimeout = settings.timeout * 1000;
 
@@ -933,7 +868,7 @@ const SharedownAPI = (() => {
             page.setDefaultNavigationTimeout(puppyTimeout);
 
             await page.goto(folderURLsList[0], {waitUntil: 'domcontentloaded'});
-            await _sharepointLogin(page, loginData, true);
+            await _sharepointLogin(page, true);
             await page.waitForFunction(`window.location.href.includes('/${match[1]}/')`);
 
             for (const folderURL of folderURLsList) {
