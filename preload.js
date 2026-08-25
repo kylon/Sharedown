@@ -88,7 +88,6 @@ const SharedownAPI = (() => {
         genID: null,
         openLink: null,
         flushAndCloseLogs: null,
-        getWindowTitle: null
     };
 
     function _hideToken(token, str) {
@@ -1300,17 +1299,6 @@ const SharedownAPI = (() => {
 
     api.openLink = async l => {
         await shell.openExternal(l);
-    }
-
-    api.getWindowTitle = () => {
-        try {
-            const titleStr = require('./version.js');
-
-            return titleStr;
-
-        } catch (e) {
-            return `${process.env.npm_package_name} ${process.env.npm_package_version}`;
-        }
     }
 
     api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});

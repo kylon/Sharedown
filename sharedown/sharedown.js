@@ -588,11 +588,9 @@ function stopDownload() {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    document.title = sharedownApi.getWindowTitle();
-
     initResources();
     UIUtils.init(resources.globalSetModal);
-    sharedownApi.deleteUserdataFold(); // if for some reasons the quit event failed, delete it now
+    sharedownApi.deleteUserdataFold(); // if for some reason the quit event failed, delete now
 
     if (!sharedownApi.hasFFmpeg()) {
         sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EFFmpegNotFound, SharedownMessage.EGeneric);

@@ -40,9 +40,6 @@ exports.default = async function(context) {
 
             console.log(`${_browser} (${res.buildId}) downloaded to ${res.path}`);
         }
-
-        fs.writeFileSync('version.js', `const title = "${context.packager.appInfo.productName} ${context.packager.appInfo.version}"; module.exports = title;`);
-
     } catch (err) {
         console.error('BeforePack hook: failed, ' + err);
     }
