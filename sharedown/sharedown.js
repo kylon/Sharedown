@@ -18,7 +18,6 @@
 
 const electron = window.sharedown;
 const InvalidURLErrStr = 'Some URLs were invalid and they were skipped';
-const InvalidVIDErrStr = 'Invalid video ID';
 
 const globalSettings = {
     _version: 18, // internal
