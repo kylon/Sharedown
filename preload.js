@@ -16,7 +16,10 @@
  */
 "use strict";
 
-const { contextBridge, ipcRenderer, shell } = require('electron');
+const {contextBridge, ipcRenderer, shell} = require('electron');
+const utils = require('./preload_utils')
+const SHDMainCMD = require('./sharedown/enums/shdMainCMD');
+const MessageType = require('./sharedown/enums/messageType');
 const isWindows = process.platform === 'win32';
 const isLinux = process.platform === 'linux';
 const isMacOS = process.platform === 'darwin';
@@ -30,7 +33,7 @@ const SharedownAPI = (() => {
     const _isAppPackage = __dirname.toLowerCase().includes('app.asar');
     const _path = require('node:path');
     const _fs = require('node:fs');
-    const _sharedownAppDataPath = ipcRenderer.sendSync('sharedown-sync', {cmd: 'getAppDataPath'}) + '/Sharedown';
+    const _sharedownAppDataPath = ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.AppDataDir}) + '/Sharedown';
     const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
     const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
     const _chromeUserdataPath = _path.normalize(_sharedownAppDataPath+'/data');
@@ -67,7 +70,6 @@ const SharedownAPI = (() => {
         upgradeSett: null,
         setShowDlInfo: null,
         isShowDlInfoSet: null,
-        showMessage: null,
         enableLogs: null,
         disableLogs: null,
         writeLog: null,
@@ -613,7 +615,9 @@ const SharedownAPI = (() => {
             _fs.writeFileSync(path, data, 'utf8');
             return true;
 
-        } catch (e) { api.showMessage('error', `${erMsg}\n${e.message}`, 'I/O Error'); }
+        } catch (e) {
+            utils.showMessage(MessageType.Error, `${erMsg}\n${e.message}`);
+        }
 
         return false;
     }
@@ -625,7 +629,9 @@ const SharedownAPI = (() => {
 
             return _fs.readFileSync(path, 'utf8');
 
-        } catch (e) { api.showMessage('error', `${erMsg}\n${e.message}`, 'I/O Error'); }
+        } catch (e) {
+            utils.showMessage(MessageType.Error, `${erMsg}\n${e.message}`);
+        }
 
         return '';
     }
@@ -831,7 +837,7 @@ const SharedownAPI = (() => {
             }
 
             api.writeLog(`runPuppeteerGetVideoData: error\n${e.message}`);
-            api.showMessage('error', e.message, 'Puppeteer Error');
+            utils.showMessage(MessageType.Error, e.message);
         }
 
         return ret;
@@ -904,7 +910,7 @@ const SharedownAPI = (() => {
             }
 
             api.writeLog(`runPuppeteerGetURLListFromFolder: error\n${e.message}`);
-            api.showMessage('error', e.message, 'Puppeteer Error');
+            utils.showMessage(MessageType.Error, e.message);
             return null;
         }
     }
@@ -964,7 +970,7 @@ const SharedownAPI = (() => {
 
                 } catch (e) {
                     api.writeLog(`ffmpegCmd.on(error):\n${e.message}`);
-                    api.showMessage('error', e.message, 'FFmpeg');
+                    utils.showMessage(MessageType.Error, e.message);
                 }
 
                 if (!err.message.includes('Exiting normally, received signal 15')) {
@@ -980,7 +986,7 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.writeLog(`FFmpeg: error\n${e.message}`);
-            api.showMessage('error', e.message, 'FFmpeg');
+            utils.showMessage(MessageType.Error, e.message);
         }
 
         return false;
@@ -1100,7 +1106,7 @@ const SharedownAPI = (() => {
             return true;
 
         } catch (e) {
-            api.showMessage('error', e.message, 'YT-dlp');
+            utils.showMessage(MessageType.Error, e.message);
         }
 
         return false;
@@ -1126,7 +1132,7 @@ const SharedownAPI = (() => {
 
         } catch (e) {
             api.writeLog(`stopDownload: error\n${e.message}`);
-            api.showMessage('error', e.message, 'Stop download error');
+            utils.showMessage(MessageType.Error, e.message);
         }
     }
 
@@ -1139,7 +1145,9 @@ const SharedownAPI = (() => {
 
             return _fs.existsSync(outFold);
 
-        } catch (e) { api.showMessage('error', e.message, 'Output directory I/O Error'); }
+        } catch (e) {
+            utils.showMessage(MessageType.Error, e.message);
+        }
 
         return false;
     }
@@ -1156,21 +1164,21 @@ const SharedownAPI = (() => {
     }
 
     api.getDefaultOutputFolder = () => {
-        const downloadsPath = ipcRenderer.sendSync('sharedown-sync', { cmd: 'getDownloadsPath' });
+        const downloadsPath = ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.OutputDir});
 
         return _path.normalize(_path.join(downloadsPath, 'sharedownVideos'));
     }
 
     api.showSelectFolderDialog = () => {
-        return ipcRenderer.sendSync('sharedown-sync', {cmd: 'selectFoldDialog'});
+        return ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.OutputDirDialog});
     }
 
     api.showSelectChromeBinDialog = () => {
-        return ipcRenderer.sendSync('sharedown-sync', {cmd: 'selectChromeBinDialog'});
+        return ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.CustomBrowserDialog});
     }
 
     api.copyURLToClipboard = (url) => {
-        ipcRenderer.sendSync('sharedown-sync', {cmd: 'clipboard', str: url});
+        ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.Clipboard, str: url});
     }
 
     api.saveAppSettings = data => {
@@ -1212,7 +1220,7 @@ const SharedownAPI = (() => {
     api.openFolder = (fold) => {
         shell.openPath(fold).then(res => {
             if (res !== '')
-                api.showMessage('error', res);
+                utils.showMessage(MessageType.Error, res);
         });
     }
 
@@ -1233,8 +1241,6 @@ const SharedownAPI = (() => {
     api.openLink = async l => {
         await shell.openExternal(l);
     }
-
-    api.showMessage = (dtype, msg, dtitle) => ipcRenderer.sendSync('showMessage', {type: dtype, m: msg, title: dtitle});
 
     api.enableLogs = () => {
         if (_enableLogs)
@@ -1259,7 +1265,7 @@ const SharedownAPI = (() => {
             _enableLogs = true;
 
         } catch (e) {
-            api.showMessage('error', `Failed to enable logging\n${e.message}`, 'Sharedown Error');
+            utils.showMessage(MessageType.Error, `Failed to enable logging\n${e.message}`);
         }
 
         return _enableLogs;
@@ -1276,7 +1282,7 @@ const SharedownAPI = (() => {
             _enableLogs = false;
 
         } catch (e) {
-            api.showMessage('error', `Failed to disable logging\n${e.message}`, 'Sharedown Error');
+            utils.showMessage(MessageType.Error, `Failed to disable logging\n${e.message}`);
         }
 
         return _enableLogs;
@@ -1321,4 +1327,11 @@ const SharedownAPI = (() => {
     return api;
 })();
 
-contextBridge.exposeInMainWorld('sharedown', SharedownAPI);
+contextBridge.exposeInMainWorld('sharedown', {
+    SharedownAPI,
+    enums: {
+        MessageType: MessageType
+    },
+    showMessage: (type, msg) => utils.showMessage(type, msg),
+    quitApp: () => utils.sendMainIPC({cmd: SHDMainCMD.QuitApp})
+});

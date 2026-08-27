@@ -16,38 +16,21 @@
  */
 "use strict";
 
-const SharedownMessage = (() => {
-    return Object.freeze({
-        EFFmpegNotFound: 'FFmpeg was not found on your system.\nSharedown requires FFmpeg to work, please install it.\n\nSharedown will now exit.',
-        OpenFFmpegWiki: 'Open Sharedown Wiki for instructions on how to install FFmpeg?',
-        EYTdlpNotFound: 'yt-dlp was not found on your system.\nSharedown requires yt-dlp to work, please install it.\n\nSharedown will now exit.',
-        OpenYtdlpWiki: 'Open Sharedown Wiki for instructions on how to install YT-dlp?',
-        EDownloadQueFromDisk: 'Unable to load download queue from disk',
-        EImportAppState: 'Could not import app state from disk',
-        EDownloadFail: 'Download failed',
-        EInvalidURLsInAddList: 'Some URLs were invalid and they were skipped',
-        EImportFromFolderCanceled: 'Import from folder canceled!',
-        EInvalidID: 'Invalid video ID',
-        EGeneric: 'Sharedown error',
-        EJsonParse: 'JSON parse error',
-    });
-})();
-
 const Utils = (() => {
     const _sharedownApi = window.sharedown;
     const util = {};
 
     util.getVideoData = async (globalSettingsModal, video, settings) => {//todo
-        return ( await _sharedownApi.runPuppeteerGetVideoData(video, null, settings) );
+        return ( await _sharedownApi.SharedownAPI.runPuppeteerGetVideoData(video, null, settings) );
     }
 
     util.getFolderURLsList = async (globalSettingsModal, foldersList, includeSubFolds, urlsSortType, settings) => {//todo
-        return ( await _sharedownApi.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, settings) );
+        return ( await _sharedownApi.SharedownAPI.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, settings) );
     }
 
     util.getOutputFolder = (globalFolder, videoFolder) => {
         if (globalFolder === '')
-            globalFolder = sharedownApi.getDefaultOutputFolder();
+            globalFolder = _sharedownApi.SharedownAPI.getDefaultOutputFolder();
 
         return videoFolder === '' ? globalFolder:videoFolder;
     }
@@ -57,7 +40,7 @@ const Utils = (() => {
     }
 
     util.showSelectOutputFolderDialog = elm => {
-        const path = _sharedownApi.showSelectFolderDialog();
+        const path = _sharedownApi.SharedownAPI.showSelectFolderDialog();
 
         if (path === undefined)
             return false;
@@ -69,7 +52,7 @@ const Utils = (() => {
     }
 
     util.showSelectCustomChromeDialog = elm => {
-        const path = _sharedownApi.showSelectChromeBinDialog();
+        const path = _sharedownApi.SharedownAPI.showSelectChromeBinDialog();
 
         if (path === undefined)
             return false;

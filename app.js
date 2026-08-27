@@ -16,8 +16,10 @@
  */
 "use strict";
 
-const { app, ipcMain, dialog, Menu, BrowserWindow, clipboard } = require('electron');
+const {app, ipcMain, dialog, Menu, BrowserWindow, clipboard} = require('electron');
 const path = require('node:path');
+const SHDMainCMD = require('./sharedown/enums/shdMainCMD');
+const MessageType = require('./sharedown/enums/messageType')
 let mainW = null;
 
 function createWindow () {
@@ -51,56 +53,48 @@ app.whenReady().then(() => {
     });
 });
 
-ipcMain.on('showMessage', (e, args) => {
-    let btns = [];
-
-    switch (args.type) {
-        case 'question': {
-            btns.push('Cancel');
-            btns.push('OK');
-        }
-            break;
-        default:
-            break;
-    }
-
-    e.returnValue = dialog.showMessageBoxSync(mainW, {
-        message: args.m,
-        type: args.type ?? 'error',
-        title: args.title ?? 'Sharedown',
-        buttons: btns
-    });
-});
-
-ipcMain.on('sharedown-sync', (e, args) => {
+ipcMain.on('shdipcmain', (e, args) => {
     switch (args.cmd) {
-        case "selectFoldDialog": {
+        case SHDMainCMD.OutputDirDialog: {
             e.returnValue = dialog.showOpenDialogSync(mainW, {
-                title: 'Select video output directory',
+                title: 'Select output directory',
                 properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
-                message: 'Output video folder',
+                message: 'Output directory',
             });
         }
             break;
-        case "selectChromeBinDialog": {
+        case SHDMainCMD.CustomBrowserDialog: {
             e.returnValue = dialog.showOpenDialogSync(mainW, {
-                title: 'Select Chrome/Chromium executable path',
+                title: 'Select custom browser executable path',
                 properties: ['openFile'],
-                message: 'Chrome/Chromium executable path',
+                message: 'Browser executable path',
             });
         }
             break;
-        case "getAppDataPath": {
+        case SHDMainCMD.AppDataDir: {//todo
             e.returnValue = app.getPath('appData');
         }
             break;
-        case "getDownloadsPath": {
+        case SHDMainCMD.OutputDir: {
             e.returnValue = app.getPath('downloads');
         }
             break;
-        case "clipboard": {
+        case SHDMainCMD.Clipboard: {
             clipboard.writeText(args.str);
             e.returnValue = true;
+        }
+            break;
+        case SHDMainCMD.MessageBox: {
+            e.returnValue = dialog.showMessageBoxSync(mainW, {
+                message: args.content,
+                type: args.type,
+                title: 'Sharedown',
+                buttons: args.type === MessageType.Question ? ['OK', 'Cancel'] : ['OK']
+            });
+        }
+            break;
+        case SHDMainCMD.QuitApp: {
+            app.exit();
         }
             break;
         default:

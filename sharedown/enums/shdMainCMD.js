@@ -1,6 +1,6 @@
 /**
  * This file is part of the Sharedown (https://github.com/kylon/Sharedown).
- * Copyright (c) 2021 Kylon.
+ * Copyright (c) 2026 Kylon.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,12 @@
  */
 "use strict";
 
-const messageBoxType = (() => {
-    const obj = {
-        None: 'none',
-        Error: 'error',
-        Info: 'info',
-        Question: 'question'
-    }
-
-    Object.freeze(obj);
-    return obj;
-})();
+module.exports = Object.freeze({
+    Clipboard: 0,
+    OutputDirDialog: 1,
+    CustomBrowserDialog: 2,
+    OpenAppDataDir: 3,
+    OpenOutputDir: 4,
+    MessageBox: 5,
+    QuitApp: 6,
+});

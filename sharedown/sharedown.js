@@ -16,7 +16,9 @@
  */
 "use strict";
 
-const sharedownApi = window.sharedown;
+const electron = window.sharedown;
+const InvalidURLErrStr = 'Some URLs were invalid and they were skipped';
+const InvalidVIDErrStr = 'Invalid video ID';
 
 const globalSettings = {
     _version: 18, // internal
@@ -149,7 +151,7 @@ function addVideoURLs() {
 
     if (invalid.length > 0) {
         resources.addVideoURLsList.value = invalid.join('\n');
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURLsInAddList, 'Sharedown');
+        electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
 
     } else {
         resources.addVideoURLsList.value = '';
@@ -199,7 +201,7 @@ async function importURLsFromFolder() {
     if (invalid.length > 0) {
         resources.importURLsFoldList.value = invalid.join('\n');
 
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidURLsInAddList, 'Sharedown');
+        electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
 
     } else {
         resources.importURLsFoldModalInstance.hide();
@@ -224,7 +226,7 @@ function addVideoToUI(vid) {
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
     node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
-    copyURLBtn.addEventListener('click', e => sharedownApi.copyURLToClipboard(e.currentTarget.getAttribute('data-vurl')));
+    copyURLBtn.addEventListener('click', e => electron.SharedownAPI.copyURLToClipboard(e.currentTarget.getAttribute('data-vurl')));
 
     for (const n of children) {
         if (!n.querySelector('.progress-bar').classList.contains('w-100'))
@@ -248,16 +250,16 @@ function toggleDownloadStats(elem) {
     if (cid !== resources.downloading?.id)
         return;
 
-    if (!sharedownApi.isShowDlInfoSet()) {
+    if (!electron.SharedownAPI.isShowDlInfoSet()) {
         elem.setAttribute('data-original-text', elem.textContent);
 
         elem.textContent = 'Waiting for download data..';
-        sharedownApi.setShowDlInfo(true);
+        electron.SharedownAPI.setShowDlInfo(true);
 
     } else {
         const origText = elem.getAttribute('data-original-text');
 
-        sharedownApi.setShowDlInfo(false);
+        electron.SharedownAPI.setShowDlInfo(false);
         elem.textContent = origText === '' || origText === null ? 'Error: no text':origText;
     }
 }
@@ -295,7 +297,7 @@ function loadVideoSettings(elem) {
     const video = resources.downQueObj.getByID(videoId);
 
     if (video === null) {
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidID, SharedownMessage.EGeneric);
+        electron.showMessage(electron.enums.MessageType.Error, InvalidVIDErrStr);
         return false;
     }
 
@@ -320,7 +322,7 @@ function saveVideoSettings(elem) {
     const video = resources.downQueObj.getByID(elem.getAttribute('data-video-id'));
 
     if (video === null) {
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EInvalidID, SharedownMessage.EGeneric);
+        electron.showMessage(electron.enums.MessageType.Error, InvalidVIDErrStr);
         return false;
     }
 
@@ -339,7 +341,7 @@ async function loadGlobalSettings() {
     outdir.setAttribute('title', globalSettings.outputPath);
     ytdlpTmpOutD.setAttribute('title', globalSettings.ytdlpTmpOut);
 
-    globalSettings.logging = globalSettings.logging ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
+    globalSettings.logging = globalSettings.logging ? electron.SharedownAPI.enableLogs() : electron.SharedownAPI.disableLogs();
 
     outdir.value = globalSettings.outputPath;
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
@@ -378,7 +380,7 @@ async function saveGlobalSettings() {
     globalSettings.keepYtdlpTmpOnFail = resources.globalSetModal.querySelector('#keeptmponfail').checked;
     globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 60 : timeout;
-    globalSettings.logging = shlogsInpt.value === '1' ? sharedownApi.enableLogs() : sharedownApi.disableLogs();
+    globalSettings.logging = shlogsInpt.value === '1' ? electron.SharedownAPI.enableLogs() : electron.SharedownAPI.disableLogs();
     globalSettings.customChromePath = resources.globalSetModal.querySelector('#cuschromep').value;
     globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
 
@@ -390,7 +392,7 @@ async function saveGlobalSettings() {
 }
 
 function exportAppSettings() {
-    sharedownApi.saveAppSettings(JSON.stringify(globalSettings));
+    electron.SharedownAPI.saveAppSettings(JSON.stringify(globalSettings));
 }
 
 function upgradeSettings(settingsFile) {
@@ -399,7 +401,7 @@ function upgradeSettings(settingsFile) {
 }
 
 function importAppSettings() {
-    const sett = sharedownApi.loadAppSettings();
+    const sett = electron.SharedownAPI.loadAppSettings();
 
     if (sett === '')
         return;
@@ -423,7 +425,7 @@ function importAppSettings() {
     globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
 
     if (data['_version'] < globalSettings['_version']) {
-        sharedownApi.upgradeForSettingsUpgrade(data['_version']);
+        electron.SharedownAPI.upgradeForSettingsUpgrade(data['_version']);
         upgradeSettings(data);
         exportAppSettings(); // update settings version
     }
@@ -438,11 +440,11 @@ function exportAppState(force = false) {
         downloading: JSON.stringify(resources.downloading)
     }
 
-    return sharedownApi.saveAppState(JSON.stringify(data));
+    return electron.SharedownAPI.saveAppState(JSON.stringify(data));
 }
 
 function importAppState() {
-    const json = sharedownApi.loadAppState();
+    const json = electron.SharedownAPI.loadAppState();
 
     if (json === '')
         return;
@@ -453,15 +455,15 @@ function importAppState() {
         data['downque'].push(data['downloading'])
 
         const ret = resources.downQueObj.importDownloadQue(data['downque']);
-        if (!ret)
-            sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadQueFromDisk, SharedownMessage.EJsonParse);
 
-        const videoList = resources.downQueObj.getQue();
-        for (const v of videoList)
+        if (!ret)
+            electron.showMessage(electron.enums.MessageType.Error, 'Some URLs could not be loaded');
+
+        for (const v of resources.downQueObj.getQue())
             addVideoToUI(v);
 
     } catch (e) {
-        sharedownApi.showMessage(messageBoxType.Error, `${SharedownMessage.EImportAppState}\n\n${e.message}`, SharedownMessage.EJsonParse)
+        electron.showMessage(electron.enums.MessageType.Error, `Failed to load app state from disk.\n\n${e.message}`)
     }
 }
 
@@ -475,7 +477,7 @@ async function downloadVideo(videoElem) {
         videoElem.querySelector('.vsett-btn').classList.add('btn-disabled');
         videoElem.querySelector('.deque-btn').classList.add('btn-disabled');
 
-        ret = sharedownApi.makeOutputDirectory(outputFolder);
+        ret = electron.SharedownAPI.makeOutputDirectory(outputFolder);
         if (!ret)
             return rej();
 
@@ -484,38 +486,38 @@ async function downloadVideo(videoElem) {
         vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, curSettings);
         toggleLoadingScr();
 
-        sharedownApi.writeLog('downloadVideo: has vdata: ' + (vdata !== null));
+        electron.SharedownAPI.writeLog('downloadVideo: has vdata: ' + (vdata !== null));
 
         if (!vdata)
             return rej();
 
         if (vdata.t === '') { // unnamed video ??, give it a name and try to download
-            vdata.t = 'sharedownVideo' + sharedownApi.genID();
+            vdata.t = 'sharedownVideo' + electron.SharedownAPI.genID();
 
-            sharedownApi.writeLog(`downloadVideo: video has empty title!? new title: ${vdata.t}`);
+            electron.SharedownAPI.writeLog(`downloadVideo: video has empty title!? new title: ${vdata.t}`);
         }
 
         // generate output file path (apply user settings, if any)
-        resources.downloadingFPath = sharedownApi.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
+        resources.downloadingFPath = electron.SharedownAPI.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
 
         if (curSettings.downloader === 'ffmpeg')
-            ret = await sharedownApi.downloadWithFFmpeg(vdata, resources.downloading, resources.downloadingFPath);
+            ret = await electron.SharedownAPI.downloadWithFFmpeg(vdata, resources.downloading, resources.downloadingFPath);
         else
-            ret = sharedownApi.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath, curSettings);
+            ret = electron.SharedownAPI.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath, curSettings);
 
         return !ret ? rej() : res();
     });
 }
 
 async function startDownload() {
-    sharedownApi.writeLog('startDownload: start');
+    electron.SharedownAPI.writeLog('startDownload: start');
 
     if (resources.downlStartBtn.classList.contains('btn-disabled')) {
-        sharedownApi.writeLog('startDownload: button is disabled');
+        electron.SharedownAPI.writeLog('startDownload: button is disabled');
         return;
 
     } else if (!resources.downQueObj.hasNext()) {
-        sharedownApi.writeLog('startDownload: queue is empty');
+        electron.SharedownAPI.writeLog('startDownload: queue is empty');
         return;
     }
 
@@ -523,42 +525,42 @@ async function startDownload() {
 
     const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
-    sharedownApi.writeLog('startDownload: valid data: ' + (resources.downloading !== null));
+    electron.SharedownAPI.writeLog('startDownload: valid data: ' + (resources.downloading !== null));
 
     downloadVideo(videoElem).then(() => {
         lockUIElemsForDownload();
-        sharedownApi.writeLog(`startDownload: selected ${resources.downloading.id}`);
+        electron.SharedownAPI.writeLog(`startDownload: selected ${resources.downloading.id}`);
 
     }).catch((e) => {
         videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
-        sharedownApi.stopDownload();
-        sharedownApi.writeLog(`startDownload: failed\n${e?.message}`);
+        electron.SharedownAPI.stopDownload();
+        electron.SharedownAPI.writeLog(`startDownload: failed\n${e?.message}`);
 
         resources.downloading = null;
     });
 }
 
 function stopDownload() {
-    sharedownApi.writeLog('stopDownload: called');
+    electron.SharedownAPI.writeLog('stopDownload: called');
 
     if (resources.downlStopBtn.classList.contains('btn-disabled')) {
-        sharedownApi.writeLog('stopDownload: button is disabled');
+        electron.SharedownAPI.writeLog('stopDownload: button is disabled');
         return;
     }
 
     toggleLoadingScr();
     const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
-    sharedownApi.stopDownload();
+    electron.SharedownAPI.stopDownload();
 
     unlockUIElemsForDownload();
     videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
-    if (sharedownApi.isShowDlInfoSet())
+    if (electron.SharedownAPI.isShowDlInfoSet())
         toggleDownloadStats(videoElem.querySelector('span'));
 
     resources.downloading = null;
@@ -569,27 +571,15 @@ function stopDownload() {
 
 window.addEventListener('DOMContentLoaded', async () => {
     initResources();
-    sharedownApi.deleteUserdataFold(); // if for some reason the quit event failed, delete now
+    electron.SharedownAPI.deleteUserdataFold(); // if for some reason the quit event failed, delete now
 
-    if (!sharedownApi.hasFFmpeg()) {
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EFFmpegNotFound, SharedownMessage.EGeneric);
+    if (!electron.SharedownAPI.hasFFmpeg() || !electron.SharedownAPI.hasYTdlp()) {
+        const ret = electron.showMessage(electron.enums.MessageType.Question, 'ffmpeg or yt-dlp is not installed.\nPress OK to open the wiki for instructions, Cancel to exit');
 
-        const ret = sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.OpenFFmpegWiki, SharedownMessage.EGeneric);
-        if (ret === 1)
-            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-FFmpeg');
+        if (ret === 0)
+            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown/wiki');
 
-        sharedownApi.quitApp();
-        return;
-    }
-
-    if (!sharedownApi.hasYTdlp()) {
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EYTdlpNotFound, SharedownMessage.EGeneric);
-
-        const ret = sharedownApi.showMessage(messageBoxType.Question, SharedownMessage.OpenYtdlpWiki, SharedownMessage.EGeneric);
-        if (ret === 1)
-            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki/How-to-install-YTdlp');
-
-        sharedownApi.quitApp();
+        electron.quitApp();
         return;
     }
 
@@ -598,7 +588,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadGlobalSettings();
     updateStartButtonState();
 
-    document.getElementById('soutdirp').setAttribute('placeholder', sharedownApi.getDefaultOutputFolder());
+    document.getElementById('soutdirp').setAttribute('placeholder', electron.SharedownAPI.getDefaultOutputFolder());
     document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
     document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { resources.importURLsFoldList.value = ''; });
@@ -630,7 +620,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             return;
 
         toggleLoadingScr();
-        sharedownApi.deleteUserdataFold();
+        electron.SharedownAPI.deleteUserdataFold();
         toggleLoadingScr();
     });
 
@@ -638,12 +628,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('DownloadFail', (e) => {
-    sharedownApi.writeLog('DownloadFail event:\n' + e.detail);
+    electron.SharedownAPI.writeLog('DownloadFail event:\n' + e.detail);
 
     if (globalSettings.retryOnFail && resources.downloading instanceof video) {
         const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
-        if (sharedownApi.isShowDlInfoSet())
+        if (electron.SharedownAPI.isShowDlInfoSet())
             toggleDownloadStats(videoElem.querySelector('span'));
 
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
@@ -655,7 +645,7 @@ window.addEventListener('DownloadFail', (e) => {
 
     } else {
         stopDownload();
-        sharedownApi.showMessage(messageBoxType.Error, SharedownMessage.EDownloadFail + '\n\n' + e.detail, SharedownMessage.EGeneric);
+        electron.showMessage(electron.enums.MessageType.Error, `Download failed.\n\n${e.detail}`);
     }
 });
 
@@ -663,9 +653,9 @@ window.addEventListener('DownloadSuccess', () => {
     const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
     const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
 
-    sharedownApi.writeLog(`DownloadSuccess event for ${resources.downloading.id}`);
+    electron.SharedownAPI.writeLog(`DownloadSuccess event for ${resources.downloading.id}`);
 
-    if (sharedownApi.isShowDlInfoSet())
+    if (electron.SharedownAPI.isShowDlInfoSet())
         toggleDownloadStats(videoElm.querySelector('span'));
 
     unlockUIElemsForDownload();
@@ -683,23 +673,23 @@ window.addEventListener('DownloadSuccess', () => {
 });
 
 window.addEventListener('beforeunload', () => {
-    sharedownApi.flushAndCloseLogs();
-    sharedownApi.deleteUserdataFold();
+    electron.SharedownAPI.flushAndCloseLogs();
+    electron.SharedownAPI.deleteUserdataFold();
 });
 
 window.addEventListener('appmenu', (e) => {
     switch (e.detail.cmd) {
         case 'odlfold':
-            sharedownApi.openFolder(Utils.getOutputFolder(globalSettings.outputPath, ''));
+            electron.SharedownAPI.openFolder(Utils.getOutputFolder(globalSettings.outputPath, ''));
             break;
         case 'ologsfold':
-            sharedownApi.openLogsFolder();
+            electron.SharedownAPI.openLogsFolder();
             break;
         case 'owiki':
-            sharedownApi.openLink('https://github.com/kylon/Sharedown/wiki');
+            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown/wiki');
             break;
         case 'osrc':
-            sharedownApi.openLink('https://github.com/kylon/Sharedown');
+            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown');
             break;
         default:
             break;
