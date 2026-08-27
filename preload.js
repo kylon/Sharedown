@@ -20,6 +20,8 @@ const {contextBridge, ipcRenderer, shell} = require('electron');
 const utils = require('./preload_utils')
 const SHDMainCMD = require('./sharedown/enums/shdMainCMD');
 const MessageType = require('./sharedown/enums/messageType');
+const nodepath = require("node:path");
+const nodefs = require("node:fs");
 const isWindows = process.platform === 'win32';
 const isLinux = process.platform === 'linux';
 const isMacOS = process.platform === 'darwin';
@@ -31,15 +33,13 @@ if (isMacOS)
 
 const SharedownAPI = (() => {
     const _isAppPackage = __dirname.toLowerCase().includes('app.asar');
-    const _path = require('node:path');
-    const _fs = require('node:fs');
-    const _sharedownAppDataPath = ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.AppDataDir}) + '/Sharedown';
-    const _sharedownStateFile = _path.normalize(_sharedownAppDataPath+'/sharedown.state');
-    const _sharedownSettFile = _path.normalize(_sharedownAppDataPath+'/sharedown.sett');
-    const _chromeUserdataPath = _path.normalize(_sharedownAppDataPath+'/data');
-    const _logsFolderPath = _path.normalize(_sharedownAppDataPath+'/logs');
-    const _logFilePath = _path.normalize(_logsFolderPath+'/sharedownLog.log');
-    const _ytdlpLogFilePath = _path.normalize(_logsFolderPath+'/ytdlp.log');
+    const _sharedownAppDataPath = `${utils.sendMainIPC({cmd: SHDMainCMD.AppDataPath})}/Sharedown`;
+    const _sharedownStateFile = nodepath.normalize(_sharedownAppDataPath+'/sharedown.state');
+    const _sharedownSettFile = nodepath.normalize(_sharedownAppDataPath+'/sharedown.sett');
+    const _chromeUserdataPath = nodepath.normalize(_sharedownAppDataPath+'/data');
+    const _logsFolderPath = nodepath.normalize(_sharedownAppDataPath+'/logs');
+    const _logFilePath = nodepath.normalize(_logsFolderPath+'/sharedownLog.log');
+    const _ytdlpLogFilePath = nodepath.normalize(_logsFolderPath+'/ytdlp.log');
     let _puppyBrowser = null;
     let _showDownlInfo = false;
     let _runningProcess = null;
@@ -57,9 +57,7 @@ const SharedownAPI = (() => {
         downloadWithFFmpeg: null,
         downloadWithYtdlp: null,
         stopDownload: null,
-        makeOutputDirectory: null,
         getNormalizedUniqueOutputFilePath: null,
-        getDefaultOutputFolder: null,
         showSelectFolderDialog: null,
         showSelectChromeBinDialog: null,
         copyURLToClipboard: null,
@@ -76,7 +74,6 @@ const SharedownAPI = (() => {
         openLogsFolder: null,
         openFolder: null,
         deleteUserdataFold: null,
-        genID: null,
         openLink: null,
         flushAndCloseLogs: null,
     };
@@ -148,20 +145,20 @@ const SharedownAPI = (() => {
             const pkgBasePath = isWindows ? basePath : (isMacOS ? __dirname : process.env.APPDIR);
 
             if (isMacOS)
-                chromeDirPath = _path.join(`${pkgBasePath}.unpacked`, chromeDirPath);
+                chromeDirPath = nodepath.join(`${pkgBasePath}.unpacked`, chromeDirPath);
             else
-                chromeDirPath = _path.join(pkgBasePath, 'resources', 'app.asar.unpacked', chromeDirPath);
+                chromeDirPath = nodepath.join(pkgBasePath, 'resources', 'app.asar.unpacked', chromeDirPath);
 
         } else {
-            chromeDirPath = _path.join(basePath, chromeDirPath);
+            chromeDirPath = nodepath.join(basePath, chromeDirPath);
         }
 
         try {
             const chromeExe = isWindows ? 'chrome.exe' : (isMacOS ? 'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' : 'chrome');
-            const osFold = (_fs.readdirSync(chromeDirPath).filter(file => _getChromeOSFolder(file)))[0];
-            const osExeFold = (_fs.readdirSync(_path.join(chromeDirPath, osFold)).filter(file => _getChromeOSExeFolder(file)))[0];
+            const osFold = (nodefs.readdirSync(chromeDirPath).filter(file => _getChromeOSFolder(file)))[0];
+            const osExeFold = (nodefs.readdirSync(nodepath.join(chromeDirPath, osFold)).filter(file => _getChromeOSExeFolder(file)))[0];
 
-            ret = _path.join(chromeDirPath, osFold, osExeFold, chromeExe);
+            ret = nodepath.join(chromeDirPath, osFold, osExeFold, chromeExe);
 
         } catch (e) {
             api.writeLog(`_getPuppeteerExecutablePath:\n${e.message}`);
@@ -181,10 +178,10 @@ const SharedownAPI = (() => {
             throw new Error('failed to find chromium executable');
 
         if (userdataFold) {
-            const dataPath = _path.normalize(_sharedownAppDataPath + '/data');
+            const dataPath = nodepath.normalize(_sharedownAppDataPath + '/data');
 
-            if (!_fs.existsSync(dataPath))
-                _fs.mkdirSync(dataPath, {recursive: true});
+            if (!nodefs.existsSync(dataPath))
+                nodefs.mkdirSync(dataPath, {recursive: true});
 
             pargs['userDataDir'] = dataPath;
         }
@@ -500,7 +497,7 @@ const SharedownAPI = (() => {
             }
 
             relUrl = relUrlElm[0].textContent;
-            fileExt = _path.extname(relUrl);
+            fileExt = nodepath.extname(relUrl);
 
             if (fileExt !== '.mp4') {
                 api.writeLog(`_getVideoURLsInFold: unhandled file format: ${fileExt}`);
@@ -584,20 +581,20 @@ const SharedownAPI = (() => {
 
     function _saveYtdlpTempFragsFolder(tmpPath, filename) {
         try {
-            if (!_fs.existsSync(tmpPath)) {
+            if (!nodefs.existsSync(tmpPath)) {
                 api.writeLog('_saveYtdlpTempFragsFolder: no temp folder, skip..');
                 return;
             }
 
-            const fnameNoExt = _path.parse(filename).name;
+            const fnameNoExt = nodepath.parse(filename).name;
             const savedTmpName = `${tmpPath}_${fnameNoExt}`;
             let savedTmpFName = savedTmpName;
             let i = 1;
 
-            while (_fs.existsSync(savedTmpFName))
+            while (nodefs.existsSync(savedTmpFName))
                 savedTmpFName = `${savedTmpName}_${i++}`;
 
-            _fs.renameSync(tmpPath, savedTmpFName);
+            nodefs.renameSync(tmpPath, savedTmpFName);
 
         } catch (e) {
             api.writeLog(`_saveYtdlpTempFragsFolder: failed to rename yt-dlp temp folder:\n${e.message}`);
@@ -606,13 +603,13 @@ const SharedownAPI = (() => {
 
     function _writeSettingsToDisk(data, path, erMsg) {
         try {
-            if (!_fs.existsSync(_sharedownAppDataPath))
-                _fs.mkdirSync(_sharedownAppDataPath, {recursive: true});
+            if (!nodefs.existsSync(_sharedownAppDataPath))
+                nodefs.mkdirSync(_sharedownAppDataPath, {recursive: true});
 
-            if (!_fs.existsSync(_sharedownAppDataPath))
+            if (!nodefs.existsSync(_sharedownAppDataPath))
                 return false;
 
-            _fs.writeFileSync(path, data, 'utf8');
+            nodefs.writeFileSync(path, data, 'utf8');
             return true;
 
         } catch (e) {
@@ -624,10 +621,10 @@ const SharedownAPI = (() => {
 
     function _loadSettingsFromDisk(path, erMsg) {
         try {
-            if (!_fs.existsSync(path))
+            if (!nodefs.existsSync(path))
                 return '';
 
-            return _fs.readFileSync(path, 'utf8');
+            return nodefs.readFileSync(path, 'utf8');
 
         } catch (e) {
             utils.showMessage(MessageType.Error, `${erMsg}\n${e.message}`);
@@ -637,13 +634,13 @@ const SharedownAPI = (() => {
     }
 
     function _rmSync(path, recur = true) {
-        if (_fs.existsSync(path))
-            _fs.rmSync(path, {recursive: recur, force: true});
+        if (nodefs.existsSync(path))
+            nodefs.rmSync(path, {recursive: recur, force: true});
     }
 
     function _unlinkSync(path) {
-        if (_fs.existsSync(path))
-            _fs.unlinkSync(path);
+        if (nodefs.existsSync(path))
+            nodefs.unlinkSync(path);
     }
 
     function _browserDisconnectedEvt() {
@@ -1005,15 +1002,15 @@ const SharedownAPI = (() => {
             let filename = null;
 
             if (!isDirect) {
-                const outFPath = _path.parse(outFile);
+                const outFPath = nodepath.parse(outFile);
                 const outFolder = settings.ytdlpTmpOut === '' ? outFPath.dir : settings.ytdlpTmpOut;
 
                 filename = outFPath.base;
-                tmpFold = _path.normalize(_path.join(outFolder, 'sharedownTmp'));
-                tmpOutFile = _path.normalize(_path.join(tmpFold, filename));
+                tmpFold = nodepath.normalize(nodepath.join(outFolder, 'sharedownTmp'));
+                tmpOutFile = nodepath.normalize(nodepath.join(tmpFold, filename));
 
                 _rmSync(tmpFold);
-                _fs.mkdirSync(tmpFold);
+                nodefs.mkdirSync(tmpFold);
                 args.push('-N', settings.ytdlpN.toString(), '-o', tmpOutFile, '-v', videoData.m);
 
             } else {
@@ -1066,14 +1063,14 @@ const SharedownAPI = (() => {
                     }
 
                     if (!isDirect) {
-                        const files = _fs.readdirSync(tmpFold);
+                        const files = nodefs.readdirSync(tmpFold);
                         let found = false;
 
                         for (const f of files) {
                             if (!f.includes(filename))
                                 continue;
 
-                            _fs.copyFileSync(tmpOutFile, outFile);
+                            nodefs.copyFileSync(tmpOutFile, outFile);
                             found = true;
                             break;
                         }
@@ -1136,37 +1133,15 @@ const SharedownAPI = (() => {
         }
     }
 
-    api.makeOutputDirectory = outFold => {
-        try {
-            outFold = _path.normalize(outFold);
-
-            if (!_fs.existsSync(outFold))
-                _fs.mkdirSync(outFold, {recursive: true});
-
-            return _fs.existsSync(outFold);
-
-        } catch (e) {
-            utils.showMessage(MessageType.Error, e.message);
-        }
-
-        return false;
-    }
-
     api.getNormalizedUniqueOutputFilePath = (outFolder, fileName) => {
-        let p = _path.normalize(_path.join(outFolder, fileName));
+        let p = nodepath.normalize(nodepath.join(outFolder, fileName));
         const name = p.substring(0, p.length - 4);
         let i = 1;
 
-        while (_fs.existsSync(p))
+        while (nodefs.existsSync(p))
             p = name + " " + (i++) + '.mp4';
 
-        return _path.extname(p) !== '.mp4' ? p.substring(0, p.length - 3) + 'mp4' : p;
-    }
-
-    api.getDefaultOutputFolder = () => {
-        const downloadsPath = ipcRenderer.sendSync('shdipcmain', {cmd: SHDMainCMD.OutputDir});
-
-        return _path.normalize(_path.join(downloadsPath, 'sharedownVideos'));
+        return nodepath.extname(p) !== '.mp4' ? p.substring(0, p.length - 3) + 'mp4' : p;
     }
 
     api.showSelectFolderDialog = () => {
@@ -1191,12 +1166,12 @@ const SharedownAPI = (() => {
 
     api.upgradeForSettingsUpgrade = (version) => {
         if (version < 4) {
-            const _ologFilePath = _path.normalize(_sharedownAppDataPath+'/sharedownLog.log');
+            const _ologFilePath = nodepath.normalize(_sharedownAppDataPath+'/sharedownLog.log');
             const oldF = _ologFilePath+'.old';
 
             _unlinkSync(oldF);
 
-            if (_fs.existsSync(_logFilePath))
+            if (nodefs.existsSync(_logFilePath))
                 _unlinkSync(_ologFilePath);
         }
     }
@@ -1232,12 +1207,6 @@ const SharedownAPI = (() => {
         _rmSync(_chromeUserdataPath);
     }
 
-    api.genID = () => {
-        const crypto = require('node:crypto');
-
-        return crypto.randomBytes(5).toString("hex");
-    }
-
     api.openLink = async l => {
         await shell.openExternal(l);
     }
@@ -1247,20 +1216,20 @@ const SharedownAPI = (() => {
             return true;
 
         try {
-            if (!_fs.existsSync(_logsFolderPath))
-                _fs.mkdirSync(_logsFolderPath, {recursive: true});
+            if (!nodefs.existsSync(_logsFolderPath))
+                nodefs.mkdirSync(_logsFolderPath, {recursive: true});
 
             for (const logf of [_logFilePath, _ytdlpLogFilePath]) {
                 const old = `${logf}.old`;
 
                 _unlinkSync(old);
 
-                if (_fs.existsSync(logf))
-                    _fs.renameSync(logf, old);
+                if (nodefs.existsSync(logf))
+                    nodefs.renameSync(logf, old);
             }
 
-            _shLogFd = _fs.openSync(_logFilePath, 'a');
-            _ytdlpLogFd = _fs.openSync(_ytdlpLogFilePath, 'a');
+            _shLogFd = nodefs.openSync(_logFilePath, 'a');
+            _ytdlpLogFd = nodefs.openSync(_ytdlpLogFilePath, 'a');
 
             _enableLogs = true;
 
@@ -1276,8 +1245,8 @@ const SharedownAPI = (() => {
             return false;
 
         try {
-            _fs.closeSync(_shLogFd);
-            _fs.closeSync(_ytdlpLogFd);
+            nodefs.closeSync(_shLogFd);
+            nodefs.closeSync(_ytdlpLogFd);
 
             _enableLogs = false;
 
@@ -1303,7 +1272,7 @@ const SharedownAPI = (() => {
                 break;
         }
 
-        _fs.writeFile(logFd, '\n'+msg+'\n', (err) => {
+        nodefs.writeFile(logFd, '\n'+msg+'\n', (err) => {
             if (err)
                 console.log(`writeLog: ${err.message}`);
         });
@@ -1314,8 +1283,8 @@ const SharedownAPI = (() => {
             return;
 
         try {
-            _fs.fsyncSync(_shLogFd);
-            _fs.fsyncSync(_ytdlpLogFd);
+            nodefs.fsyncSync(_shLogFd);
+            nodefs.fsyncSync(_ytdlpLogFd);
             api.disableLogs();
 
         } catch (e) {
@@ -1332,6 +1301,26 @@ contextBridge.exposeInMainWorld('sharedown', {
     enums: {
         MessageType: MessageType
     },
+
     showMessage: (type, msg) => utils.showMessage(type, msg),
-    quitApp: () => utils.sendMainIPC({cmd: SHDMainCMD.QuitApp})
+
+    quitApp: () => utils.sendMainIPC({cmd: SHDMainCMD.QuitApp}),
+
+    getDefaultDownloadPath: () => nodepath.normalize(utils.sendMainIPC({cmd: SHDMainCMD.DownloadPath})),
+
+    makeOutputDirectory: opath => {
+        try {
+            opath = opath === '' ? this.getDefaultDownloadPath() : nodepath.normalize(opath);
+
+            if (!nodefs.existsSync(opath))
+                nodefs.mkdirSync(opath, {recursive: true});
+
+            return nodefs.existsSync(opath);
+
+        } catch (e) {
+            utils.showMessage(MessageType.Error, e.message);
+        }
+
+        return false;
+    }
 });

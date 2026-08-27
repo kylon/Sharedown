@@ -123,41 +123,6 @@
         </div>
     </div>
 
-    <!-- video settings modal -->
-    <div id="videosett" class="modal fade" tabindex="-1" aria-labelledby="videosett" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Video settings</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="saveas" class="form-label">Save file as</label>
-                                <input id="saveas" type="text" class="form-control" placeholder="file name">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <label for="voutdirp" class="form-label">Output directory</label>
-                            <div class="input-group mb-3">
-                                <button class="btn btn-outline-secondary" type="button" id="voutdirinp">Select folder</button>
-                                <input id="voutdirp" type="text" class="form-control outpath" aria-label="Video output directory" placeholder="Downloads/sharedownVideos">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <span id="save-succ-str" class="text-success d-none"><i class="fa-solid fa-check"></i> Saved</span>
-                    <button id="save-sett" type="button" class="btn bg-sharepoint1" data-video-id="">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- global settings modal -->
     <div id="sharedownsett" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett" aria-hidden="true">
         <div class="modal-dialog">
@@ -371,8 +336,7 @@
                     <div class="progress-bar rounded-0 bg-sharepoint4" role="progressbar" data-tmp-perc="0"></div>
                 </div>
                 <button type="button" class="copy-btn btn btn-outline-primary" title="Copy video URL"><i class="fa-solid fa-copy"></i></button>
-                <button type="button" class="vsett-btn btn btn-outline-secondary" title="Sharedown video options"><i class="fa-solid fa-gear"></i></button>
-                <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa-solid fa-times"></i></button>
+                <button type="button" class="deque-btn btn btn-outline-danger" title="Remove video from download queue"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>
     </template>

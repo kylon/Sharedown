@@ -24,4 +24,6 @@ module.exports = Object.freeze({
     OpenOutputDir: 4,
     MessageBox: 5,
     QuitApp: 6,
+    DownloadPath: 7,
+    AppDataPath: 8
 });

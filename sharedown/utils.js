@@ -28,13 +28,6 @@ const Utils = (() => {
         return ( await _sharedownApi.SharedownAPI.runPuppeteerGetURLListFromFolder(foldersList, includeSubFolds, urlsSortType, settings) );
     }
 
-    util.getOutputFolder = (globalFolder, videoFolder) => {
-        if (globalFolder === '')
-            globalFolder = _sharedownApi.SharedownAPI.getDefaultOutputFolder();
-
-        return videoFolder === '' ? globalFolder:videoFolder;
-    }
-
     util.getOutputFileName = (videoTitle, videoSaveAs) => {
         return videoSaveAs === '' ? videoTitle : `${videoSaveAs}.mp4`;
     }

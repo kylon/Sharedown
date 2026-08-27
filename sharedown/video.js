@@ -17,27 +17,14 @@
 "use strict";
 
 class video {
+    static #_id = 0;
     id;
     url;
-    settings = {
-        _version: 1, // internal
-        saveas: '',
-        outputPath: ''
-    };
 
-    constructor(url, settings = null) {
+    constructor(url) {
+        this.id = video.#_id++;
         this.url = url;
 
-        if (settings !== null) {
-            this.settings.saveas = settings.saveas ?? '';
-            this.settings.outputPath = settings.outputPath ?? ''
-        }
-
-        this.#generateId();
         Object.freeze(this);
-    }
-
-    #generateId() {
-        this.id = window.sharedown.genID();
     }
 }

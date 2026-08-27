@@ -48,9 +48,6 @@ const resources = {
     addURLsModalInstance: null,
     importURLsFoldList: null,
     importURLsFoldModalInstance: null,
-    videoSettModal: null,
-    videoSettModalInstance: null,
-    videoSettModalSaveMsg: null,
     globalSetModal: null,
     globalSetDownldrOpts: null,
     globalSetModalSaveMsg: null,
@@ -69,9 +66,6 @@ function initResources() {
     resources.addURLsModalInstance          = new bootstrap.Modal(document.getElementById('urlsaddmodal'));
     resources.importURLsFoldList            = document.getElementById('furlslist');
     resources.importURLsFoldModalInstance   = new bootstrap.Modal(document.getElementById('foldimportmodal'));
-    resources.videoSettModal                = document.getElementById('videosett');
-    resources.videoSettModalInstance        = new bootstrap.Modal(resources.videoSettModal);
-    resources.videoSettModalSaveMsg         = new timeoutMessage(resources.videoSettModal.querySelector('#save-succ-str'));
     resources.globalSetModal                = document.getElementById('sharedownsett');
     resources.globalSetDownldrOpts          = resources.globalSetModal.querySelectorAll('.downldr-opt');
     resources.globalSetModalSaveMsg         = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
@@ -225,7 +219,6 @@ function addVideoToUI(vid) {
     progBar.addEventListener('click', e => toggleDownloadStats(e.currentTarget.querySelector('span')));
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
-    node.querySelector('.vsett-btn').addEventListener('click', e => loadVideoSettings(e.currentTarget));
     copyURLBtn.addEventListener('click', e => electron.SharedownAPI.copyURLToClipboard(e.currentTarget.getAttribute('data-vurl')));
 
     for (const n of children) {
@@ -287,51 +280,6 @@ function removeVideoFromQue(removeBtn) {
     exportAppState();
     updateStartButtonState();
     toggleLoadingScr();
-}
-
-function loadVideoSettings(elem) {
-    if (elem.classList.contains('btn-disabled'))
-        return;
-
-    const videoId = elem.parentElement.getAttribute('data-video-id');
-    const video = resources.downQueObj.getByID(videoId);
-
-    if (video === null) {
-        electron.showMessage(electron.enums.MessageType.Error, InvalidVIDErrStr);
-        return false;
-    }
-
-    toggleLoadingScr();
-
-    const saveas = resources.videoSettModal.querySelector('#saveas');
-    const outdir = resources.videoSettModal.querySelector('#voutdirp');
-
-    saveas.value = video.settings.saveas;
-    outdir.value = video.settings.outputPath;
-
-    saveas.setAttribute('title', video.settings.saveas);
-    outdir.setAttribute('title', video.settings.outputPath);
-    resources.videoSettModal.querySelector('#save-sett').setAttribute('data-video-id', videoId);
-    resources.videoSettModalSaveMsg.reset();
-    toggleLoadingScr();
-
-    resources.videoSettModalInstance.show();
-}
-
-function saveVideoSettings(elem) {
-    const video = resources.downQueObj.getByID(elem.getAttribute('data-video-id'));
-
-    if (video === null) {
-        electron.showMessage(electron.enums.MessageType.Error, InvalidVIDErrStr);
-        return false;
-    }
-
-    toggleLoadingScr();
-    video.settings.saveas = resources.videoSettModal.querySelector('#saveas').value;
-    video.settings.outputPath = resources.videoSettModal.querySelector('#voutdirp').value;
-    exportAppState();
-    toggleLoadingScr();
-    resources.videoSettModalSaveMsg.show();
 }
 
 async function loadGlobalSettings() {
@@ -470,15 +418,12 @@ function importAppState() {
 async function downloadVideo(videoElem) {
     return new Promise(async (res, rej) => {
         const curSettings = Object.assign({}, globalSettings);
-        const outputFolder = Utils.getOutputFolder(curSettings.outputPath, resources.downloading.settings.outputPath);
         let vdata;
         let ret;
 
-        videoElem.querySelector('.vsett-btn').classList.add('btn-disabled');
         videoElem.querySelector('.deque-btn').classList.add('btn-disabled');
 
-        ret = electron.SharedownAPI.makeOutputDirectory(outputFolder);
-        if (!ret)
+        if (!electron.makeOutputDirectory(curSettings.outputPath))
             return rej();
 
         toggleLoadingScr();
@@ -492,7 +437,7 @@ async function downloadVideo(videoElem) {
             return rej();
 
         if (vdata.t === '') { // unnamed video ??, give it a name and try to download
-            vdata.t = 'sharedownVideo' + electron.SharedownAPI.genID();
+            vdata.t = `sharedownVideo${vdata.id}`;
 
             electron.SharedownAPI.writeLog(`downloadVideo: video has empty title!? new title: ${vdata.t}`);
         }
@@ -532,7 +477,6 @@ async function startDownload() {
         electron.SharedownAPI.writeLog(`startDownload: selected ${resources.downloading.id}`);
 
     }).catch((e) => {
-        videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
         resources.downQueObj.reinsert(resources.downloading); // add back video to que
         electron.SharedownAPI.stopDownload();
@@ -556,7 +500,6 @@ function stopDownload() {
     electron.SharedownAPI.stopDownload();
 
     unlockUIElemsForDownload();
-    videoElem.querySelector('.vsett-btn').classList.remove('btn-disabled');
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     resources.downQueObj.reinsert(resources.downloading); // add back video to que
 
@@ -588,13 +531,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     await loadGlobalSettings();
     updateStartButtonState();
 
-    document.getElementById('soutdirp').setAttribute('placeholder', electron.SharedownAPI.getDefaultOutputFolder());
+    document.getElementById('soutdirp').setAttribute('placeholder', electron.getDefaultDownloadPath());
     document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
     document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { resources.importURLsFoldList.value = ''; });
     document.getElementById('importfoldurlsbtn').addEventListener('click', () => importURLsFromFolder());
-    resources.videoSettModal.querySelector('#save-sett').addEventListener('click', e => saveVideoSettings(e.currentTarget));
-    resources.videoSettModal.querySelector('#voutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
     resources.downlStartBtn.addEventListener('click', () => startDownload());
     resources.downlStopBtn.addEventListener('click', () => stopDownload());
     resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());

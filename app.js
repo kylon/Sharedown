@@ -71,11 +71,11 @@ ipcMain.on('shdipcmain', (e, args) => {
             });
         }
             break;
-        case SHDMainCMD.AppDataDir: {//todo
+        case SHDMainCMD.AppDataPath: {//todo
             e.returnValue = app.getPath('appData');
         }
             break;
-        case SHDMainCMD.OutputDir: {
+        case SHDMainCMD.DownloadPath: {
             e.returnValue = app.getPath('downloads');
         }
             break;
