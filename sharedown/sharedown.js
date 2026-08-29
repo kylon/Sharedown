@@ -26,17 +26,13 @@ const globalSettings = {
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
     keepYtdlpTmpOnFail: false,
-    ytdlpN: 5,
-    directN: 5,
-    timeout: 60, // secs
+    ytdlpN: 4,
+    directN: 4,
     retryOnFail: false,
     userdataFold: false,
-    autoSaveState: true,
     logging: false,
     customChromePath: '',
     keepBrowserOpen: false,
-    ytdlpRateLimit: 0,
-    ytdlpRateLimitU: 'm',
 };
 
 function makeObjCache() {
@@ -104,7 +100,6 @@ function unlockUIElemsForDownload() {
     updateStartButtonState();
     objCache.downlStopBtn.classList.add('btn-disabled');
     objCache.settingsModal.querySelector('#delchdfold').removeAttribute('disabled');
-    objCache.settingsModal.querySelector('#mexportstate').removeAttribute('disabled');
     objCache.settingsModal.querySelector('#downlrun-setalr').classList.add('d-none');
 }
 
@@ -112,7 +107,6 @@ function lockUIElemsForDownload() {
     objCache.downlStartBtn.classList.add('btn-disabled');
     objCache.downlStopBtn.classList.remove('btn-disabled');
     objCache.settingsModal.querySelector('#delchdfold').setAttribute('disabled', '');
-    objCache.settingsModal.querySelector('#mexportstate').setAttribute('disabled', '');
     objCache.settingsModal.querySelector('#downlrun-setalr').classList.remove('d-none');
 }
 
@@ -139,7 +133,7 @@ function setAsWebPlayerURL(url) {
 }
 
 function getYtdlpNVal(n) {
-    return Math.min(Math.max(parseInt(n, 10), 1), 5);
+    return Math.min(Math.max(parseInt(n, 10), 1), 4);
 }
 
 function addVideoURLs() {
@@ -319,13 +313,9 @@ async function loadGlobalSettings() {
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
     objCache.settingsModal.querySelector('#shddownloader').value = globalSettings.downloader;
     objCache.settingsModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
-    objCache.settingsModal.querySelector('#ytdlprl').value = globalSettings.ytdlpRateLimit;
-    objCache.settingsModal.querySelector(`#${globalSettings.ytdlpRateLimitU}bunitlim`).checked = true;
     objCache.settingsModal.querySelector('#keeptmponfail').checked = globalSettings.keepYtdlpTmpOnFail;
     objCache.settingsModal.querySelector('#directn').value = globalSettings.directN;
     objCache.settingsModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
-    objCache.settingsModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
-    objCache.settingsModal.querySelector('#ppttmout').value = globalSettings.timeout;
     objCache.settingsModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
     objCache.settingsModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
     objCache.settingsModal.querySelector('#cuschromep').value = globalSettings.customChromePath;
@@ -337,26 +327,17 @@ async function loadGlobalSettings() {
 async function saveGlobalSettings() {
     toggleLoadingScr();
 
-    const timeout = parseInt(objCache.settingsModal.querySelector('#ppttmout').value, 10);
-    const shlogsInpt = objCache.settingsModal.querySelector('#shlogs');
-
     globalSettings.outputPath = objCache.settingsModal.querySelector('#soutdirp').value;
     globalSettings.ytdlpTmpOut = objCache.settingsModal.querySelector('#ytdlptmpdp').value;
     globalSettings.userdataFold = objCache.settingsModal.querySelector('#chuserdata').checked;
-    globalSettings.autoSaveState = objCache.settingsModal.querySelector('#autosavestate').checked;
     globalSettings.retryOnFail = objCache.settingsModal.querySelector('#retryonfail').checked;
     globalSettings.downloader = objCache.settingsModal.querySelector('#shddownloader').value;
     globalSettings.ytdlpN = getYtdlpNVal(objCache.settingsModal.querySelector('#ytdlpn').value);
-    globalSettings.ytdlpRateLimit = objCache.settingsModal.querySelector('#ytdlprl').value;
-    globalSettings.ytdlpRateLimitU = objCache.settingsModal.querySelector('input[name="ratelimunitradio"]:checked').value;
     globalSettings.keepYtdlpTmpOnFail = objCache.settingsModal.querySelector('#keeptmponfail').checked;
     globalSettings.directN = getYtdlpNVal(objCache.settingsModal.querySelector('#directn').value);
-    globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 60 : timeout;
-    globalSettings.logging = shlogsInpt.value === '1';
+    globalSettings.logging = objCache.settingsModal.querySelector('#shlogs').value === '1';
     globalSettings.customChromePath = objCache.settingsModal.querySelector('#cuschromep').value;
     globalSettings.keepBrowserOpen = objCache.settingsModal.querySelector('#keepbrowopen').checked;
-
-    shlogsInpt.value = globalSettings.logging ? '1' : '0';
 
     if (globalSettings.logging)
         electron.enableLog()
@@ -383,15 +364,11 @@ function importAppSettings() {
     globalSettings.outputPath = data.outputPath ?? '';
     globalSettings.ytdlpTmpOut = data.ytdlpTmpOut ?? '';
     globalSettings.userdataFold = data.userdataFold ?? false;
-    globalSettings.autoSaveState = data.autoSaveState ?? true;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
-    globalSettings.ytdlpN = getYtdlpNVal(data.ytdlpN ?? 5);
-    globalSettings.ytdlpRateLimit = data.ytdlpRateLimit ?? 0;
-    globalSettings.ytdlpRateLimitU = data.ytdlpRateLimitU ?? 'm';
+    globalSettings.ytdlpN = getYtdlpNVal(data.ytdlpN ?? 4);
     globalSettings.keepYtdlpTmpOnFail = data.keepYtdlpTmpOnFail ?? false;
-    globalSettings.directN = getYtdlpNVal(data.directN ?? 5);
-    globalSettings.timeout = data.timeout ?? 60;
+    globalSettings.directN = getYtdlpNVal(data.directN ?? 4);
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
@@ -400,10 +377,7 @@ function importAppSettings() {
         exportAppSettings(); // update settings version
 }
 
-function exportAppState(force = false) {
-    if (!globalSettings.autoSaveState && !force)
-        return;
-
+function exportAppState() {
     const data = {
         downque: objCache.downQueObj.exportDownloadQue(),
         downloading: JSON.stringify(objCache.downloading)
@@ -565,18 +539,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     objCache.settingsModal.querySelector('#cuschromepb').addEventListener('click', e => selectCustomBrowserDialog(e.currentTarget));
     objCache.settingsModal.querySelector('#shddownloader').addEventListener('change', e => toggleDownloaderSettingsUI(e.currentTarget.value));
 
-    objCache.settingsModal.querySelector('#mexportstate').addEventListener('click', e => {
-        if (e.target.hasAttribute('disabled'))
-            return;
-
-        toggleLoadingScr();
-
-        if (exportAppState(true))
-            objCache.settingsModalSaveMsg.show();
-
-        toggleLoadingScr();
-    });
-
     objCache.settingsModal.querySelector('#delchdfold').addEventListener('click', e => {
         if (e.target.hasAttribute('disabled') || objCache.downloading !== null)
             return;
@@ -629,7 +591,7 @@ window.addEventListener('DownloadSuccess', () => {
     objCache.queLenElm.textContent = (newQueLen < 0 ? 0 : newQueLen).toString(10);
     objCache.downloading = null;
 
-    exportAppState(true);
+    exportAppState();
     updateStartButtonState();
     startDownload(); // start next download, if any
 });

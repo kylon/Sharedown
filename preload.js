@@ -261,19 +261,6 @@ function selectCustomBrowserDialog() {
     return sendMainIPC({cmd: SHDMainCMD.CustomBrowserDialog});
 }
 
-function setYtdlpRateLimit(unit, value, args) {
-    let v = parseInt(value, 10);
-
-    if (v === 0 || isNaN(v))
-        return;
-    else if (unit === 'm')
-        v *= 1024 * 1024;
-    else if (unit === 'k')
-        v *= 1024;
-
-    args.push('-r', v);
-}
-
 function setYTdlpProgressForDirect(rexMatch, videoProgBar) {
     const perc = Math.floor(parseInt(rexMatch[1], 10));
 
@@ -709,8 +696,6 @@ async function getVideosInFold(puppyPage, pageURL, recursive) {
 }
 
 async function getURLListFromFolder(folderList, recursive, sortType, settings) {
-    const puppyTimeout = settings.timeout * 1000;
-
     try {
         if (puppyBrowser === null)
             puppyBrowser = await puppy.launch(getPuppeteerArgs(settings.customChromePath, settings.userdataFold));
@@ -737,8 +722,8 @@ async function getURLListFromFolder(folderList, recursive, sortType, settings) {
             puppyBrowser.on('disconnected', browserDisconnectedEvt);
         }
 
-        page.setDefaultTimeout(puppyTimeout);
-        page.setDefaultNavigationTimeout(puppyTimeout);
+        page.setDefaultTimeout(0);
+        page.setDefaultNavigationTimeout(0);
 
         await page.goto(folderList[0], {waitUntil: 'domcontentloaded'});
         await page.waitForFunction(`window.location.href.includes('/${match[1]}/')`);
@@ -781,8 +766,6 @@ async function getURLListFromFolder(folderList, recursive, sortType, settings) {
 }
 
 async function getVideoData(video, settings) {
-    const puppyTimeout = settings.timeout * 1000;
-
     try {
         if (puppyBrowser === null)
             puppyBrowser = await puppy.launch(getPuppeteerArgs(settings.customChromePath, settings.userdataFold));
@@ -818,8 +801,8 @@ async function getVideoData(video, settings) {
         if (settings.customChromePath)
             writeLog('WARNING: custom browser executable!');
 
-        page.setDefaultTimeout(puppyTimeout);
-        page.setDefaultNavigationTimeout(puppyTimeout);
+        page.setDefaultTimeout(0);
+        page.setDefaultNavigationTimeout(0);
         writeLog(`getVideoData: goto ${video.url}`);
         page.on('response', catchResponse);
         await page.goto(video.url, {waitUntil: 'domcontentloaded'});
@@ -1029,7 +1012,6 @@ function downloadWithYtdlp(videoData, video, outFile, settings) {
             args.push('-N', settings.directN.toString(), '--add-header', cookieH, '-o', outFile, (new URL(videoData.m)).toString());
         }
 
-        setYtdlpRateLimit(settings.ytdlpRateLimitU, settings.ytdlpRateLimit, args);
         videoProgBar.setAttribute('data-tmp-perc', '0');
 
         downloaderProcess = spawn('yt-dlp', args);

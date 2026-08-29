@@ -123,7 +123,7 @@
         </div>
     </div>
 
-    <!-- global settings modal -->
+    <!-- settings modal -->
     <div id="sharedownsett" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -151,9 +151,9 @@
                             <div class="mb-3">
                                 <label class="form-label">Downloader</label>
                                 <select id="shddownloader" class="form-select" aria-label="Downloader">
-                                    <option value="ffmpeg">FFmpeg (Slow/Stable)</option>
-                                    <option selected value="yt-dlp">YT-dlp (Fast)</option>
-                                    <option value="direct">Direct (Fastest)</option>
+                                    <option value="ffmpeg">FFmpeg</option>
+                                    <option selected value="yt-dlp">YT-dlp</option>
+                                    <option value="direct">Direct (downloadable only)</option>
                                 </select>
                             </div>
                         </div>
@@ -180,29 +180,8 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
-                                <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="5">
+                                <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="4">
                                 <div id="ytdlpnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 5)</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3 downldr-opt yt-dlp-opt d-none">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="form-label">Download rate limit</label>
-                                <div class="input-group">
-                                    <div class="input-group-text">
-                                        <div class="form-check form-check-inline">
-                                            <input name="ratelimunitradio" id="mbunitlim" checked class="form-check-input" type="radio" value="m" aria-label="Radio button to set rate limit in megabyte for following rate limit input">
-                                            <label class="form-check-label" for="mbunitlim">Mb</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input name="ratelimunitradio" id="kbunitlim" class="form-check-input" type="radio" value="k" aria-label="Radio button to set rate limit in kilobyte for following rate limit input">
-                                            <label class="form-check-label" for="kbunitlim">Kb</label>
-                                        </div>
-                                    </div>
-                                    <input id="ytdlprl" type="number" class="form-control" aria-label="Download rate limit input with radio button" placeholder="0 (default, unlimited)" min="0">
-                                </div>
-                                <div id="ytdlprlhelp" class="form-text">Exact value may not be respected, try lower if it is the case</div>
                             </div>
                         </div>
                     </div>
@@ -210,17 +189,8 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
-                                <input id="directn" type="number" class="form-control" aria-describedby="directnhelp" placeholder="5 (default)" min="1" max="5">
+                                <input id="directn" type="number" class="form-control" aria-describedby="directnhelp" placeholder="5 (default)" min="1" max="4">
                                 <div id="directnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 5)</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label class="form-label">Browser timeout (seconds)</label>
-                                <input id="ppttmout" type="number" class="form-control" aria-describedby="ppttmouthelp" placeholder="30 (default)" min="0">
-                                <div id="ppttmouthelp" class="form-text">Set this to 0 to disable the timeout</div>
                             </div>
                         </div>
                     </div>
@@ -261,16 +231,15 @@
                         <div class="col-12">
                             <div class="form-check form-switch mb-3">
                                 <input class="form-check-input" type="checkbox" id="keepbrowopen">
-                                <label class="form-check-label" for="keepbrowopen">Keep Chrome window open</label>
+                                <label class="form-check-label" for="keepbrowopen">Persistent browser window</label>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-12">
                             <p class="form-text">
-                                Workaround for those cases where login session is lost on browser close event.<br><br>
-                                This will start Chrome once and never close its window.<br>
-                                It's up to the user to close the browser window once all donwloads are complete.
+                                Sharedown will not close the browser window.<br>
+                                Workaround for those cases where login session is lost after browser close event.
                             </p>
                         </div>
                     </div>
@@ -286,31 +255,12 @@
                     <div class="row">
                         <div class="col-12">
                             <p class="form-text">
-                                This lets you save your login session.<br>
-                                Login module is ignored when this is set.<br>
-                                You will be prompted to login again when the session expires.<br><br>
-                                <i>All data will be deleted on application exit.</i>
+                                Enable chrome data folder to ease usage with 2FA or complex login procedures.<br>
+                                <i>userdata folder will be deleted on application exit.</i>
                             </p>
                         </div>
                         <div class="col-6 offset-6">
                             <button id="delchdfold" type="button" class="btn bg-sharepoint1 float-end">Delete data folder</button>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="autosavestate">
-                                <label class="form-check-label" for="autosavestate">Automatically save Sharedown state</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <p class="form-text">Save Sharedown download queue, global settings and per-video settings.</p>
-                        </div>
-                        <div class="col-6 offset-6">
-                            <button id="mexportstate" type="button" class="btn bg-sharepoint1 float-end">Save Sharedown state</button>
                         </div>
                     </div>
                 </div>
