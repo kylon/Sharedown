@@ -19,7 +19,7 @@
 const {app, ipcMain, dialog, Menu, BrowserWindow, clipboard} = require('electron');
 const path = require('node:path');
 const SHDMainCMD = require('./sharedown/enums/shdMainCMD');
-const MessageType = require('./sharedown/enums/messageType')
+const MessageType = require('./sharedown/enums/messageType');
 let mainW = null;
 
 function createWindow () {
@@ -34,11 +34,18 @@ function createWindow () {
             devTools: false,
             preload: path.join(__dirname, 'preload.js')
         }
-    })
+    });
 
-    win.loadFile('sharedown/sharedown.html');
-    win.setResizable(true);
+    win.webContents.on('will-navigate', e => e.preventDefault());
+    win.webContents.on('will-redirect', e => e.preventDefault());
+    win.webContents.on('will-frame-navigate', e => e.preventDefault());
+    win.webContents.on('will-attach-webview', e => e.preventDefault());
 
+    win.webContents.setWindowOpenHandler((details) => {
+        return {action: 'deny'};
+    });
+
+    win.loadFile(path.join(__dirname, 'sharedown', 'sharedown.html'));
     return win;
 }
 

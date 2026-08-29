@@ -18,9 +18,10 @@
 
 const electron = window.sharedown;
 const InvalidURLErrStr = 'Some URLs were invalid and they were skipped';
+let objCache = {};
 
 const globalSettings = {
-    _version: 18, // internal
+    _version: 19, // internal
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -38,117 +39,139 @@ const globalSettings = {
     ytdlpRateLimitU: 'm',
 };
 
-const resources = {
-    downQueObj: new downloadQue(),
-    downloading: null,
-    downloadingFPath: '',
-    template: null,
-    addVideoURLsList: null,
-    addURLsModalInstance: null,
-    importURLsFoldList: null,
-    importURLsFoldModalInstance: null,
-    globalSetModal: null,
-    globalSetDownldrOpts: null,
-    globalSetModalSaveMsg: null,
-    downlStartBtn: null,
-    downlStopBtn: null,
-    downQueElm: null,
-    queLenElm: null,
-    completeCElm: null,
-    loadingScr: null,
-    bodyElm: null
-};
+function makeObjCache() {
+    const settModal = document.getElementById('sharedownsett');
 
-function initResources() {
-    resources.template                      = document.getElementById('videoitem').content;
-    resources.addVideoURLsList              = document.getElementById('vurlslist');
-    resources.addURLsModalInstance          = new bootstrap.Modal(document.getElementById('urlsaddmodal'));
-    resources.importURLsFoldList            = document.getElementById('furlslist');
-    resources.importURLsFoldModalInstance   = new bootstrap.Modal(document.getElementById('foldimportmodal'));
-    resources.globalSetModal                = document.getElementById('sharedownsett');
-    resources.globalSetDownldrOpts          = resources.globalSetModal.querySelectorAll('.downldr-opt');
-    resources.globalSetModalSaveMsg         = new timeoutMessage(resources.globalSetModal.querySelector('#gsett-succ-str'));
-    resources.downlStartBtn                 = document.getElementById('start-dwnl');
-    resources.downlStopBtn                  = document.getElementById('stop-dwnl');
-    resources.downQueElm                    = document.getElementById('dque');
-    resources.queLenElm                     = document.getElementById('quelen');
-    resources.completeCElm                  = document.getElementById('completec');
-    resources.loadingScr                    = document.getElementById('loadingscr');
-    resources.bodyElm                       = document.querySelector('body');
+    return {
+        downQueObj: new downloadQue(),
+        downloading: null,
+        downloadingOutPath: '',
+        template: document.getElementById('videoitem').content,
+        addVideoURLsList: document.getElementById('vurlslist'),
+        addURLsModalInstance: new bootstrap.Modal(document.getElementById('urlsaddmodal')),
+        importURLsFoldList: document.getElementById('furlslist'),
+        importURLsFoldModalInstance: new bootstrap.Modal(document.getElementById('foldimportmodal')),
+        settingsModal: settModal,
+        settingsDownldrOpts: settModal.querySelectorAll('.downldr-opt'),
+        settingsModalSaveMsg: new Notification(settModal.querySelector('#gsett-succ-str')),
+        downlStartBtn: document.getElementById('start-dwnl'),
+        downlStopBtn: document.getElementById('stop-dwnl'),
+        downQueElm: document.getElementById('dque'),
+        queLenElm: document.getElementById('quelen'),
+        completeCElm: document.getElementById('completec'),
+        loadingScr: document.getElementById('loadingscr'),
+        bodyElm: document.querySelector('body')
+    };
+}
+
+function selectOutputFolderDialog(elm) {
+    const path = electron.selectFolderDialog();
+
+    if (path === undefined)
+        return false;
+
+    const inpt = elm.parentElement.querySelector('.outpath');
+
+    inpt.value = path[0];
+    inpt.setAttribute('title', path[0]);
+}
+
+function selectCustomBrowserDialog(elm) {
+    const path = electron.selectCustomBrowserDialog();
+
+    if (path === undefined)
+        return false;
+
+    const inpt = elm.parentElement.querySelector('.binpath');
+
+    inpt.value = path[0];
+    inpt.setAttribute('title', path[0]);
 }
 
 function toggleLoadingScr() {
-    resources.loadingScr.classList.toggle('d-none');
-    resources.bodyElm.classList.toggle('overflow-hidden');
+    objCache.loadingScr.classList.toggle('d-none');
+    objCache.bodyElm.classList.toggle('overflow-hidden');
 }
 
 function updateStartButtonState() {
-    if (resources.downQueObj.hasNext()) {
-        resources.downlStartBtn.classList.remove('btn-disabled');
-    } else {
-        resources.downlStartBtn.classList.add('btn-disabled');
-    }
+    if (objCache.downQueObj.hasNext())
+        objCache.downlStartBtn.classList.remove('btn-disabled');
+    else
+        objCache.downlStartBtn.classList.add('btn-disabled');
 }
 
 function unlockUIElemsForDownload() {
     updateStartButtonState();
-    resources.downlStopBtn.classList.add('btn-disabled');
-    resources.globalSetModal.querySelector('#delchdfold').removeAttribute('disabled');
-    resources.globalSetModal.querySelector('#mexportstate').removeAttribute('disabled');
-    resources.globalSetModal.querySelector('#downlrun-setalr').classList.add('d-none');
+    objCache.downlStopBtn.classList.add('btn-disabled');
+    objCache.settingsModal.querySelector('#delchdfold').removeAttribute('disabled');
+    objCache.settingsModal.querySelector('#mexportstate').removeAttribute('disabled');
+    objCache.settingsModal.querySelector('#downlrun-setalr').classList.add('d-none');
 }
 
 function lockUIElemsForDownload() {
-    resources.downlStartBtn.classList.add('btn-disabled');
-    resources.downlStopBtn.classList.remove('btn-disabled');
-    resources.globalSetModal.querySelector('#delchdfold').setAttribute('disabled', '');
-    resources.globalSetModal.querySelector('#mexportstate').setAttribute('disabled', '');
-    resources.globalSetModal.querySelector('#downlrun-setalr').classList.remove('d-none');
+    objCache.downlStartBtn.classList.add('btn-disabled');
+    objCache.downlStopBtn.classList.remove('btn-disabled');
+    objCache.settingsModal.querySelector('#delchdfold').setAttribute('disabled', '');
+    objCache.settingsModal.querySelector('#mexportstate').setAttribute('disabled', '');
+    objCache.settingsModal.querySelector('#downlrun-setalr').classList.remove('d-none');
 }
 
-function setDownloaderSettingsUI(selectedDownloader) {
-    for (const opt of resources.globalSetDownldrOpts) {
-        const clList = opt.classList;
-
-        if (clList.contains(`${selectedDownloader}-opt`))
-            clList.remove('d-none');
+function toggleDownloaderSettingsUI(selectedDownloader) {
+    for (const opt of objCache.settingsDownldrOpts) {
+        if (opt.classList.contains(`${selectedDownloader}-opt`))
+            opt.classList.remove('d-none');
         else
-            clList.add('d-none');
+            opt.classList.add('d-none');
     }
 }
 
+function isValidURL(url) {
+    return url !== '' && url.includes('sharepoint') && url.substring(0, 8) === 'https://';
+}
+
+function setAsWebPlayerURL(url) {
+    const urlObj = new URL(url);
+
+    if (urlObj.searchParams.get('web') === null)
+        urlObj.searchParams.set('web', '1');
+
+    return urlObj.href;
+}
+
+function getYtdlpNVal(n) {
+    return Math.min(Math.max(parseInt(n, 10), 1), 5);
+}
+
 function addVideoURLs() {
-    const urls = resources.addVideoURLsList.value.trim();
-
-    if (urls === '')
-        return;
-
-    const urlsList = urls.split(/\r?\n/);
+    const list = objCache.addVideoURLsList.value.trim().split(/\r?\n/);
     const invalid = [];
+
+    if (list.length === 0)
+        return;
 
     toggleLoadingScr();
 
-    for (const url of urlsList) {
+    for (const url of list) {
         const _url = url.replaceAll('#', '%23');
 
-        if (!Utils.isValidURL(_url)) {
+        if (!isValidURL(_url)) {
             invalid.push(url);
             continue;
         }
 
-        const vid = new video(Utils.setAsWebPlayerURL(_url));
+        const vid = new video(setAsWebPlayerURL(_url));
 
         addVideoToUI(vid);
-        resources.downQueObj.addVideo(vid);
+        objCache.downQueObj.addVideo(vid);
     }
 
     if (invalid.length > 0) {
-        resources.addVideoURLsList.value = invalid.join('\n');
+        objCache.addVideoURLsList.value = invalid.join('\n');
         electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
 
     } else {
-        resources.addVideoURLsList.value = '';
-        resources.addURLsModalInstance.hide();
+        objCache.addVideoURLsList.value = '';
+        objCache.addURLsModalInstance.hide();
     }
 
     exportAppState();
@@ -157,29 +180,28 @@ function addVideoURLs() {
 }
 
 async function importURLsFromFolder() {
-    const folderURLs = resources.importURLsFoldList.value.trim();
+    const folderList = objCache.importURLsFoldList.value.trim().split(/\r?\n/);
 
-    if (folderURLs === '')
+    if (folderList.length === 0)
         return;
 
     toggleLoadingScr();
 
     const curSettings = Object.assign({}, globalSettings);
-    const foldersList = folderURLs.split(/\r?\n/);
-    const includeSubFolds = document.getElementById('importfoldsubfolds').checked;
+    const recursive = document.getElementById('importfoldsubfolds').checked;
     const urlsSortType = parseInt(document.getElementById('importfoldurlssort').value, 10);
     const invalid = [];
     let urlList;
 
-    for (const folderURL of foldersList) {
-        if (!Utils.isValidURL(folderURL))
+    for (const folderURL of folderList) {
+        if (!isValidURL(folderURL))
             invalid.push(folderURL);
     }
 
     for (const inv of invalid)
-        foldersList.splice(foldersList.indexOf(inv), 1);
+        folderList.splice(folderList.indexOf(inv), 1);
 
-    urlList = await Utils.getFolderURLsList(resources.globalSetModal, foldersList, includeSubFolds, urlsSortType, curSettings);
+    urlList = await electron.getURLListFromFolder(folderList, recursive, urlsSortType, curSettings);
 
     if (urlList === null || urlList.length === 0) {
         toggleLoadingScr();
@@ -187,29 +209,29 @@ async function importURLsFromFolder() {
     }
 
     for (const url of urlList)
-        resources.addVideoURLsList.value += `${url}\n`;
+        objCache.addVideoURLsList.value += `${url}\n`;
 
-    resources.importURLsFoldList.value = '';
+    objCache.importURLsFoldList.value = '';
 
     if (invalid.length > 0) {
-        resources.importURLsFoldList.value = invalid.join('\n');
+        objCache.importURLsFoldList.value = invalid.join('\n');
 
         electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
 
     } else {
-        resources.importURLsFoldModalInstance.hide();
-        resources.addURLsModalInstance.show();
+        objCache.importURLsFoldModalInstance.hide();
+        objCache.addURLsModalInstance.show();
     }
 
     toggleLoadingScr();
 }
 
 function addVideoToUI(vid) {
-    const node = resources.template.cloneNode(true);
+    const node = objCache.template.cloneNode(true);
     const progBar = node.querySelector('#shdprogbar');
     const span = progBar.querySelector('span');
     const copyURLBtn = node.querySelector('.copy-btn');
-    const children = resources.downQueElm.children;
+    const children = objCache.downQueElm.children;
     let firstComplete = null;
 
     span.textContent = vid.url;
@@ -218,7 +240,7 @@ function addVideoToUI(vid) {
     progBar.addEventListener('click', e => toggleDownloadStats(e.currentTarget.querySelector('span')));
     node.querySelector('.input-group').setAttribute('data-video-id', vid.id);
     node.querySelector('.deque-btn').addEventListener('click', e => removeVideoFromQue(e.currentTarget));
-    copyURLBtn.addEventListener('click', e => electron.SharedownAPI.copyURLToClipboard(e.currentTarget.getAttribute('data-vurl')));
+    copyURLBtn.addEventListener('click', e => electron.copyURLToClipboard(e.currentTarget.getAttribute('data-vurl')));
 
     for (const n of children) {
         if (!n.querySelector('.progress-bar').classList.contains('w-100'))
@@ -229,29 +251,29 @@ function addVideoToUI(vid) {
     }
 
     if (firstComplete === null)
-        resources.downQueElm.appendChild(node);
+        objCache.downQueElm.appendChild(node);
     else
-        resources.downQueElm.insertBefore(node, firstComplete);
+        objCache.downQueElm.insertBefore(node, firstComplete);
 
-    resources.queLenElm.textContent = parseInt(resources.queLenElm.textContent, 10) + 1;
+    objCache.queLenElm.textContent = (parseInt(objCache.queLenElm.textContent, 10) + 1).toString(10);
 }
 
 function toggleDownloadStats(elem) {
-    const cid = elem.parentElement.parentElement.getAttribute('data-video-id');
+    const vid = parseInt(elem.parentElement.parentElement.getAttribute('data-video-id'), 10);
 
-    if (cid !== resources.downloading?.id)
+    if (vid !== objCache.downloading?.id)
         return;
 
-    if (!electron.SharedownAPI.isShowDlInfoSet()) {
+    if (!electron.isShowDlInfoSet()) {
         elem.setAttribute('data-original-text', elem.textContent);
+        electron.setShowDlInfo(true);
 
         elem.textContent = 'Waiting for download data..';
-        electron.SharedownAPI.setShowDlInfo(true);
 
     } else {
         const origText = elem.getAttribute('data-original-text');
 
-        electron.SharedownAPI.setShowDlInfo(false);
+        electron.setShowDlInfo(false);
         elem.textContent = origText === '' || origText === null ? 'Error: no text':origText;
     }
 }
@@ -261,20 +283,20 @@ function removeVideoFromQue(removeBtn) {
         return;
 
     const parent = removeBtn.parentElement;
-    const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
+    const newQueLen = parseInt(objCache.queLenElm.textContent, 10) - 1;
 
     toggleLoadingScr();
 
     if (parent.querySelector('.progress-bar').classList.contains('w-100')) {
-        const newComplC = parseInt(resources.completeCElm.textContent, 10) - 1;
+        const newComplC = parseInt(objCache.completeCElm.textContent, 10) - 1;
 
-        resources.completeCElm.textContent = newComplC < 0 ? 0:newComplC;
+        objCache.completeCElm.textContent = (newComplC < 0 ? 0 : newComplC).toString(10);
 
     } else {
-        resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
+        objCache.queLenElm.textContent = (newQueLen < 0 ? 0 : newQueLen).toString(10);
     }
 
-    resources.downQueObj.remove(parent.getAttribute('data-video-id'));
+    objCache.downQueObj.remove(parent.getAttribute('data-video-id'));
     parent.parentElement.remove();
     exportAppState();
     updateStartButtonState();
@@ -282,73 +304,76 @@ function removeVideoFromQue(removeBtn) {
 }
 
 async function loadGlobalSettings() {
-    const outdir = resources.globalSetModal.querySelector('#soutdirp');
-    const ytdlpTmpOutD = resources.globalSetModal.querySelector('#ytdlptmpdp');
+    const outdir = objCache.settingsModal.querySelector('#soutdirp');
+    const ytdlpTmpOutD = objCache.settingsModal.querySelector('#ytdlptmpdp');
+
+    if (globalSettings.logging)
+        electron.enableLog()
+    else
+        electron.disableLog();
 
     outdir.setAttribute('title', globalSettings.outputPath);
     ytdlpTmpOutD.setAttribute('title', globalSettings.ytdlpTmpOut);
 
-    globalSettings.logging = globalSettings.logging ? electron.SharedownAPI.enableLogs() : electron.SharedownAPI.disableLogs();
-
     outdir.value = globalSettings.outputPath;
     ytdlpTmpOutD.value = globalSettings.ytdlpTmpOut;
-    resources.globalSetModal.querySelector('#shddownloader').value = globalSettings.downloader;
-    resources.globalSetModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
-    resources.globalSetModal.querySelector('#ytdlprl').value = globalSettings.ytdlpRateLimit;
-    resources.globalSetModal.querySelector(`#${globalSettings.ytdlpRateLimitU}bunitlim`).checked = true;
-    resources.globalSetModal.querySelector('#keeptmponfail').checked = globalSettings.keepYtdlpTmpOnFail;
-    resources.globalSetModal.querySelector('#directn').value = globalSettings.directN;
-    resources.globalSetModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
-    resources.globalSetModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
-    resources.globalSetModal.querySelector('#ppttmout').value = globalSettings.timeout;
-    resources.globalSetModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
-    resources.globalSetModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
-    resources.globalSetModal.querySelector('#cuschromep').value = globalSettings.customChromePath;
-    resources.globalSetModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
+    objCache.settingsModal.querySelector('#shddownloader').value = globalSettings.downloader;
+    objCache.settingsModal.querySelector('#ytdlpn').value = globalSettings.ytdlpN;
+    objCache.settingsModal.querySelector('#ytdlprl').value = globalSettings.ytdlpRateLimit;
+    objCache.settingsModal.querySelector(`#${globalSettings.ytdlpRateLimitU}bunitlim`).checked = true;
+    objCache.settingsModal.querySelector('#keeptmponfail').checked = globalSettings.keepYtdlpTmpOnFail;
+    objCache.settingsModal.querySelector('#directn').value = globalSettings.directN;
+    objCache.settingsModal.querySelector('#chuserdata').checked = globalSettings.userdataFold;
+    objCache.settingsModal.querySelector('#autosavestate').checked = globalSettings.autoSaveState;
+    objCache.settingsModal.querySelector('#ppttmout').value = globalSettings.timeout;
+    objCache.settingsModal.querySelector('#shlogs').value = globalSettings.logging ? '1':'0';
+    objCache.settingsModal.querySelector('#retryonfail').checked = globalSettings.retryOnFail;
+    objCache.settingsModal.querySelector('#cuschromep').value = globalSettings.customChromePath;
+    objCache.settingsModal.querySelector('#keepbrowopen').checked = globalSettings.keepBrowserOpen;
 
-    setDownloaderSettingsUI(globalSettings.downloader);
+    toggleDownloaderSettingsUI(globalSettings.downloader);
 }
 
 async function saveGlobalSettings() {
     toggleLoadingScr();
 
-    const timeout = parseInt(resources.globalSetModal.querySelector('#ppttmout').value, 10);
-    const shlogsInpt = resources.globalSetModal.querySelector('#shlogs');
+    const timeout = parseInt(objCache.settingsModal.querySelector('#ppttmout').value, 10);
+    const shlogsInpt = objCache.settingsModal.querySelector('#shlogs');
 
-    globalSettings.outputPath = resources.globalSetModal.querySelector('#soutdirp').value;
-    globalSettings.ytdlpTmpOut = resources.globalSetModal.querySelector('#ytdlptmpdp').value;
-    globalSettings.userdataFold = resources.globalSetModal.querySelector('#chuserdata').checked;
-    globalSettings.autoSaveState = resources.globalSetModal.querySelector('#autosavestate').checked;
-    globalSettings.retryOnFail = resources.globalSetModal.querySelector('#retryonfail').checked;
-    globalSettings.downloader = resources.globalSetModal.querySelector('#shddownloader').value;
-    globalSettings.ytdlpN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#ytdlpn').value);
-    globalSettings.ytdlpRateLimit = resources.globalSetModal.querySelector('#ytdlprl').value;
-    globalSettings.ytdlpRateLimitU = resources.globalSetModal.querySelector('input[name="ratelimunitradio"]:checked').value;
-    globalSettings.keepYtdlpTmpOnFail = resources.globalSetModal.querySelector('#keeptmponfail').checked;
-    globalSettings.directN = Utils.getYtdlpNVal(resources.globalSetModal.querySelector('#directn').value);
+    globalSettings.outputPath = objCache.settingsModal.querySelector('#soutdirp').value;
+    globalSettings.ytdlpTmpOut = objCache.settingsModal.querySelector('#ytdlptmpdp').value;
+    globalSettings.userdataFold = objCache.settingsModal.querySelector('#chuserdata').checked;
+    globalSettings.autoSaveState = objCache.settingsModal.querySelector('#autosavestate').checked;
+    globalSettings.retryOnFail = objCache.settingsModal.querySelector('#retryonfail').checked;
+    globalSettings.downloader = objCache.settingsModal.querySelector('#shddownloader').value;
+    globalSettings.ytdlpN = getYtdlpNVal(objCache.settingsModal.querySelector('#ytdlpn').value);
+    globalSettings.ytdlpRateLimit = objCache.settingsModal.querySelector('#ytdlprl').value;
+    globalSettings.ytdlpRateLimitU = objCache.settingsModal.querySelector('input[name="ratelimunitradio"]:checked').value;
+    globalSettings.keepYtdlpTmpOnFail = objCache.settingsModal.querySelector('#keeptmponfail').checked;
+    globalSettings.directN = getYtdlpNVal(objCache.settingsModal.querySelector('#directn').value);
     globalSettings.timeout = isNaN(timeout) || timeout < 0 ? 60 : timeout;
-    globalSettings.logging = shlogsInpt.value === '1' ? electron.SharedownAPI.enableLogs() : electron.SharedownAPI.disableLogs();
-    globalSettings.customChromePath = resources.globalSetModal.querySelector('#cuschromep').value;
-    globalSettings.keepBrowserOpen = resources.globalSetModal.querySelector('#keepbrowopen').checked;
+    globalSettings.logging = shlogsInpt.value === '1';
+    globalSettings.customChromePath = objCache.settingsModal.querySelector('#cuschromep').value;
+    globalSettings.keepBrowserOpen = objCache.settingsModal.querySelector('#keepbrowopen').checked;
 
     shlogsInpt.value = globalSettings.logging ? '1' : '0';
 
+    if (globalSettings.logging)
+        electron.enableLog()
+    else
+        electron.disableLog();
+
     exportAppSettings();
     toggleLoadingScr();
-    resources.globalSetModalSaveMsg.show();
+    objCache.settingsModalSaveMsg.show();
 }
 
 function exportAppSettings() {
-    electron.SharedownAPI.saveAppSettings(JSON.stringify(globalSettings));
-}
-
-function upgradeSettings(settingsFile) {
-    if (settingsFile['_version'] < 16)
-        globalSettings.customChromePath = settingsFile.customChomePath ?? '';
+    electron.saveAppSettings(JSON.stringify(globalSettings));
 }
 
 function importAppSettings() {
-    const sett = electron.SharedownAPI.loadAppSettings();
+    const sett = electron.loadAppSettings();
 
     if (sett === '')
         return;
@@ -361,21 +386,18 @@ function importAppSettings() {
     globalSettings.autoSaveState = data.autoSaveState ?? true;
     globalSettings.retryOnFail = data.retryOnFail ?? false;
     globalSettings.downloader = data.downloader ?? 'yt-dlp';
-    globalSettings.ytdlpN = Utils.getYtdlpNVal(data.ytdlpN ?? 5);
+    globalSettings.ytdlpN = getYtdlpNVal(data.ytdlpN ?? 5);
     globalSettings.ytdlpRateLimit = data.ytdlpRateLimit ?? 0;
     globalSettings.ytdlpRateLimitU = data.ytdlpRateLimitU ?? 'm';
     globalSettings.keepYtdlpTmpOnFail = data.keepYtdlpTmpOnFail ?? false;
-    globalSettings.directN = Utils.getYtdlpNVal(data.directN ?? 5);
+    globalSettings.directN = getYtdlpNVal(data.directN ?? 5);
     globalSettings.timeout = data.timeout ?? 60;
     globalSettings.logging = data.logging ?? false;
     globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
 
-    if (data['_version'] < globalSettings['_version']) {
-        electron.SharedownAPI.upgradeForSettingsUpgrade(data['_version']);
-        upgradeSettings(data);
+    if (data['_version'] < globalSettings['_version'])
         exportAppSettings(); // update settings version
-    }
 }
 
 function exportAppState(force = false) {
@@ -383,15 +405,15 @@ function exportAppState(force = false) {
         return;
 
     const data = {
-        downque: resources.downQueObj.exportDownloadQue(),
-        downloading: JSON.stringify(resources.downloading)
+        downque: objCache.downQueObj.exportDownloadQue(),
+        downloading: JSON.stringify(objCache.downloading)
     }
 
-    return electron.SharedownAPI.saveAppState(JSON.stringify(data));
+    return electron.saveAppState(JSON.stringify(data));
 }
 
 function importAppState() {
-    const json = electron.SharedownAPI.loadAppState();
+    const json = electron.loadAppState();
 
     if (json === '')
         return;
@@ -401,12 +423,10 @@ function importAppState() {
 
         data['downque'].push(data['downloading'])
 
-        const ret = resources.downQueObj.importDownloadQue(data['downque']);
-
-        if (!ret)
+        if (!objCache.downQueObj.importDownloadQue(data['downque']))
             electron.showMessage(electron.enums.MessageType.Error, 'Some URLs could not be loaded');
 
-        for (const v of resources.downQueObj.getQue())
+        for (const v of objCache.downQueObj.getQue())
             addVideoToUI(v);
 
     } catch (e) {
@@ -426,100 +446,102 @@ async function downloadVideo(videoElem) {
             return rej();
 
         toggleLoadingScr();
-
-        vdata = await Utils.getVideoData(resources.globalSetModal, resources.downloading, curSettings);
+        vdata = await electron.getVideoData(objCache.downloading, curSettings);
         toggleLoadingScr();
 
-        electron.SharedownAPI.writeLog('downloadVideo: has vdata: ' + (vdata !== null));
-
-        if (!vdata)
+        if (vdata !== null)
+            electron.writeLog('has vdata');
+        else
             return rej();
 
         if (vdata.t === '') { // unnamed video ??, give it a name and try to download
             vdata.t = `sharedownVideo${vdata.id}`;
 
-            electron.SharedownAPI.writeLog(`downloadVideo: video has empty title!? new title: ${vdata.t}`);
+            electron.writeLog(`video has empty title!? new title: ${vdata.t}`);
         }
 
         // generate output file path (apply user settings, if any)
-        resources.downloadingFPath = electron.SharedownAPI.getNormalizedUniqueOutputFilePath(outputFolder, Utils.getOutputFileName(vdata.t, resources.downloading.settings.saveas));
+        objCache.downloadingOutPath = electron.getUniqueOutputFilePath(curSettings.outputPath, vdata.t);
 
         if (curSettings.downloader === 'ffmpeg')
-            ret = await electron.SharedownAPI.downloadWithFFmpeg(vdata, resources.downloading, resources.downloadingFPath);
+            ret = await electron.downloadWithFFmpeg(vdata, objCache.downloading, objCache.downloadingOutPath);
         else
-            ret = electron.SharedownAPI.downloadWithYtdlp(vdata, resources.downloading, resources.downloadingFPath, curSettings);
+            ret = electron.downloadWithYtdlp(vdata, objCache.downloading, objCache.downloadingOutPath, curSettings);
 
         return !ret ? rej() : res();
     });
 }
 
 async function startDownload() {
-    electron.SharedownAPI.writeLog('startDownload: start');
+    electron.writeLog('startDownload: start');
 
-    if (resources.downlStartBtn.classList.contains('btn-disabled')) {
-        electron.SharedownAPI.writeLog('startDownload: button is disabled');
+    if (objCache.downlStartBtn.classList.contains('btn-disabled')) {
+        electron.writeLog('startDownload: button is disabled');
         return;
 
-    } else if (!resources.downQueObj.hasNext()) {
-        electron.SharedownAPI.writeLog('startDownload: queue is empty');
+    } else if (!objCache.downQueObj.hasNext()) {
+        electron.writeLog('startDownload: queue is empty');
         return;
     }
 
-    resources.downloading = resources.downQueObj.getNext();
+    objCache.downloading = objCache.downQueObj.getNext();
 
-    const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+    const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
 
-    electron.SharedownAPI.writeLog('startDownload: valid data: ' + (resources.downloading !== null));
+    if (objCache.downloading !== null)
+        electron.writeLog('startDownload: has valid data');
 
     downloadVideo(videoElem).then(() => {
         lockUIElemsForDownload();
-        electron.SharedownAPI.writeLog(`startDownload: selected ${resources.downloading.id}`);
+        electron.writeLog(`startDownload: selected ${objCache.downloading.id}`);
 
     }).catch((e) => {
         videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
-        resources.downQueObj.reinsert(resources.downloading); // add back video to que
-        electron.SharedownAPI.stopDownload();
-        electron.SharedownAPI.writeLog(`startDownload: failed\n${e?.message}`);
+        objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
+        electron.stopDownload();
+        electron.writeLog(`startDownload: failed\n${e?.message}`);
 
-        resources.downloading = null;
+        objCache.downloading = null;
     });
 }
 
 function stopDownload() {
-    electron.SharedownAPI.writeLog('stopDownload: called');
+    electron.writeLog('stopDownload: called');
 
-    if (resources.downlStopBtn.classList.contains('btn-disabled')) {
-        electron.SharedownAPI.writeLog('stopDownload: button is disabled');
+    if (objCache.downlStopBtn.classList.contains('btn-disabled')) {
+        electron.writeLog('stopDownload: button is disabled');
         return;
     }
 
     toggleLoadingScr();
-    const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
 
-    electron.SharedownAPI.stopDownload();
+    const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
+
+    electron.stopDownload();
 
     unlockUIElemsForDownload();
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
-    resources.downQueObj.reinsert(resources.downloading); // add back video to que
+    objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
 
-    if (electron.SharedownAPI.isShowDlInfoSet())
+    if (electron.isShowDlInfoSet())
         toggleDownloadStats(videoElem.querySelector('span'));
 
-    resources.downloading = null;
+    objCache.downloading = null;
     videoElem.querySelector('.progress-bar').style.width = '0%';
 
     toggleLoadingScr();
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    initResources();
-    electron.SharedownAPI.deleteUserdataFold(); // if for some reason the quit event failed, delete now
+    objCache = makeObjCache();
 
-    if (!electron.SharedownAPI.hasFFmpeg() || !electron.SharedownAPI.hasYTdlp()) {
+    electron.deleteUserdataFold(); // if for some reason the quit event failed, delete now
+
+    if (!electron.hasFFmpeg() || !electron.hasYTdlp()) {
         const ret = electron.showMessage(electron.enums.MessageType.Question, 'ffmpeg or yt-dlp is not installed.\nPress OK to open the wiki for instructions, Cancel to exit');
 
         if (ret === 0)
-            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown/wiki');
+            electron.openLink('https://github.com/kylon/Sharedown/wiki');
 
         electron.quitApp();
         return;
@@ -531,36 +553,36 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateStartButtonState();
 
     document.getElementById('soutdirp').setAttribute('placeholder', electron.getDefaultDownloadPath());
-    document.getElementById('clearimporturlsbtn').addEventListener('click', () => { resources.addVideoURLsList.value = ''; });
+    document.getElementById('clearimporturlsbtn').addEventListener('click', () => { objCache.addVideoURLsList.value = ''; });
     document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
-    document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { resources.importURLsFoldList.value = ''; });
+    document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { objCache.importURLsFoldList.value = ''; });
     document.getElementById('importfoldurlsbtn').addEventListener('click', () => importURLsFromFolder());
-    resources.downlStartBtn.addEventListener('click', () => startDownload());
-    resources.downlStopBtn.addEventListener('click', () => stopDownload());
-    resources.globalSetModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
-    resources.globalSetModal.querySelector('#soutdirinp').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
-    resources.globalSetModal.querySelector('#ytdlptmpdir').addEventListener('click', e => Utils.showSelectOutputFolderDialog(e.currentTarget));
-    resources.globalSetModal.querySelector('#cuschromepb').addEventListener('click', e => Utils.showSelectCustomChromeDialog(e.currentTarget));
-    resources.globalSetModal.querySelector('#shddownloader').addEventListener('change', e => setDownloaderSettingsUI(e.currentTarget.value));
+    objCache.downlStartBtn.addEventListener('click', () => startDownload());
+    objCache.downlStopBtn.addEventListener('click', () => stopDownload());
+    objCache.settingsModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
+    objCache.settingsModal.querySelector('#soutdirinp').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#ytdlptmpdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#cuschromepb').addEventListener('click', e => selectCustomBrowserDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#shddownloader').addEventListener('change', e => toggleDownloaderSettingsUI(e.currentTarget.value));
 
-    resources.globalSetModal.querySelector('#mexportstate').addEventListener('click', e => {
+    objCache.settingsModal.querySelector('#mexportstate').addEventListener('click', e => {
         if (e.target.hasAttribute('disabled'))
             return;
 
         toggleLoadingScr();
 
         if (exportAppState(true))
-            resources.globalSetModalSaveMsg.show();
+            objCache.settingsModalSaveMsg.show();
 
         toggleLoadingScr();
     });
 
-    resources.globalSetModal.querySelector('#delchdfold').addEventListener('click', e => {
-        if (e.target.hasAttribute('disabled') || resources.downloading !== null)
+    objCache.settingsModal.querySelector('#delchdfold').addEventListener('click', e => {
+        if (e.target.hasAttribute('disabled') || objCache.downloading !== null)
             return;
 
         toggleLoadingScr();
-        electron.SharedownAPI.deleteUserdataFold();
+        electron.deleteUserdataFold();
         toggleLoadingScr();
     });
 
@@ -568,18 +590,18 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('DownloadFail', (e) => {
-    electron.SharedownAPI.writeLog('DownloadFail event:\n' + e.detail);
+    electron.writeLog(`DownloadFail event:\n${e.detail}`);
 
-    if (globalSettings.retryOnFail && resources.downloading instanceof video) {
-        const videoElem = document.querySelector(`[data-video-id="${resources.downloading.id}"]`);
+    if (globalSettings.retryOnFail && objCache.downloading instanceof video) {
+        const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
 
-        if (electron.SharedownAPI.isShowDlInfoSet())
+        if (electron.isShowDlInfoSet())
             toggleDownloadStats(videoElem.querySelector('span'));
 
-        resources.downQueObj.reinsert(resources.downloading); // add back video to que
+        objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
         videoElem.querySelector('.progress-bar').style.width = '0%';
         unlockUIElemsForDownload();
-        resources.downloading = null;
+        objCache.downloading = null;
 
         startDownload();
 
@@ -590,22 +612,22 @@ window.addEventListener('DownloadFail', (e) => {
 });
 
 window.addEventListener('DownloadSuccess', () => {
-    const videoElm = document.querySelector('[data-video-id="'+resources.downloading.id+'"]');
-    const newQueLen = parseInt(resources.queLenElm.textContent, 10) - 1;
+    const videoElm = document.querySelector('[data-video-id="'+objCache.downloading.id+'"]');
+    const newQueLen = parseInt(objCache.queLenElm.textContent, 10) - 1;
 
-    electron.SharedownAPI.writeLog(`DownloadSuccess event for ${resources.downloading.id}`);
+    electron.writeLog(`DownloadSuccess event for ${objCache.downloading.id}`);
 
-    if (electron.SharedownAPI.isShowDlInfoSet())
+    if (electron.isShowDlInfoSet())
         toggleDownloadStats(videoElm.querySelector('span'));
 
     unlockUIElemsForDownload();
     videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
     videoElm.querySelector('.progress-bar').classList.add('w-100');
-    resources.downQueElm.appendChild(videoElm.parentElement);
+    objCache.downQueElm.appendChild(videoElm.parentElement);
 
-    resources.completeCElm.textContent = parseInt(resources.completeCElm.textContent, 10) + 1;
-    resources.queLenElm.textContent = newQueLen < 0 ? 0:newQueLen;
-    resources.downloading = null;
+    objCache.completeCElm.textContent = (parseInt(objCache.completeCElm.textContent, 10) + 1).toString(10);
+    objCache.queLenElm.textContent = (newQueLen < 0 ? 0 : newQueLen).toString(10);
+    objCache.downloading = null;
 
     exportAppState(true);
     updateStartButtonState();
@@ -613,25 +635,6 @@ window.addEventListener('DownloadSuccess', () => {
 });
 
 window.addEventListener('beforeunload', () => {
-    electron.SharedownAPI.flushAndCloseLogs();
-    electron.SharedownAPI.deleteUserdataFold();
-});
-
-window.addEventListener('appmenu', (e) => {
-    switch (e.detail.cmd) {
-        case 'odlfold':
-            electron.SharedownAPI.openFolder(Utils.getOutputFolder(globalSettings.outputPath, ''));
-            break;
-        case 'ologsfold':
-            electron.SharedownAPI.openLogsFolder();
-            break;
-        case 'owiki':
-            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown/wiki');
-            break;
-        case 'osrc':
-            electron.SharedownAPI.openLink('https://github.com/kylon/Sharedown');
-            break;
-        default:
-            break;
-    }
+    electron.disableLog();
+    electron.deleteUserdataFold();
 });

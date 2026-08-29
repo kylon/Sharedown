@@ -43,10 +43,11 @@ class downloadQue {
     }
 
     remove(id) {
+        const idI = parseInt(id, 10);
         let i = 0;
 
         for (const v of this.#list) {
-            if (v.id === id)
+            if (v.id === idI)
                 break;
 
             ++i;

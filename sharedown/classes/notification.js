@@ -16,7 +16,7 @@
  */
 "use strict";
 
-class timeoutMessage {
+class Notification {
     #elm;
     #tm;
 
