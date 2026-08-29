@@ -17,10 +17,10 @@
 "use strict";
 
 const {app, ipcMain, dialog, Menu, BrowserWindow, clipboard} = require('electron');
-const path = require('node:path');
+const nodepath = require('node:path');
 const SHDMainCMD = require('./sharedown/enums/shdMainCMD');
 const MessageType = require('./sharedown/enums/messageType');
-let mainW = null;
+let mainWindow = null;
 
 function createWindow () {
     const win = new BrowserWindow({
@@ -32,7 +32,7 @@ function createWindow () {
             nodeIntegration: true,
             spellcheck: false,
             devTools: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: nodepath.join(__dirname, 'preload.js')
         }
     });
 
@@ -47,25 +47,25 @@ function createWindow () {
         return {action: 'deny'};
     });
 
-    win.loadFile(path.join(__dirname, 'sharedown', 'sharedown.html'));
+    win.loadFile(nodepath.join(__dirname, 'sharedown', 'sharedown.html'));
     return win;
 }
 
 app.whenReady().then(() => {
-    mainW = createWindow();
+    mainWindow = createWindow();
 
     Menu.setApplicationMenu(null);
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0)
-            mainW = createWindow();
+            mainWindow = createWindow();
     });
 });
 
 ipcMain.on('shdipcmain', (e, args) => {
     switch (args.cmd) {
         case SHDMainCMD.OutputDirDialog: {
-            e.returnValue = dialog.showOpenDialogSync(mainW, {
+            e.returnValue = dialog.showOpenDialogSync(mainWindow, {
                 title: 'Select output directory',
                 properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
                 message: 'Output directory',
@@ -73,7 +73,7 @@ ipcMain.on('shdipcmain', (e, args) => {
         }
             break;
         case SHDMainCMD.CustomBrowserDialog: {
-            e.returnValue = dialog.showOpenDialogSync(mainW, {
+            e.returnValue = dialog.showOpenDialogSync(mainWindow, {
                 title: 'Select custom browser executable path',
                 properties: ['openFile'],
                 message: 'Browser executable path',
@@ -94,7 +94,7 @@ ipcMain.on('shdipcmain', (e, args) => {
         }
             break;
         case SHDMainCMD.MessageBox: {
-            e.returnValue = dialog.showMessageBoxSync(mainW, {
+            e.returnValue = dialog.showMessageBoxSync(mainWindow, {
                 message: args.content,
                 type: args.type,
                 title: 'Sharedown',
