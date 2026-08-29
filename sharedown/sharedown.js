@@ -534,10 +534,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     objCache.downlStartBtn.addEventListener('click', () => startDownload());
     objCache.downlStopBtn.addEventListener('click', () => stopDownload());
     objCache.settingsModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
-    objCache.settingsModal.querySelector('#soutdirinp').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#boutdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
     objCache.settingsModal.querySelector('#ytdlptmpdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
     objCache.settingsModal.querySelector('#cuschromepb').addEventListener('click', e => selectCustomBrowserDialog(e.currentTarget));
     objCache.settingsModal.querySelector('#shddownloader').addEventListener('change', e => toggleDownloaderSettingsUI(e.currentTarget.value));
+    objCache.settingsModal.querySelector('#ologdir').addEventListener('click', e => electron.openLogFolder());
 
     objCache.settingsModal.querySelector('#delchdfold').addEventListener('click', e => {
         if (e.target.hasAttribute('disabled') || objCache.downloading !== null)

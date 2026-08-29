@@ -86,18 +86,6 @@ function getChromePath() {
 
     return nodepath.join(basePath, osPaths[0], exePaths[0], name);
 }
-/*
-    api.openFolder = (fold) => {
-        shell.openPath(fold).then(res => {
-            if (res !== '')
-                utils.showMessage(MessageType.Error, res);
-        });
-    }
-
-    api.openLogsFolder = () => {
-        api.openFolder(logsPath);
-    }
-*/
 
 function sendMainIPC(obj) {
     return ipcRenderer.sendSync('shdipcmain', obj);
@@ -115,6 +103,13 @@ function rmSync(path, recursive = true) {
 
 function deleteUserdataFold() {
     rmSync(chromeUserdataPath);
+}
+
+function openLogFolder() {
+    shell.openPath(logsPath).then(res => {
+        if (res !== '')
+            showMessage(MessageType.Error, res);
+    });
 }
 
 async function openLink(l) {
@@ -1125,6 +1120,7 @@ contextBridge.exposeInMainWorld('sharedown', {
         MessageType: MessageType
     },
     deleteUserdataFold,
+    openLogFolder,
     openLink,
     hasFFmpeg,
     hasYTdlp,

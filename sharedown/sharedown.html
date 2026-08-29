@@ -38,7 +38,7 @@
                 </button>
             </div>
 
-            <div class="col-12 d-flex justify-content-end pt-4">
+            <div class="col-12 d-flex justify-content-end p-0 pt-4">
                 <div class="btn-group">
                     <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa-solid fa-gear"></i> Settings</a>
                     <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa-solid fa-stop"></i> Stop download</a>
@@ -48,8 +48,9 @@
         </div>
 
         <div class="row shinfo position-fixed w-100">
-            <div class="col-12 fst-italic text-lightgrey p-2">
-                <p class="mb-0">(<span id="quelen">0</span>) Download queue - (<span id="completec">0</span>) Complete</p>
+            <div class="col-12 fst-italic text-lightgrey pt-2 d-flex justify-content-between">
+                <p class="mb-0">Queue (<span id="quelen">0</span>)</p>
+                <p>Complete (<span id="completec">0</span>)</p>
             </div>
         </div>
 
@@ -141,7 +142,7 @@
                         <div class="col-12">
                             <label for="soutdirp" class="form-label">Output directory</label>
                             <div class="input-group mb-3">
-                                <button class="btn btn-outline-dark" type="button" id="soutdirinp">Select folder</button>
+                                <button class="btn btn-outline-dark" type="button" id="boutdir"><i class="fa fa-folder-open"></i></button>
                                 <input id="soutdirp" type="text" class="form-control outpath" aria-label="Sharedown output directory">
                             </div>
                         </div>
@@ -162,7 +163,7 @@
                         <div class="col-12">
                             <label for="ytdlptmpdp" class="form-label">Fragments temp directory</label>
                             <div class="input-group mb-3">
-                                <button class="btn btn-outline-dark" type="button" id="ytdlptmpdir">Select folder</button>
+                                <button class="btn btn-outline-dark" type="button" id="ytdlptmpdir"><i class="fa fa-folder-open"></i></button>
                                 <input id="ytdlptmpdp" type="text" class="form-control outpath" aria-label="YT-dlp temp output directory" placeholder="Output directory">
                                 <div id="ytdlptmphelp" class="form-text">Set the temp directory for fragments download. (default: output directory)</div>
                             </div>
@@ -199,7 +200,7 @@
                             <label for="cuschromep" class="form-label">Custom Chrome/Chromium executable</label>
                             <div class="mb-3">
                                 <div class="input-group">
-                                    <button class="btn btn-outline-dark" type="button" id="cuschromepb">Select executable</button>
+                                    <button class="btn btn-outline-dark" type="button" id="cuschromepb"><i class="fa fa-file"></i></button>
                                     <input id="cuschromep" type="text" class="form-control binpath" aria-label="Custom Chrome/Chromium executable" placeholder="Built-in Chromium">
                                 </div>
                                 <div id="cuschromephelp" class="form-text">Override built-in Chromium with an external Chrome executable</div>
@@ -210,10 +211,13 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Sharedown Logs</label>
-                                <select id="shlogs" class="form-select" aria-label="Logging">
-                                    <option value="1">Enable</option>
-                                    <option selected value="0">Disable</option>
-                                </select>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-dark" type="button" id="ologdir"><i class="fa fa-folder"></i></button>
+                                    <select id="shlogs" class="form-select" aria-label="Logging">
+                                        <option value="1">Enable</option>
+                                        <option selected value="0">Disable</option>
+                                    </select>
+                                </div>
                                 <div id="shlogshelp" class="form-text">Remember to remove any sentive data before uploading!</div>
                             </div>
                         </div>
@@ -266,7 +270,7 @@
                 </div>
                 <div class="modal-footer mt-3">
                     <span id="gsett-succ-str" class="text-success d-none"><i class="fa-solid fa-check"></i> Saved</span>
-                    <button id="gsett-save" type="button" class="btn bg-sharepoint1">Save changes</button>
+                    <button id="gsett-save" type="button" class="btn bg-sharepoint1">Save</button>
                 </div>
             </div>
         </div>

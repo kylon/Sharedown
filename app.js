@@ -31,10 +31,12 @@ function createWindow () {
         webPreferences: {
             nodeIntegration: true,
             spellcheck: false,
-            devTools: false,
+            devTools: true,
             preload: path.join(__dirname, 'preload.js')
         }
     });
+
+    win.webContents.toggleDevTools();
 
     win.webContents.on('will-navigate', e => e.preventDefault());
     win.webContents.on('will-redirect', e => e.preventDefault());
@@ -78,7 +80,7 @@ ipcMain.on('shdipcmain', (e, args) => {
             });
         }
             break;
-        case SHDMainCMD.AppDataPath: {//todo
+        case SHDMainCMD.AppDataPath: {
             e.returnValue = app.getPath('appData');
         }
             break;
