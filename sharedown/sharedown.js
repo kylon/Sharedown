@@ -17,11 +17,8 @@
 "use strict";
 
 const electron = window.sharedown;
-const InvalidURLErrStr = 'Some URLs were invalid and they were skipped';
-let objCache = {};
-
 const globalSettings = {
-    _version: 19, // internal
+    version: 19,
     outputPath: '',
     downloader: 'yt-dlp',
     ytdlpTmpOut: '',
@@ -34,6 +31,7 @@ const globalSettings = {
     customChromePath: '',
     keepBrowserOpen: false,
 };
+let objCache = {};
 
 function makeObjCache() {
     const settModal = document.getElementById('sharedownsett');
@@ -64,7 +62,7 @@ function selectOutputFolderDialog(elm) {
     const path = electron.selectFolderDialog();
 
     if (path === undefined)
-        return false;
+        return;
 
     const inpt = elm.parentElement.querySelector('.outpath');
 
@@ -76,7 +74,7 @@ function selectCustomBrowserDialog(elm) {
     const path = electron.selectCustomBrowserDialog();
 
     if (path === undefined)
-        return false;
+        return;
 
     const inpt = elm.parentElement.querySelector('.binpath');
 
@@ -297,7 +295,7 @@ function removeVideoFromQue(removeBtn) {
     toggleLoadingScr();
 }
 
-async function loadGlobalSettings() {
+function loadGlobalSettings() {
     const outdir = objCache.settingsModal.querySelector('#soutdirp');
     const ytdlpTmpOutD = objCache.settingsModal.querySelector('#ytdlptmpdp');
 
@@ -373,7 +371,7 @@ function importAppSettings() {
     globalSettings.customChromePath = data.customChromePath ?? '';
     globalSettings.keepBrowserOpen = data.keepBrowserOpen ?? false;
 
-    if (data['_version'] < globalSettings['_version'])
+    if (data['version'] < globalSettings['version'])
         exportAppSettings(); // update settings version
 }
 
@@ -383,7 +381,7 @@ function exportAppState() {
         downloading: JSON.stringify(objCache.downloading)
     }
 
-    return electron.saveAppState(JSON.stringify(data));
+    electron.saveAppState(JSON.stringify(data));
 }
 
 function importAppState() {
@@ -462,8 +460,6 @@ async function startDownload() {
 
     const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
 
-    if (objCache.downloading !== null)
-        electron.writeLog('startDownload: has valid data');
 
     downloadVideo(videoElem).then(() => {
         lockUIElemsForDownload();
@@ -492,7 +488,6 @@ function stopDownload() {
     const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
 
     electron.stopDownload();
-
     unlockUIElemsForDownload();
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
@@ -523,7 +518,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     importAppSettings();
     importAppState();
-    await loadGlobalSettings();
+    loadGlobalSettings();
     updateStartButtonState();
 
     document.getElementById('soutdirp').setAttribute('placeholder', electron.getDefaultDownloadPath());
