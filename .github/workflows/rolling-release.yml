@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  SHD_VER: '5.3.6'
+  SHD_VER: '6.0.0'
   
 jobs:
   linux-build:
@@ -116,20 +116,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GTOK }}
           GH_REPO: ${{ github.repository }}
-        run: gh release delete rolling -y
+        run: gh release delete $(gh release view -R "${{ github.server_url }}/${{ github.repository }}" --json tagName -q .tagName) --cleanup-tag -y
         continue-on-error: true
+
+      - name: prepare release notes
+        run: >
+          echo -e "continuous builds\n\n
+          [**Changelog**](https://github.com/kylon/Sharedown/blob/main/CHANGELOG.md)" > rel_notes.md
 
       - name: publish release
         env:
           GH_TOKEN: ${{ secrets.GTOK }}
           GH_REPO: ${{ github.repository }}
         run: >
-          gh release create rolling
+          gh release create $(date '+%Y%m%d%H%M%S')
           "sharedown-linux/sharedown-${{env.SHD_VER}}.AppImage"
           "sharedown-win/sharedown-${{env.SHD_VER}}-win.7z"
           "sharedown-mac/sharedown-${{env.SHD_VER}}-mac.7z"
           "sharedown-mac/sharedown-${{env.SHD_VER}}-arm64-mac.7z"
           --draft=false
           --latest
-          -t "Sharedown rolling builds"
-          -n "continuous builds"
+          -t "Sharedown rolling build"
+          -F rel_notes.md
