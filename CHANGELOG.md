@@ -1,0 +1,15 @@
+## 6.0
+- remove per-video settings
+- remove login modules
+- remove menu bar
+- unify logs to **sharedown.log** file
+- remove yt-dlp rate limit setting
+- reduce yt-dlp max fragments to 4
+- remove timeout setting (timeout is now always disabled)
+- remove app state setting
+- switch to native clipboard api
+- fix infinite app loading in cases where player could not be found
+- update settings and move some options around after menu bar removal
+- download progress bar now match program output progress (bar may be filled multiple times if there are multiple passes)
+- upgrade all packages
+- major code rewrite to match modern electron standards
