@@ -838,60 +838,52 @@ async function getVideoDuration(manifestFetchURL, renderer) {
 
 async function ffmpegDownload(e, videoData, video, outFile) {
     try {
-        const {FFmpegCommand, FFmpegInput, FFmpegOutput} = require('fessonia')();
-        const ffmpegInput = new FFmpegInput(videoData.m);
-        const ffmpegOutput = new FFmpegOutput(outFile, new Map([
-            ['c:v', 'copy'],
-            ['c:a', 'copy'],
-            ['crf', '26']
-        ]));
-        const ffmpegCmd = new FFmpegCommand();
+        const args = ['-i', videoData.m, '-c', 'copy', outFile];
         const totalTime = await getVideoDuration(videoData.m, e.sender);
 
-        ffmpegCmd.addInput(ffmpegInput);
-        ffmpegCmd.addOutput(ffmpegOutput);
-
         isDownloadStopped = false;
+        downloaderProcess = nodechildproc.spawn('ffmpeg', args);
 
-        ffmpegCmd.on('update', (data) => {
-            if (isDownloadStopped)
+        downloaderProcess.stdout.on('data', data => writeLog(data.toString()));
+
+        downloaderProcess.stderr.on('data', data => {
+            const outStr = data.toString();
+
+            if (isDownloadStopped || !outStr.startsWith('frame'))
                 return;
 
-            const sec = Math.floor(data.out_time_ms / 1000);
-            const prog = Math.floor((sec / totalTime) * 100);
+            const timeMatch = outStr.match(/time=([0-9:]+)/);
 
-            e.sender.send('downloadProg', prog);
+            if (timeMatch !== null && timeMatch.length) {
+                const timeData = timeMatch[1].split(':');
+                const sec = parseInt(timeData[0], 10) * 3600 + parseInt(timeData[1], 10) * 60 + parseInt(timeData[2], 10);
+
+                e.sender.send('downloadProg', Math.floor((sec / totalTime) * 100));
+            }
 
             if (showDownlInfo)
-                e.sender.send('detailedProg', `frame: ${data.frame}, speed: ${data.speed}`);
+                e.sender.send('detailedProg', outStr);
         });
 
-        ffmpegCmd.on('success', (data) => {
-            if (data.exitCode === 0) {
-                e.sender.send('downloadSuccess');
+        downloaderProcess.on('close', (code) => {
+            if (code !== 0) {
+                const isAborted = isDownloadStopped || code === null;
 
-            } else {
-                e.sender.send('downloadFail', `Exit code: ${data.exitCode}`);
-                writeLog(`FFMPEG: download failed: exit code ${data.exitCode}`);
-            }
-        });
-
-        ffmpegCmd.on('error', (err) => {
-            try {
+                e.sender.send('downloadProg', 0);
                 unlinkSync(outFile);
+                writeLog(`FFMPEG: download failed, ${code}`);
 
-            } catch (e) {
-                writeLog(`ffmpegCmd.on(error):\n${e.message}`);
-                showErrorMessage(e.message);
+                if (!isAborted)
+                    e.sender.send('downloadFail', 'FFMPEG error');
+
+                downloaderProcess = null;
+                return;
             }
 
-            if (!err.message.includes('Exiting normally, received signal 15')) {
-                e.sender.send('downloadFail', err);
-                writeLog(`ffmpegCmd.on(error):\n${err.log}`);
-            }
+            e.sender.send('downloadSuccess');
+            downloaderProcess = null;
         });
 
-        downloaderProcess = ffmpegCmd.spawn();
         return true;
 
     } catch (e) {

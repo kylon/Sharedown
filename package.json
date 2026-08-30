@@ -52,7 +52,6 @@
     "@fortawesome/fontawesome-free": "7.3.1",
     "axios": "^1.20.0",
     "bootstrap": "5.3.8",
-    "fessonia": "^2.2.2",
     "iso8601-duration": "^2.1.4",
     "puppeteer": "25.9.0"
   },
