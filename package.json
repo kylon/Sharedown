@@ -6,6 +6,7 @@
   "license": "GPL-3.0-or-later",
   "version": "6.0.0",
   "description": "Electron app to save your Sharepoint videos for offline usage (for students)",
+  "desktopName": "com.electron.sharedown",
   "main": "app.js",
   "scripts": {
     "start": "electron .",
@@ -40,7 +41,7 @@
       "target": "AppImage"
     },
     "appImage": {
-      "license": "LICENSE"
+      "license": "LICENSE.txt"
     }
   },
   "keywords": [],
