@@ -14,8 +14,12 @@ function getPuppyPlatform(electronPlat, arch) {
         throw new Error(`BeforePack hook: unknown platform: ${electronPlat}:${arch}`);
 }
 
+function browserDownloadProgress(downloadedBytes, totalBytes, buildid) {
+    console.log(`downloading ${buildid}: ${downloadedBytes}/${totalBytes}`);
+}
+
 exports.default = async function(context) {
-    const {install, Browser, resolveBuildId, makeProgressCallback} = require('@puppeteer/browsers');
+    const {install, Browser, resolveBuildId} = require('@puppeteer/browsers');
     const {PUPPETEER_REVISIONS} = require('puppeteer-core/internal/revisions.js');
     const {join} = require('node:path');
     const fs = require('node:fs');
@@ -33,7 +37,7 @@ exports.default = async function(context) {
                 browser: _browser,
                 buildId: _buildId,
                 cacheDir: puppyPath,
-                downloadProgressCallback: makeProgressCallback(_browser, _buildId),
+                downloadProgressCallback: (downloaded, total) => browserDownloadProgress(downloaded, total, _buildId),
                 platform: platf,
                 unpack: true
             });
