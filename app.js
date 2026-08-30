@@ -47,12 +47,9 @@ function createWindow() {
         minHeight: 400,
         webPreferences: {
             spellcheck: false,
-            devTools: true,
             preload: nodepath.join(__dirname, 'preload.js')
         }
     });
-
-    win.webContents.toggleDevTools();
 
     win.webContents.on('will-navigate', e => e.preventDefault());
     win.webContents.on('will-redirect', e => e.preventDefault());
