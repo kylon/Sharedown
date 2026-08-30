@@ -35,15 +35,15 @@
 
             <div class="col-12 text-center">
                 <button type="button" class="btn btn-warning text-lightblack" title="Add Sharepoint link to download queue" data-bs-toggle="modal" data-bs-target="#urlsaddmodal">
-                    <i class="fa-solid fa-plus"></i> Add Sharepoint video URLs
+                    <i class="fa-solid fa-plus"></i> Add SharePoint video URLs
                 </button>
             </div>
 
             <div class="col-12 d-flex justify-content-end p-0 pt-4">
                 <div class="btn-group">
-                    <a id="open-gsett" href="#" class="btn btn-light" aria-current="page" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa-solid fa-gear"></i> Settings</a>
-                    <a id="stop-dwnl" href="#" class="btn btn-light btn-disabled" aria-current="page"><i class="fa-solid fa-stop"></i> Stop download</a>
-                    <a id="start-dwnl" href="#" class="btn btn-light btn-disabled"><i class="fa-solid fa-download"></i> Start download</a>
+                    <button id="open-gsett" type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#sharedownsett"><i class="fa-solid fa-gear"></i> Settings</button>
+                    <button id="stop-dwnl" type="button" class="btn btn-light btn-disabled"><i class="fa-solid fa-stop"></i> Stop download</button>
+                    <button id="start-dwnl" type="button" class="btn btn-light btn-disabled"><i class="fa-solid fa-download"></i> Start download</button>
                 </div>
             </div>
         </div>
@@ -59,16 +59,16 @@
     </div>
 
     <!-- import video urls modal -->
-    <div id="urlsaddmodal" class="modal fade" tabindex="-1" aria-labelledby="urlsaddmodal" aria-hidden="true">
+    <div id="urlsaddmodal" class="modal fade" tabindex="-1" aria-labelledby="urlsaddmodal-title" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Sharepoint URLs to download queue</h5>
+                    <h5 id="urlsaddmodal-title" class="modal-title">Add SharePoint URLs to download queue</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="h-100">
-                        <textarea class="form-control h-100 text-nowrap" id="vurlslist" placeholder="Paste URLs here, one URL per line"></textarea>
+                        <textarea class="form-control h-100 text-nowrap" id="vurlslist" placeholder="Paste URLs here, one URL per line" autocomplete="off"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer d-inline-block">
@@ -87,16 +87,16 @@
     </div>
 
     <!-- import video urls from folder modal -->
-    <div id="foldimportmodal" class="modal fade" tabindex="-1" aria-labelledby="foldimportmodal" aria-hidden="true">
+    <div id="foldimportmodal" class="modal fade" tabindex="-1" aria-labelledby="foldimportmodal-title" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Import URLs from folder</h5>
+                    <h5 id="foldimportmodal-title" class="modal-title">Import URLs from folder</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="h-100">
-                        <textarea class="form-control h-100 text-nowrap" id="furlslist" placeholder="Paste folder URLs here, one URL per line"></textarea>
+                        <textarea class="form-control h-100 text-nowrap" id="furlslist" placeholder="Paste folder URLs here, one URL per line" autocomplete="off"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer d-inline-block">
@@ -126,11 +126,11 @@
     </div>
 
     <!-- settings modal -->
-    <div id="sharedownsett" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett" aria-hidden="true">
+    <div id="sharedownsett" class="modal fade" tabindex="-1" aria-labelledby="sharedownsett-title" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Sharedown settings</h5>
+                    <h5 id="sharedownsett-title" class="modal-title">Sharedown settings</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -144,14 +144,14 @@
                             <label for="soutdirp" class="form-label">Output directory</label>
                             <div class="input-group mb-3">
                                 <button class="btn btn-outline-dark" type="button" id="boutdir"><i class="fa fa-folder-open"></i></button>
-                                <input id="soutdirp" type="text" class="form-control outpath" aria-label="Sharedown output directory">
+                                <input id="soutdirp" type="text" class="form-control outpath" aria-label="Sharedown output directory" autocomplete="off">
                             </div>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="mb-3">
-                                <label class="form-label">Downloader</label>
+                                <label for="shddownloader" class="form-label">Downloader</label>
                                 <select id="shddownloader" class="form-select" aria-label="Downloader">
                                     <option value="ffmpeg">FFmpeg</option>
                                     <option selected value="yt-dlp">YT-dlp</option>
@@ -182,8 +182,8 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
-                                <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="5 (default)" min="1" max="4">
-                                <div id="ytdlpnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 5)</div>
+                                <input id="ytdlpn" type="number" class="form-control" aria-describedby="ytdlpnhelp" placeholder="4 (default)" min="1" max="4">
+                                <div id="ytdlpnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 4)</div>
                             </div>
                         </div>
                     </div>
@@ -191,8 +191,8 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">Parallel fragment downloads</label>
-                                <input id="directn" type="number" class="form-control" aria-describedby="directnhelp" placeholder="5 (default)" min="1" max="4">
-                                <div id="directnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 5)</div>
+                                <input id="directn" type="number" class="form-control" aria-describedby="directnhelp" placeholder="4 (default)" min="1" max="4">
+                                <div id="directnhelp" class="form-text">Lower this value to avoid network throttle (min 1, max 4)</div>
                             </div>
                         </div>
                     </div>
@@ -202,7 +202,7 @@
                             <div class="mb-3">
                                 <div class="input-group">
                                     <button class="btn btn-outline-dark" type="button" id="cuschromepb"><i class="fa fa-file"></i></button>
-                                    <input id="cuschromep" type="text" class="form-control binpath" aria-label="Custom Chrome/Chromium executable" placeholder="Built-in Chromium">
+                                    <input id="cuschromep" type="text" class="form-control binpath" aria-label="Custom Chrome/Chromium executable" placeholder="Built-in Chromium" autocomplete="off">
                                 </div>
                                 <div id="cuschromephelp" class="form-text">Override built-in Chromium with an external Chrome executable</div>
                             </div>
@@ -219,7 +219,7 @@
                                         <option selected value="0">Disable</option>
                                     </select>
                                 </div>
-                                <div id="shlogshelp" class="form-text">Remember to remove any sentive data before uploading!</div>
+                                <div id="shlogshelp" class="form-text">Remember to remove any sensitive data before uploading!</div>
                             </div>
                         </div>
                     </div>
@@ -286,7 +286,7 @@
     <template id="videoitem">
         <div class="videoitm mt-1 col-12">
             <div class="input-group" data-video-id="">
-                <div id="shdprogbar" class="progress rounded-0 position-relative flex-fill bg-sharepoint3">
+                <div class="shdprogbar progress rounded-0 position-relative flex-fill bg-sharepoint3">
                     <span class="progtext position-absolute text-truncate text-white fw-bold"></span>
                     <div class="progress-bar rounded-0 bg-sharepoint4" role="progressbar" data-tmp-perc="0"></div>
                 </div>

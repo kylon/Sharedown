@@ -220,7 +220,7 @@ async function importURLsFromFolder() {
 
 function addVideoToUI(vid) {
     const node = objCache.template.cloneNode(true);
-    const progBar = node.querySelector('#shdprogbar');
+    const progBar = node.querySelector('.shdprogbar');
     const span = progBar.querySelector('span');
     const copyURLBtn = node.querySelector('.copy-btn');
     const children = objCache.downQueElm.children;
