@@ -23,12 +23,12 @@ const nodefs = require("node:fs");
 const puppy = require("puppeteer");
 const isDebug = false;
 const isWindows = process.platform === 'win32';
-const builtinChromePath = getChromePath();
 const appDataPath = `${app.getPath('appData')}/Sharedown`;
 const logsPath = nodepath.join(appDataPath, 'logs');
 const settingsPath = nodepath.join(appDataPath, 'sharedown.sett');
 const statePath = nodepath.join(appDataPath, 'sharedown.state');
 const chromeUserdataPath = nodepath.join(appDataPath, 'data');
+let builtinChromePath = '';
 let puppyBrowser = null;
 let logFd = null;
 let showDownlInfo = false;
@@ -65,9 +65,10 @@ function getChromePath() {
     try {
         const isLinux = process.platform === 'linux';
         const isMacOS = process.platform === 'darwin';
-        const basePath = 'node_modules/puppeteer/chrome';
         const name = isWindows ? 'chrome.exe' : (isMacOS ? 'Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' : 'chrome');
         const builtinPath = (() => {
+            const basePath = 'node_modules/puppeteer/chrome';
+
             if (__dirname.toLowerCase().includes('app.asar')) {
                 const pkgPath = isWindows ? process.cwd() : (isMacOS ? __dirname : process.env.APPDIR);
 
@@ -100,9 +101,10 @@ function getChromePath() {
                 return false;
         }).at(0);
 
-        return nodepath.join(basePath, osPath, exePath, name);
+        return nodepath.join(builtinPath, osPath, exePath, name);
 
     } catch (e) {
+        console.log(e);
         return '';
     }
 }
@@ -1074,6 +1076,7 @@ app.whenReady().then(() => {
     ipcMain.handle('ytdlpDownload', ytdlpDownload);
 
     mainWindow = createWindow();
+    builtinChromePath = getChromePath();
     Menu.setApplicationMenu(null);
 
     app.on('activate', function() {
