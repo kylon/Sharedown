@@ -39,7 +39,10 @@ function makeObjCache() {
     return {
         downQueObj: new downloadQue(),
         downloading: null,
+        downloadingProgBar: null,
+        downloadingProgBarTx: null,
         downloadingOutPath: '',
+        showDetailedProgress: false,
         template: document.getElementById('videoitem').content,
         addVideoURLsList: document.getElementById('vurlslist'),
         addURLsModalInstance: new bootstrap.Modal(document.getElementById('urlsaddmodal')),
@@ -58,10 +61,10 @@ function makeObjCache() {
     };
 }
 
-function selectOutputFolderDialog(elm) {
-    const path = electron.selectFolderDialog();
+async function selectOutputFolderDialog(elm) {
+    const path = await electron.selectFolderDialog();
 
-    if (path === undefined)
+    if (path === '')
         return;
 
     const inpt = elm.parentElement.querySelector('.outpath');
@@ -70,10 +73,10 @@ function selectOutputFolderDialog(elm) {
     inpt.setAttribute('title', path[0]);
 }
 
-function selectCustomBrowserDialog(elm) {
-    const path = electron.selectCustomBrowserDialog();
+async function selectCustomBrowserDialog(elm) {
+    const path = await electron.selectCustomBrowserDialog();
 
-    if (path === undefined)
+    if (path === '')
         return;
 
     const inpt = elm.parentElement.querySelector('.binpath');
@@ -135,10 +138,11 @@ function getYtdlpNVal(n) {
 }
 
 function addVideoURLs() {
-    const list = objCache.addVideoURLsList.value.trim().split(/\r?\n/);
+    const text = objCache.addVideoURLsList.value.trim();
+    const list = text.split(/\r?\n/);
     const invalid = [];
 
-    if (list.length === 0)
+    if (text === '' || list.length === 0)
         return;
 
     toggleLoadingScr();
@@ -159,7 +163,7 @@ function addVideoURLs() {
 
     if (invalid.length > 0) {
         objCache.addVideoURLsList.value = invalid.join('\n');
-        electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
+        electron.showErrorMessage('Some URLs were invalid and they were skipped');
 
     } else {
         objCache.addVideoURLsList.value = '';
@@ -172,9 +176,10 @@ function addVideoURLs() {
 }
 
 async function importURLsFromFolder() {
-    const folderList = objCache.importURLsFoldList.value.trim().split(/\r?\n/);
+    const text = objCache.importURLsFoldList.value.trim();
+    const folderList = text.split(/\r?\n/);
 
-    if (folderList.length === 0)
+    if (text === '' || folderList.length === 0)
         return;
 
     toggleLoadingScr();
@@ -208,7 +213,7 @@ async function importURLsFromFolder() {
     if (invalid.length > 0) {
         objCache.importURLsFoldList.value = invalid.join('\n');
 
-        electron.showMessage(electron.enums.MessageType.Error, InvalidURLErrStr);
+        electron.showErrorMessage('Some URLs were invalid and they were skipped');
 
     } else {
         objCache.importURLsFoldModalInstance.hide();
@@ -256,18 +261,36 @@ function toggleDownloadStats(elem) {
     if (vid !== objCache.downloading?.id)
         return;
 
-    if (!electron.isShowDlInfoSet()) {
+    if (!objCache.showDetailedProgress) {
         elem.setAttribute('data-original-text', elem.textContent);
         electron.setShowDlInfo(true);
 
+        objCache.showDetailedProgress = true;
         elem.textContent = 'Waiting for download data..';
 
     } else {
         const origText = elem.getAttribute('data-original-text');
 
         electron.setShowDlInfo(false);
+        objCache.showDetailedProgress = false;
         elem.textContent = origText === '' || origText === null ? 'Error: no text':origText;
     }
+}
+
+function updateDownloadProgress(progress) {
+    if (objCache.downloading === null || objCache.downloadingProgBar === null)
+        return;
+
+    const perc = Math.max(0, progress);
+
+    objCache.downloadingProgBar.style.width = perc > 100 ? '100%' : `${progress}%`;
+}
+
+function updateDetailedDownloadInfo(text) {
+    if (objCache.downloading === null || objCache.downloadingProgBarTx === null)
+        return;
+
+    objCache.downloadingProgBarTx.textContent = text;
 }
 
 function removeVideoFromQue(removeBtn) {
@@ -351,8 +374,8 @@ function exportAppSettings() {
     electron.saveAppSettings(JSON.stringify(globalSettings));
 }
 
-function importAppSettings() {
-    const sett = electron.loadAppSettings();
+async function importAppSettings() {
+    const sett = await electron.loadAppSettings();
 
     if (sett === '')
         return;
@@ -384,8 +407,8 @@ function exportAppState() {
     electron.saveAppState(JSON.stringify(data));
 }
 
-function importAppState() {
-    const json = electron.loadAppState();
+async function importAppState() {
+    const json = await electron.loadAppState();
 
     if (json === '')
         return;
@@ -396,13 +419,13 @@ function importAppState() {
         data['downque'].push(data['downloading'])
 
         if (!objCache.downQueObj.importDownloadQue(data['downque']))
-            electron.showMessage(electron.enums.MessageType.Error, 'Some URLs could not be loaded');
+            electron.showErrorMessage('Some URLs could not be loaded');
 
         for (const v of objCache.downQueObj.getQue())
             addVideoToUI(v);
 
     } catch (e) {
-        electron.showMessage(electron.enums.MessageType.Error, `Failed to load app state from disk.\n\n${e.message}`)
+        electron.showErrorMessage(`Failed to load app state from disk.\n\n${e.message}`)
     }
 }
 
@@ -414,7 +437,7 @@ async function downloadVideo(videoElem) {
 
         videoElem.querySelector('.deque-btn').classList.add('btn-disabled');
 
-        if (!electron.makeOutputDirectory(curSettings.outputPath))
+        if (!(await electron.makeOutputDirectory(curSettings.outputPath)))
             return rej();
 
         toggleLoadingScr();
@@ -433,12 +456,12 @@ async function downloadVideo(videoElem) {
         }
 
         // generate output file path (apply user settings, if any)
-        objCache.downloadingOutPath = electron.getUniqueOutputFilePath(curSettings.outputPath, vdata.t);
+        objCache.downloadingOutPath = await electron.getUniqueOutputFilePath(curSettings.outputPath, vdata.t);
 
         if (curSettings.downloader === 'ffmpeg')
-            ret = await electron.downloadWithFFmpeg(vdata, objCache.downloading, objCache.downloadingOutPath);
+            ret = await electron.ffmpegDownload(vdata, objCache.downloading, objCache.downloadingOutPath);
         else
-            ret = electron.downloadWithYtdlp(vdata, objCache.downloading, objCache.downloadingOutPath, curSettings);
+            ret = await electron.ytdlpDownload(vdata, objCache.downloading, objCache.downloadingOutPath, curSettings);
 
         return !ret ? rej() : res();
     });
@@ -456,10 +479,12 @@ async function startDownload() {
         return;
     }
 
-    objCache.downloading = objCache.downQueObj.getNext();
+    const nextVid = objCache.downQueObj.getNext();
+    const videoElem = document.querySelector(`[data-video-id="${nextVid.id}"]`);
 
-    const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
-
+    objCache.downloading = nextVid;
+    objCache.downloadingProgBar = videoElem.querySelector('.progress-bar');
+    objCache.downloadingProgBarTx = objCache.downloadingProgBar.parentNode.querySelector('.progtext');
 
     downloadVideo(videoElem).then(() => {
         lockUIElemsForDownload();
@@ -492,7 +517,7 @@ function stopDownload() {
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
 
-    if (electron.isShowDlInfoSet())
+    if (objCache.showDetailedProgress)
         toggleDownloadStats(videoElem.querySelector('span'));
 
     objCache.downloading = null;
@@ -501,81 +526,13 @@ function stopDownload() {
     toggleLoadingScr();
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
-    objCache = makeObjCache();
-
-    electron.deleteUserdataFold(); // if for some reason the quit event failed, delete now
-
-    if (!electron.hasFFmpeg() || !electron.hasYTdlp()) {
-        const ret = electron.showMessage(electron.enums.MessageType.Question, 'ffmpeg or yt-dlp is not installed.\nPress OK to open the wiki for instructions, Cancel to exit');
-
-        if (ret === 0)
-            electron.openLink('https://github.com/kylon/Sharedown/wiki');
-
-        electron.quitApp();
-        return;
-    }
-
-    importAppSettings();
-    importAppState();
-    loadGlobalSettings();
-    updateStartButtonState();
-
-    document.getElementById('soutdirp').setAttribute('placeholder', electron.getDefaultDownloadPath());
-    document.getElementById('clearimporturlsbtn').addEventListener('click', () => { objCache.addVideoURLsList.value = ''; });
-    document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
-    document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { objCache.importURLsFoldList.value = ''; });
-    document.getElementById('importfoldurlsbtn').addEventListener('click', () => importURLsFromFolder());
-    objCache.downlStartBtn.addEventListener('click', () => startDownload());
-    objCache.downlStopBtn.addEventListener('click', () => stopDownload());
-    objCache.settingsModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
-    objCache.settingsModal.querySelector('#boutdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
-    objCache.settingsModal.querySelector('#ytdlptmpdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
-    objCache.settingsModal.querySelector('#cuschromepb').addEventListener('click', e => selectCustomBrowserDialog(e.currentTarget));
-    objCache.settingsModal.querySelector('#shddownloader').addEventListener('change', e => toggleDownloaderSettingsUI(e.currentTarget.value));
-    objCache.settingsModal.querySelector('#ologdir').addEventListener('click', e => electron.openLogFolder());
-
-    objCache.settingsModal.querySelector('#delchdfold').addEventListener('click', e => {
-        if (e.target.hasAttribute('disabled') || objCache.downloading !== null)
-            return;
-
-        toggleLoadingScr();
-        electron.deleteUserdataFold();
-        toggleLoadingScr();
-    });
-
-    toggleLoadingScr();
-});
-
-window.addEventListener('DownloadFail', (e) => {
-    electron.writeLog(`DownloadFail event:\n${e.detail}`);
-
-    if (globalSettings.retryOnFail && objCache.downloading instanceof video) {
-        const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
-
-        if (electron.isShowDlInfoSet())
-            toggleDownloadStats(videoElem.querySelector('span'));
-
-        objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
-        videoElem.querySelector('.progress-bar').style.width = '0%';
-        unlockUIElemsForDownload();
-        objCache.downloading = null;
-
-        startDownload();
-
-    } else {
-        stopDownload();
-        electron.showMessage(electron.enums.MessageType.Error, `Download failed.\n\n${e.detail}`);
-    }
-});
-
-window.addEventListener('DownloadSuccess', () => {
-    const videoElm = document.querySelector('[data-video-id="'+objCache.downloading.id+'"]');
+function downloadSuccess() {
+    const videoElm = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
     const newQueLen = parseInt(objCache.queLenElm.textContent, 10) - 1;
 
     electron.writeLog(`DownloadSuccess event for ${objCache.downloading.id}`);
 
-    if (electron.isShowDlInfoSet())
+    if (objCache.showDetailedProgress)
         toggleDownloadStats(videoElm.querySelector('span'));
 
     unlockUIElemsForDownload();
@@ -590,6 +547,74 @@ window.addEventListener('DownloadSuccess', () => {
     exportAppState();
     updateStartButtonState();
     startDownload(); // start next download, if any
+}
+
+function downloadFail(error) {
+    electron.writeLog(`DownloadFail event:\n${error}`);
+
+    if (globalSettings.retryOnFail && objCache.downloading instanceof video) {
+        const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
+
+        if (objCache.showDetailedProgress)
+            toggleDownloadStats(videoElem.querySelector('span'));
+
+        objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
+        videoElem.querySelector('.progress-bar').style.width = '0%';
+        unlockUIElemsForDownload();
+        objCache.downloading = null;
+
+        startDownload();
+
+    } else {
+        stopDownload();
+        electron.showErrorMessage(`Download failed.\n\n${error}`);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    objCache = makeObjCache();
+
+    electron.deleteUserdataFold(); // if for some reason the quit event failed, delete now
+
+    if (!(await electron.hasFFmpeg()) || !(await electron.hasYTdlp())) {
+        await electron.showErrorMessage('ffmpeg or yt-dlp is not installed, check sharedown wiki for instructions.\nApplication will now close.');
+        electron.quitApp();
+        return;
+    }
+
+    await importAppSettings();
+    await importAppState();
+    loadGlobalSettings();
+    updateStartButtonState();
+
+    document.getElementById('soutdirp').setAttribute('placeholder', await electron.getDefaultDownloadPath());
+    document.getElementById('clearimporturlsbtn').addEventListener('click', () => { objCache.addVideoURLsList.value = ''; });
+    document.getElementById('importurlsbtn').addEventListener('click', () => addVideoURLs());
+    document.getElementById('clearimportfoldurlsbtn').addEventListener('click', () => { objCache.importURLsFoldList.value = ''; });
+    document.getElementById('importfoldurlsbtn').addEventListener('click', () => importURLsFromFolder());
+    objCache.downlStartBtn.addEventListener('click', () => startDownload());
+    objCache.downlStopBtn.addEventListener('click', () => stopDownload());
+    objCache.settingsModal.querySelector('#gsett-save').addEventListener('click', () => saveGlobalSettings());
+    objCache.settingsModal.querySelector('#boutdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#ytdlptmpdir').addEventListener('click', e => selectOutputFolderDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#cuschromepb').addEventListener('click', e => selectCustomBrowserDialog(e.currentTarget));
+    objCache.settingsModal.querySelector('#shddownloader').addEventListener('change', e => toggleDownloaderSettingsUI(e.currentTarget.value));
+    objCache.settingsModal.querySelector('#ologdir').addEventListener('click', e => electron.openLogFolder());
+    electron.onDownloadProgress(updateDownloadProgress);
+    electron.onDetailedDownloadProgress(updateDetailedDownloadInfo);
+    electron.onDownloadSuccess(downloadSuccess);
+    electron.onDownloadFail(downloadFail);
+
+    objCache.settingsModal.querySelector('#delchdfold').addEventListener('click', e => {
+        if (e.target.hasAttribute('disabled') || objCache.downloading !== null)
+            return;
+
+        toggleLoadingScr();
+        electron.deleteUserdataFold();
+        toggleLoadingScr();
+    });
+
+    toggleLoadingScr();
 });
 
 window.addEventListener('beforeunload', () => {
