@@ -513,7 +513,6 @@ function stopDownload() {
     const videoElem = document.querySelector(`[data-video-id="${objCache.downloading.id}"]`);
 
     electron.stopDownload();
-    unlockUIElemsForDownload();
     videoElem.querySelector('.deque-btn').classList.remove('btn-disabled');
     objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
 
@@ -523,6 +522,7 @@ function stopDownload() {
     objCache.downloading = null;
     videoElem.querySelector('.progress-bar').style.width = '0%';
 
+    unlockUIElemsForDownload();
     toggleLoadingScr();
 }
 
@@ -535,7 +535,6 @@ function downloadSuccess() {
     if (objCache.showDetailedProgress)
         toggleDownloadStats(videoElm.querySelector('span'));
 
-    unlockUIElemsForDownload();
     videoElm.querySelector('.deque-btn').classList.remove('btn-disabled');
     videoElm.querySelector('.progress-bar').classList.add('w-100');
     objCache.downQueElm.appendChild(videoElm.parentElement);
@@ -545,7 +544,7 @@ function downloadSuccess() {
     objCache.downloading = null;
 
     exportAppState();
-    updateStartButtonState();
+    unlockUIElemsForDownload();
     startDownload(); // start next download, if any
 }
 
@@ -560,9 +559,9 @@ function downloadFail(error) {
 
         objCache.downQueObj.reinsert(objCache.downloading); // add back video to que
         videoElem.querySelector('.progress-bar').style.width = '0%';
-        unlockUIElemsForDownload();
         objCache.downloading = null;
 
+        unlockUIElemsForDownload();
         startDownload();
 
     } else {
