@@ -44,4 +44,4 @@ $ npm start
 
 ---
 
-![](sharedown.jpg)
+![](sharedown.png)
