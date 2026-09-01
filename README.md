@@ -16,10 +16,6 @@ See [Sharedown Wiki](https://github.com/kylon/Sharedown/wiki) for more info or h
 ### Releases
 * Download latest build from [here](https://github.com/kylon/Sharedown/releases/latest)
 
-**ArchLinux**:
-
-The official AUR package [sharedown](https://aur.archlinux.org/packages/sharedown/) is available.
-
 ### Build
 
 Run the following commands in a terminal to build Sharedown.
