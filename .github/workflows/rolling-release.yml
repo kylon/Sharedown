@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  SHD_VER: '6.0.0'
+  SHD_VER: '6.0.1'
   
 jobs:
   linux-build:
