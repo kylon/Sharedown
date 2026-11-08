@@ -1,3 +1,6 @@
+## 6.0.1
+- upgrade all packages
+
 ## 6.0
 - remove per-video settings
 - remove login modules
